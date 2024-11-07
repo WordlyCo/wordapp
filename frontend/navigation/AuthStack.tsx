@@ -9,7 +9,9 @@ export type AuthStackParamList = {
 const Stack = createStackNavigator<AuthStackParamList>();
 
 const AuthStack = () => (
-  <Stack.Navigator>
+  <Stack.Navigator screenOptions={{
+    headerShown: false
+  }}>
     <Stack.Screen name="Login" component={LoginScreen} />
   </Stack.Navigator>
 );

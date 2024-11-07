@@ -20,3 +20,12 @@ The app logic is divided into several directories.
 - hooks (standard hooks, backend calls, etc)
 - components (commonly used components)
 
+## NOTE
+
+Navigation is laid out as follows
+
+Tabs are defined here, and this navigation requires authentication
+- navigation/AppStack.tsx 
+
+These are stacks, and they define screens for login page, register, etc
+- navigation/AuthStack.tsx 
