@@ -63,15 +63,7 @@ const ProfileScreen = () => {
         />
       </List.Section>
 
-      <Divider style={styles.divider} />
-
-      {/* Logout Button */}
-      <List.Item
-        title="Log Out"
-        titleStyle={styles.logoutText}
-        left={props => <List.Icon {...props} icon="logout" color="#FF4444" />}
-        onPress={() => {/* Handle logout */}}
-      />
+  
     </ScrollView>
   );
 };
