@@ -68,6 +68,7 @@ const ProfileScreen = () => {
         />
       </List.Section>
 
+
       <Divider style={styles.divider} />
 
       {/* Logout Button */}
@@ -81,6 +82,7 @@ const ProfileScreen = () => {
           Logout
         </Button>
       </View>
+
     </ScrollView>
   );
 };

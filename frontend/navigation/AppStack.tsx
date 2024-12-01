@@ -7,9 +7,13 @@ import FontAwesomeIcons from '@expo/vector-icons/FontAwesome';
 import HomeScreen from '../screens/HomeScreen';
 import ProfileScreen from '../screens/ProfileScreen';
 import UserSettingsScreen from '../screens/UserSettingsScreen';
+
+import GameScreen from '../screens/GameScreen';
+
 import HelpCenterScreen from '../screens/HelpCenterScreen';
 import PrivacyPolicyScreen from '../screens/PrivacyPolicyScreen';
 import SettingsScreen from '../screens/SettingsScreen';
+
 
 const Tab = createMaterialBottomTabNavigator();
 
@@ -43,7 +47,7 @@ const AppStack = () => (
         if (route.name === 'Home') {
           iconName = focused ? 'home' : 'home';
             return <MaterialCommunityIcons name={iconName} size={26} color={color} />;
-        } else if (route.name === 'Quiz') {
+        } else if (route.name === 'Games') {
           iconName = focused ? 'cards-playing' : 'cards-playing';
           return <MaterialCommunityIcons name={iconName} size={26} color={color} />;
         } else if (route.name === 'Progress') {
@@ -60,7 +64,7 @@ const AppStack = () => (
   >
    
     <Tab.Screen name="Home" component={HomeScreen}/>
-    <Tab.Screen name="Quiz" component={HomeScreen}/>
+    <Tab.Screen name="Games" component={GameScreen}/>
     <Tab.Screen name="Progress" component={HomeScreen}/>
     <Tab.Screen name="Profile" component={ProfileStackScreen}/>
   </Tab.Navigator>
