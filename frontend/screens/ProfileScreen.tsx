@@ -1,8 +1,10 @@
 import React from 'react';
 import { View, StyleSheet, Image, ScrollView } from 'react-native';
-import { Text, List, Avatar, Divider } from 'react-native-paper';
+import { Text, List, Avatar, Divider, Button } from 'react-native-paper';
 import { useNavigation } from '@react-navigation/native';
 import { StackNavigationProp } from '@react-navigation/stack';
+import { useContext } from 'react';
+import { AuthContext } from '../context/AuthContext';
 
 type ProfileStackParamList = {
   ProfileMain: undefined;
@@ -13,7 +15,7 @@ type ProfileScreenNavigationProp = StackNavigationProp<ProfileStackParamList>;
 
 const ProfileScreen = () => {
   const navigation = useNavigation<ProfileScreenNavigationProp>();
-
+  const { logout } = useContext(AuthContext);
   return (
     <ScrollView style={styles.container}>
       {/* Profile Header Section */}
@@ -66,12 +68,16 @@ const ProfileScreen = () => {
       <Divider style={styles.divider} />
 
       {/* Logout Button */}
-      <List.Item
-        title="Log Out"
-        titleStyle={styles.logoutText}
-        left={props => <List.Icon {...props} icon="logout" color="#FF4444" />}
-        onPress={() => {/* Handle logout */}}
-      />
+      <View style={styles.logoutContainer}>
+        <Button 
+          icon="logout" 
+          mode="contained" 
+          onPress={logout}
+          style={styles.logoutButton}
+        >
+          Logout
+        </Button>
+      </View>
     </ScrollView>
   );
 };
@@ -102,8 +108,11 @@ const styles = StyleSheet.create({
     backgroundColor: '#e0e0e0',
     marginVertical: 10,
   },
-  logoutText: {
-    color: '#FF4444',
+  logoutContainer: {
+    padding: 20,
+  },
+  logoutButton: {
+    backgroundColor: '#5856D6',
   },
 });
 
