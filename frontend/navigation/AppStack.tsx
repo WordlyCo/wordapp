@@ -7,7 +7,13 @@ import FontAwesomeIcons from '@expo/vector-icons/FontAwesome';
 import HomeScreen from '../screens/HomeScreen';
 import ProfileScreen from '../screens/ProfileScreen';
 import UserSettingsScreen from '../screens/UserSettingsScreen';
+
 import GameScreen from '../screens/GameScreen';
+
+import HelpCenterScreen from '../screens/HelpCenterScreen';
+import PrivacyPolicyScreen from '../screens/PrivacyPolicyScreen';
+import SettingsScreen from '../screens/SettingsScreen';
+
 
 const Tab = createMaterialBottomTabNavigator();
 
@@ -17,6 +23,9 @@ const ProfileStackScreen = () => (
   <ProfileStack.Navigator>
     <ProfileStack.Screen name="ProfileMain" component={ProfileScreen} />
     <ProfileStack.Screen name="UserSettingsScreen" component={UserSettingsScreen} />
+    <ProfileStack.Screen name="Settings" component={SettingsScreen} />
+    <ProfileStack.Screen name="HelpCenter" component={HelpCenterScreen} />
+    <ProfileStack.Screen name="PrivacyPolicy" component={PrivacyPolicyScreen} />
   </ProfileStack.Navigator>
 );
 
