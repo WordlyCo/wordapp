@@ -1,11 +1,29 @@
 import React from 'react';
 import { createMaterialBottomTabNavigator } from 'react-native-paper/react-navigation';
+import { createStackNavigator } from '@react-navigation/stack';
 
 import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
 import FontAwesomeIcons from '@expo/vector-icons/FontAwesome';
 import HomeScreen from '../screens/HomeScreen';
+import ProfileScreen from '../screens/ProfileScreen';
+import UserSettingsScreen from '../screens/UserSettingsScreen';
+import HelpCenterScreen from '../screens/HelpCenterScreen';
+import PrivacyPolicyScreen from '../screens/PrivacyPolicyScreen';
+import SettingsScreen from '../screens/SettingsScreen';
 
 const Tab = createMaterialBottomTabNavigator();
+
+// Create a stack navigator for Profile tab
+const ProfileStack = createStackNavigator();
+const ProfileStackScreen = () => (
+  <ProfileStack.Navigator>
+    <ProfileStack.Screen name="ProfileMain" component={ProfileScreen} />
+    <ProfileStack.Screen name="UserSettingsScreen" component={UserSettingsScreen} />
+    <ProfileStack.Screen name="Settings" component={SettingsScreen} />
+    <ProfileStack.Screen name="HelpCenter" component={HelpCenterScreen} />
+    <ProfileStack.Screen name="PrivacyPolicy" component={PrivacyPolicyScreen} />
+  </ProfileStack.Navigator>
+);
 
 const AppStack = () => (
   <Tab.Navigator 
@@ -44,7 +62,7 @@ const AppStack = () => (
     <Tab.Screen name="Home" component={HomeScreen}/>
     <Tab.Screen name="Quiz" component={HomeScreen}/>
     <Tab.Screen name="Progress" component={HomeScreen}/>
-    <Tab.Screen name="Profile" component={HomeScreen}/>
+    <Tab.Screen name="Profile" component={ProfileStackScreen}/>
   </Tab.Navigator>
 );
 
