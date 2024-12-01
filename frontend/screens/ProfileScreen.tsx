@@ -9,6 +9,9 @@ import { AuthContext } from '../context/AuthContext';
 type ProfileStackParamList = {
   ProfileMain: undefined;
   UserSettingsScreen: undefined;
+  Settings: undefined;
+  HelpCenter: undefined;
+  PrivacyPolicy: undefined;
 };
 
 type ProfileScreenNavigationProp = StackNavigationProp<ProfileStackParamList>;
@@ -34,7 +37,7 @@ const ProfileScreen = () => {
       {/* Menu Items */}
       <List.Section>
         <List.Item
-          title="Your Settings"
+          title="Your Profile"
           left={props => <List.Icon {...props} icon="account-cog" />}
           right={props => <List.Icon {...props} icon="chevron-right" />}
           onPress={() => navigation.navigate('UserSettingsScreen')}
@@ -43,7 +46,7 @@ const ProfileScreen = () => {
           title="Settings"
           left={props => <List.Icon {...props} icon="cog" />}
           right={props => <List.Icon {...props} icon="chevron-right" />}
-          onPress={() => {/* Handle navigation */}}
+          onPress={() => navigation.navigate('Settings')}
         />
         <List.Item
           title="Payment Methods"
@@ -55,13 +58,13 @@ const ProfileScreen = () => {
           title="Help Center"
           left={props => <List.Icon {...props} icon="help-circle" />}
           right={props => <List.Icon {...props} icon="chevron-right" />}
-          onPress={() => {/* Handle navigation */}}
+          onPress={() => navigation.navigate('HelpCenter')}
         />
         <List.Item
           title="Privacy Policy"
           left={props => <List.Icon {...props} icon="shield-account" />}
           right={props => <List.Icon {...props} icon="chevron-right" />}
-          onPress={() => {/* Handle navigation */}}
+          onPress={() => navigation.navigate('PrivacyPolicy')}
         />
       </List.Section>
 
