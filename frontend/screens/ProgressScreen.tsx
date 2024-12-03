@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, Button } from 'react-native';
+import { View, Text, StyleSheet, Button, FlatList } from 'react-native';
 
 // Dummy leaderboard data
 const globalLeaderboard = [
@@ -38,32 +38,39 @@ const getCurrentLevel = (points) => {
   return { currentLevel, nextLevel };
 };
 
-// Global Leaderboard Component
+// Leaderboard Component
+const Leaderboard = ({ data }) => (
+  <FlatList
+    data={data}
+    keyExtractor={(item) => item.id}
+    renderItem={({ item, index }) => (
+      <View style={[styles.row, item.name === 'You' && styles.highlight]}>
+        <Text style={styles.rank}>{index + 1}</Text>
+        <Text style={styles.name}>{item.name}</Text>
+        <Text style={styles.points}>{item.points} pts</Text>
+      </View>
+    )}
+  />
+);
+
+// Global Leaderboard Screen
 const GlobalLeaderboard = () => {
   console.log("Rendering GlobalLeaderboard");
   return (
     <View style={styles.container}>
       <Text style={styles.header}>Global Leaderboard</Text>
-      {globalLeaderboard.map((item, index) => (
-        <Text key={item.id}>
-          {index + 1}. {item.name} - {item.points} pts
-        </Text>
-      ))}
+      <Leaderboard data={globalLeaderboard} />
     </View>
   );
 };
 
-// Friends Leaderboard Component
+// Friends Leaderboard Screen
 const FriendsLeaderboard = () => {
   console.log("Rendering FriendsLeaderboard");
   return (
     <View style={styles.container}>
       <Text style={styles.header}>Friends Leaderboard</Text>
-      {friendsLeaderboard.map((item, index) => (
-        <Text key={item.id}>
-          {index + 1}. {item.name} - {item.points} pts
-        </Text>
-      ))}
+      <Leaderboard data={friendsLeaderboard} />
     </View>
   );
 };
@@ -107,12 +114,12 @@ const ProgressScreen = () => {
         <Button
           title="Global"
           onPress={() => setActiveTab('Global')}
-          color={activeTab === 'Global' ? '#5856D6' : '#282828'}
+          color={activeTab === 'Global' ? '#FFFFFF' : '#AAAAAA'}
         />
         <Button
           title="Friends"
           onPress={() => setActiveTab('Friends')}
-          color={activeTab === 'Friends' ? '#5856D6' : '#282828'}
+          color={activeTab === 'Friends' ? '#FFFFFF' : '#AAAAAA'}
         />
       </View>
 
@@ -128,21 +135,26 @@ const ProgressScreen = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
     padding: 20,
+    backgroundColor: '#fff',
   },
   header: {
     fontSize: 24,
     fontWeight: 'bold',
-    marginBottom: 10,
+    marginBottom: 20,
   },
-  tabBar: {
+  row: {
     flexDirection: 'row',
-    justifyContent: 'space-evenly',
-    paddingVertical: 10,
-    backgroundColor: '#282828',
+    justifyContent: 'space-between',
+    padding: 10,
+    backgroundColor: '#f9f9f9',
+    borderBottomWidth: 1,
+    borderColor: '#ddd',
   },
+  rank: { fontSize: 18, fontWeight: 'bold' },
+  name: { fontSize: 18 },
+  points: { fontSize: 18, fontWeight: 'bold' },
+  highlight: { backgroundColor: '#d1f7c4' }, // Highlight the user row
   levelBox: {
     backgroundColor: '#f8f9fa',
     padding: 20,
@@ -156,7 +168,14 @@ const styles = StyleSheet.create({
   },
   levelText: { fontSize: 20, fontWeight: 'bold' },
   pointsText: { fontSize: 16, color: '#666' },
+  tabBar: {
+    flexDirection: 'row',
+    justifyContent: 'space-evenly',
+    paddingVertical: 10,
+    backgroundColor: '#282828',
+  },
 });
 
 export default ProgressScreen;
+
 
