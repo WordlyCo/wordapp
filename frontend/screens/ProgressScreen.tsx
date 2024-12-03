@@ -61,29 +61,28 @@ const FriendsLeaderboard = () => {
 // Main Progress Screen with Tabs
 const ProgressScreen = () => {
   return (
-    <Tab.Navigator>
-      <Tab.Screen name="Global">
-        {() => (
-          <View style={styles.container}>
+    <Tab.Navigator lazy>
+      <Tab.Screen
+        name="Global"
+        children={() => (
+          <View style={styles.container} key="global-tab">
             <Text style={styles.header}>Global Leaderboard</Text>
             <Leaderboard data={globalLeaderboard} />
           </View>
         )}
-      </Tab.Screen>
-      <Tab.Screen name="Friends">
-        {() => (
-          <View style={styles.container}>
+      />
+      <Tab.Screen
+        name="Friends"
+        children={() => (
+          <View style={styles.container} key="friends-tab">
             <Text style={styles.header}>Friends Leaderboard</Text>
             <Leaderboard data={friendsLeaderboard} />
           </View>
         )}
-      </Tab.Screen>
+      />
     </Tab.Navigator>
   );
 };
-
-
-
 
 const styles = StyleSheet.create({
   container: { flex: 1, padding: 20, backgroundColor: '#fff' },
