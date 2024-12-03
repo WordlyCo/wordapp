@@ -62,23 +62,26 @@ const FriendsLeaderboard = () => {
 const ProgressScreen = () => {
   return (
     <Tab.Navigator>
-      <Tab.Screen
-        name="Global"
-        component={(props) => {
-          console.log("Global Tab Active");
-          return <GlobalLeaderboard {...props} />;
-        }}
-      />
-      <Tab.Screen
-        name="Friends"
-        component={(props) => {
-          console.log("Friends Tab Active");
-          return <FriendsLeaderboard {...props} />;
-        }}
-      />
+      <Tab.Screen name="Global">
+        {() => (
+          <View style={styles.container}>
+            <Text style={styles.header}>Global Leaderboard</Text>
+            <Leaderboard data={globalLeaderboard} />
+          </View>
+        )}
+      </Tab.Screen>
+      <Tab.Screen name="Friends">
+        {() => (
+          <View style={styles.container}>
+            <Text style={styles.header}>Friends Leaderboard</Text>
+            <Leaderboard data={friendsLeaderboard} />
+          </View>
+        )}
+      </Tab.Screen>
     </Tab.Navigator>
   );
 };
+
 
 
 
