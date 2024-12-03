@@ -13,9 +13,9 @@ const globalLeaderboard = [
 ];
 
 const friendsLeaderboard = [
-  { id: '1', name: 'Your Best Friend', points: 1300 },
+  { id: '1', name: 'Friend 1', points: 1300 },
   { id: '2', name: 'You', points: 1200 },
-  { id: '3', name: 'Another Friend', points: 1000 },
+  { id: '3', name: 'Friend 2', points: 1000 },
 ];
 
 // Levels for leveling system
