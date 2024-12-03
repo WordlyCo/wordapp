@@ -62,7 +62,7 @@ const FriendsLeaderboard = () => {
 const ProgressScreen = () => {
   console.log("Rendering ProgressScreen");
   return (
-    <Tab.Navigator>
+    <Tab.Navigator lazy>
       <Tab.Screen name="Global" component={GlobalLeaderboard} />
       <Tab.Screen name="Friends" component={FriendsLeaderboard} />
     </Tab.Navigator>
