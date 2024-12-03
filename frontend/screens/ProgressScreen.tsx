@@ -62,7 +62,26 @@ const ProgressScreen = () => {
       <Tab.Screen name="Global" component={GlobalLeaderboard} />
       <Tab.Screen name="Friends" component={FriendsLeaderboard} />
     </Tab.Navigator>
+  );
+};
+
+// Styles
+const styles = StyleSheet.create({
+  container: { flex: 1, padding: 20, backgroundColor: '#fff' },
+  header: { fontSize: 24, fontWeight: 'bold', marginBottom: 20 },
+  row: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    padding: 10,
+    backgroundColor: '#f9f9f9',
+    borderBottomWidth: 1,
+    borderColor: '#ddd',
+  },
+  rank: { fontSize: 18, fontWeight: 'bold' },
+  name: { fontSize: 18 },
+  points: { fontSize: 18, fontWeight: 'bold' },
+  highlight: { backgroundColor: '#d1f7c4' }, // Highlight the user row
+});
 
 export default ProgressScreen;
-
 
