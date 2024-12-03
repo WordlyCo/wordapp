@@ -62,5 +62,7 @@ const ProgressScreen = () => {
       <Tab.Screen name="Global" component={GlobalLeaderboard} />
       <Tab.Screen name="Friends" component={FriendsLeaderboard} />
     </Tab.Navigator>
- 
+
+export default ProgressScreen;
+
 
