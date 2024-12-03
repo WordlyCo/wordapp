@@ -60,13 +60,8 @@ const FriendsLeaderboard = () => {
 
 // Main Progress Screen with Tabs
 const ProgressScreen = () => {
-  console.log("Rendering ProgressScreen");
-  return (
-    <Tab.Navigator lazy>
-      <Tab.Screen name="Global" component={GlobalLeaderboard} />
-      <Tab.Screen name="Friends" component={FriendsLeaderboard} />
-    </Tab.Navigator>
-  );
+  // Temporarily render one component to test
+  return <GlobalLeaderboard />; // Change this to <FriendsLeaderboard /> to test the other
 };
 
 const styles = StyleSheet.create({
