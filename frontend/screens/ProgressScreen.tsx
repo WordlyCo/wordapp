@@ -17,6 +17,28 @@ const friendsLeaderboard = [
   { id: '3', name: 'Another Friend', points: 1000 },
 ];
 
+// Points needed for each level
+const levels = [
+  { level: 1, minPoints: 0 },
+  { level: 2, minPoints: 500 },
+  { level: 3, minPoints: 1000 },
+  { level: 4, minPoints: 1500 },
+  { level: 5, minPoints: 2000 },
+];
+
+const getCurrentLevel = (points) => {
+  let currentLevel = levels[0];
+  let nextLevel = levels[1];
+
+  for (let i = 0; i < levels.length; i++) {
+    if (points >= levels[i].minPoints) {
+      currentLevel = levels[i];
+      nextLevel = levels[i + 1] || null; // Handle max level
+    }
+  }
+  return { currentLevel, nextLevel };
+};
+
 const Leaderboard = ({ data }) => (
   <FlatList
     data={data}
@@ -45,12 +67,36 @@ const FriendsLeaderboard = () => (
   </View>
 );
 
-const ProgressScreen = () => (
-  <Tab.Navigator>
-    <Tab.Screen name="Global" component={GlobalLeaderboard} />
-    <Tab.Screen name="Friends" component={FriendsLeaderboard} />
-  </Tab.Navigator>
-);
+const UserLevel = ({ userPoints }) => {
+  const { currentLevel, nextLevel } = getCurrentLevel(userPoints);
+
+  return (
+    <View style={styles.levelBox}>
+      <Text style={styles.levelText}>Your Level: {currentLevel.level}</Text>
+      {nextLevel ? (
+        <Text style={styles.pointsText}>
+          {nextLevel.minPoints - userPoints} points to Level {nextLevel.level}
+        </Text>
+      ) : (
+        <Text style={styles.pointsText}>Max Level Reached</Text>
+      )}
+    </View>
+  );
+};
+
+const ProgressScreen = () => {
+  const userPoints = 1200; // Replace this with dynamic data from your backend or state
+
+  return (
+    <View style={{ flex: 1 }}>
+      <Tab.Navigator>
+        <Tab.Screen name="Global" component={GlobalLeaderboard} />
+        <Tab.Screen name="Friends" component={FriendsLeaderboard} />
+      </Tab.Navigator>
+      <UserLevel userPoints={userPoints} />
+    </View>
+  );
+};
 
 const styles = StyleSheet.create({
   container: { flex: 1, padding: 20, backgroundColor: '#fff' },
@@ -66,10 +112,16 @@ const styles = StyleSheet.create({
   rank: { fontSize: 18, fontWeight: 'bold' },
   name: { fontSize: 18 },
   points: { fontSize: 18, fontWeight: 'bold' },
-  highlight: { backgroundColor: '#d1f7c4' }, // Highlight the user row
+  highlight: { backgroundColor: '#d1f7c4' },
+  levelBox: {
+    backgroundColor: '#f0f0f0',
+    padding: 20,
+    alignItems: 'center',
+    borderTopWidth: 1,
+    borderColor: '#ddd',
+  },
+  levelText: { fontSize: 20, fontWeight: 'bold' },
+  pointsText: { fontSize: 16, color: '#666' },
 });
 
 export default ProgressScreen;
-
-
-
