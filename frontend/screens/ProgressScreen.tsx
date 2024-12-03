@@ -13,9 +13,9 @@ const globalLeaderboard = [
 ];
 
 const friendsLeaderboard = [
-  { id: '1', name: 'Friend 1', points: 1300 },
+  { id: '1', name: 'Your Best Friend', points: 1300 },
   { id: '2', name: 'You', points: 1200 },
-  { id: '3', name: 'Friend 2', points: 1000 },
+  { id: '3', name: 'Another Friend', points: 1000 },
 ];
 
 // Levels for leveling system
@@ -57,20 +57,26 @@ const Leaderboard = ({ data }) => (
 );
 
 // Global Leaderboard Screen
-const GlobalLeaderboard = () => (
-  <View style={styles.container}>
-    <Text style={styles.header}>Global Leaderboard</Text>
-    <Leaderboard data={globalLeaderboard} />
-  </View>
-);
+const GlobalLeaderboard = () => {
+  console.log("Rendering GlobalLeaderboard");
+  return (
+    <View style={styles.container}>
+      <Text style={styles.header}>Global Leaderboard</Text>
+      <Leaderboard data={globalLeaderboard} />
+    </View>
+  );
+};
 
 // Friends Leaderboard Screen
-const FriendsLeaderboard = () => (
-  <View style={styles.container}>
-    <Text style={styles.header}>Friends Leaderboard</Text>
-    <Leaderboard data={friendsLeaderboard} />
-  </View>
-);
+const FriendsLeaderboard = () => {
+  console.log("Rendering FriendsLeaderboard");
+  return (
+    <View style={styles.container}>
+      <Text style={styles.header}>Friends Leaderboard</Text>
+      <Leaderboard data={friendsLeaderboard} />
+    </View>
+  );
+};
 
 // User Level Display Component
 const UserLevel = ({ userPoints }) => {
@@ -90,19 +96,20 @@ const UserLevel = ({ userPoints }) => {
   );
 };
 
-// Progress Screen
+// Main Progress Screen with Tabs and Leveling System
 const ProgressScreen = () => {
   const userPoints = 1200; // Replace this with actual user points from state/backend
 
   return (
     <View style={{ flex: 1 }}>
       <Tab.Navigator
-        lazy
+        lazy // Load tabs only when they become active
         screenOptions={{
           tabBarStyle: { backgroundColor: '#282828' },
           tabBarIndicatorStyle: { backgroundColor: '#5856D6', height: 4 },
           tabBarActiveTintColor: '#FFFFFF',
           tabBarInactiveTintColor: '#BBBBBB',
+          unmountOnBlur: true, // Unmount inactive tabs to force re-rendering
         }}
       >
         <Tab.Screen name="Global" component={GlobalLeaderboard} />
@@ -152,5 +159,3 @@ const styles = StyleSheet.create({
 });
 
 export default ProgressScreen;
-
-
