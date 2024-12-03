@@ -94,7 +94,7 @@ const UserLevel = ({ userPoints }) => {
     nextLevel && nextLevel.minPoints > currentLevel.minPoints
       ? (userPoints - currentLevel.minPoints) /
         (nextLevel.minPoints - currentLevel.minPoints)
-      : 1; // Max level
+      : 1; // Max level reached
 
   return (
     <View style={styles.levelBox}>
@@ -115,6 +115,7 @@ const UserLevel = ({ userPoints }) => {
     </View>
   );
 };
+
 
 // Modal for Personal Best Stats
 const PersonalBestModal = ({ visible, onClose }) => (
@@ -225,10 +226,11 @@ const styles = StyleSheet.create({
   levelText: { fontSize: 20, fontWeight: 'bold' },
   pointsText: { fontSize: 16, color: '#666' },
   progressBar: {
-    height: 10,
+    height: 8,
     borderRadius: 5,
     marginTop: 10,
     width: '90%',
+    alignSelf: 'center',
   },
   buttonContainer: {
     marginTop: 20,
