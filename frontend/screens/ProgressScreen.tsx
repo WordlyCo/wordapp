@@ -53,6 +53,7 @@ const FriendsLeaderboard = () => (
 const ProgressScreen = () => {
   return (
     <Tab.Navigator>
+      {/* Ensure correct mapping */}
       <Tab.Screen name="Global" component={GlobalLeaderboard} />
       <Tab.Screen name="Friends" component={FriendsLeaderboard} />
     </Tab.Navigator>
