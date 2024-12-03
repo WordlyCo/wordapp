@@ -1,5 +1,13 @@
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, Button, FlatList } from 'react-native';
+import {
+  View,
+  Text,
+  StyleSheet,
+  Button,
+  FlatList,
+  Modal,
+  TouchableOpacity,
+} from 'react-native';
 import { ProgressBar } from 'react-native-paper'; // For progress bar
 
 // Dummy leaderboard data
@@ -62,26 +70,20 @@ const Leaderboard = ({ data }) => (
 );
 
 // Global Leaderboard Screen
-const GlobalLeaderboard = () => {
-  console.log("Rendering GlobalLeaderboard");
-  return (
-    <View style={styles.container}>
-      <Text style={styles.header}>Global Leaderboard</Text>
-      <Leaderboard data={globalLeaderboard} />
-    </View>
-  );
-};
+const GlobalLeaderboard = () => (
+  <View style={styles.container}>
+    <Text style={styles.header}>Global Leaderboard</Text>
+    <Leaderboard data={globalLeaderboard} />
+  </View>
+);
 
 // Friends Leaderboard Screen
-const FriendsLeaderboard = () => {
-  console.log("Rendering FriendsLeaderboard");
-  return (
-    <View style={styles.container}>
-      <Text style={styles.header}>Friends Leaderboard</Text>
-      <Leaderboard data={friendsLeaderboard} />
-    </View>
-  );
-};
+const FriendsLeaderboard = () => (
+  <View style={styles.container}>
+    <Text style={styles.header}>Friends Leaderboard</Text>
+    <Leaderboard data={friendsLeaderboard} />
+  </View>
+);
 
 // User Level and Progress Bar
 const UserLevel = ({ userPoints }) => {
@@ -114,19 +116,27 @@ const UserLevel = ({ userPoints }) => {
   );
 };
 
-// Personal Best Stats Component
-const PersonalBestStats = () => (
-  <View style={styles.statsBox}>
-    <Text style={styles.statsHeader}>Personal Best</Text>
-    <Text style={styles.statsText}>Highest Score: {personalStats.highestScore}</Text>
-    <Text style={styles.statsText}>Average Score: {personalStats.averageScore}</Text>
-    <Text style={styles.statsText}>Games Played: {personalStats.gamesPlayed}</Text>
-  </View>
+// Modal for Personal Best Stats
+const PersonalBestModal = ({ visible, onClose }) => (
+  <Modal visible={visible} transparent={true} animationType="slide">
+    <View style={styles.modalOverlay}>
+      <View style={styles.modalContent}>
+        <Text style={styles.statsHeader}>Personal Best</Text>
+        <Text style={styles.statsText}>Highest Score: {personalStats.highestScore}</Text>
+        <Text style={styles.statsText}>Average Score: {personalStats.averageScore}</Text>
+        <Text style={styles.statsText}>Games Played: {personalStats.gamesPlayed}</Text>
+        <TouchableOpacity onPress={onClose} style={styles.closeButton}>
+          <Text style={styles.closeButtonText}>Close</Text>
+        </TouchableOpacity>
+      </View>
+    </View>
+  </Modal>
 );
 
 // Main Progress Screen
 const ProgressScreen = () => {
   const [activeTab, setActiveTab] = useState('Global'); // Track active tab
+  const [modalVisible, setModalVisible] = useState(false); // Track modal visibility
   const userPoints = 1200; // Replace this with actual user points from state/backend
 
   const renderTabContent = () => {
@@ -160,8 +170,20 @@ const ProgressScreen = () => {
       {/* Leveling System */}
       <UserLevel userPoints={userPoints} />
 
-      {/* Personal Best Stats */}
-      <PersonalBestStats />
+      {/* Button to View Personal Best Stats */}
+      <View style={styles.buttonContainer}>
+        <Button
+          title="View Personal Best Stats"
+          onPress={() => setModalVisible(true)}
+          color="#5856D6"
+        />
+      </View>
+
+      {/* Personal Best Modal */}
+      <PersonalBestModal
+        visible={modalVisible}
+        onClose={() => setModalVisible(false)}
+      />
     </View>
   );
 };
@@ -188,7 +210,7 @@ const styles = StyleSheet.create({
   rank: { fontSize: 18, fontWeight: 'bold' },
   name: { fontSize: 18 },
   points: { fontSize: 18, fontWeight: 'bold' },
-  highlight: { backgroundColor: '#d1f7c4' }, // Highlight the user row
+  highlight: { backgroundColor: '#d1f7c4' },
   levelBox: {
     backgroundColor: '#f8f9fa',
     padding: 20,
@@ -208,16 +230,33 @@ const styles = StyleSheet.create({
     marginTop: 10,
     width: '90%',
   },
-  statsBox: {
+  buttonContainer: {
+    marginTop: 20,
+    alignItems: 'center',
+  },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.5)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  modalContent: {
+    width: '80%',
     backgroundColor: '#fff',
     padding: 20,
-    marginTop: 10,
-    borderTopWidth: 1,
-    borderColor: '#ddd',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 3,
+    borderRadius: 10,
+    alignItems: 'center',
+  },
+  closeButton: {
+    marginTop: 20,
+    backgroundColor: '#5856D6',
+    padding: 10,
+    borderRadius: 5,
+  },
+  closeButtonText: {
+    color: '#fff',
+    fontSize: 16,
+    fontWeight: 'bold',
   },
   statsHeader: { fontSize: 18, fontWeight: 'bold', marginBottom: 10 },
   statsText: { fontSize: 16, color: '#666' },
