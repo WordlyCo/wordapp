@@ -10,7 +10,7 @@ import {
 } from 'react-native';
 import { ProgressBar } from 'react-native-paper'; // For progress bar
 
-// Dummy leaderboard data
+// Sample leaderboard data
 const globalLeaderboard = [
   { id: '1', name: 'Alice', points: 1500 },
   { id: '2', name: 'Bob', points: 1400 },
@@ -19,12 +19,12 @@ const globalLeaderboard = [
 ];
 
 const friendsLeaderboard = [
-  { id: '1', name: 'Your Best Friend', points: 1300 },
+  { id: '1', name: 'Friend 1', points: 1300 },
   { id: '2', name: 'You', points: 1200 },
-  { id: '3', name: 'Another Friend', points: 1000 },
+  { id: '3', name: 'Friend 2', points: 1000 },
 ];
 
-// Levels for leveling system
+// Levels for leveling system, can add more later 
 const levels = [
   { level: 1, minPoints: 0 },
   { level: 2, minPoints: 500 },
@@ -33,7 +33,7 @@ const levels = [
   { level: 5, minPoints: 2000 },
 ];
 
-// Dummy stats for personal best
+// Sample stats for personal best stats display
 const personalStats = {
   highestScore: 350,
   averageScore: 200,
