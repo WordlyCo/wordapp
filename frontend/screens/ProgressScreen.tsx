@@ -50,12 +50,14 @@ const FriendsLeaderboard = () => (
 );
 
 // Main Progress Screen with Tabs
-const ProgressScreen = () => (
-  <Tab.Navigator>
-    <Tab.Screen name="Global" component={GlobalLeaderboard} /> {/* Correctly mapped */}
-    <Tab.Screen name="Friends" component={FriendsLeaderboard} /> {/* Correctly mapped */}
-  </Tab.Navigator>
-);
+const ProgressScreen = () => {
+  return (
+    <Tab.Navigator>
+      <Tab.Screen name="Global" component={GlobalLeaderboard} />
+      <Tab.Screen name="Friends" component={FriendsLeaderboard} />
+    </Tab.Navigator>
+  );
+};
 
 // Styles
 const styles = StyleSheet.create({
