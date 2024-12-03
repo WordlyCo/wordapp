@@ -19,51 +19,43 @@ const friendsLeaderboard = [
 ];
 
 // Reusable leaderboard component
-const Leaderboard = ({ data }) => {
-  return (
-    <FlatList
-      data={data}
-      keyExtractor={(item) => item.id}
-      renderItem={({ item, index }) => (
-        <View style={[styles.row, item.name === 'You' && styles.highlight]}>
-          <Text style={styles.rank}>{index + 1}</Text>
-          <Text style={styles.name}>{item.name}</Text>
-          <Text style={styles.points}>{item.points} pts</Text>
-        </View>
-      )}
-    />
-  );
-};
+const Leaderboard = ({ data }) => (
+  <FlatList
+    data={data}
+    keyExtractor={(item) => item.id}
+    renderItem={({ item, index }) => (
+      <View style={[styles.row, item.name === 'You' && styles.highlight]}>
+        <Text style={styles.rank}>{index + 1}</Text>
+        <Text style={styles.name}>{item.name}</Text>
+        <Text style={styles.points}>{item.points} pts</Text>
+      </View>
+    )}
+  />
+);
 
 // Global Leaderboard Screen
-const GlobalLeaderboard = () => {
-  return (
-    <View style={styles.container}>
-      <Text style={styles.header}>Global Leaderboard</Text>
-      <Leaderboard data={globalLeaderboard} />
-    </View>
-  );
-};
+const GlobalLeaderboard = () => (
+  <View style={styles.container}>
+    <Text style={styles.header}>Global Leaderboard</Text>
+    <Leaderboard data={globalLeaderboard} />
+  </View>
+);
 
 // Friends Leaderboard Screen
-const FriendsLeaderboard = () => {
-  return (
-    <View style={styles.container}>
-      <Text style={styles.header}>Friends Leaderboard</Text>
-      <Leaderboard data={friendsLeaderboard} />
-    </View>
-  );
-};
+const FriendsLeaderboard = () => (
+  <View style={styles.container}>
+    <Text style={styles.header}>Friends Leaderboard</Text>
+    <Leaderboard data={friendsLeaderboard} />
+  </View>
+);
 
 // Main Progress Screen with Tabs
-const ProgressScreen = () => {
-  return (
-    <Tab.Navigator>
-      <Tab.Screen name="Global" component={GlobalLeaderboard} /> {/* Correctly maps to GlobalLeaderboard */}
-      <Tab.Screen name="Friends" component={FriendsLeaderboard} /> {/* Correctly maps to FriendsLeaderboard */}
-    </Tab.Navigator>
-  );
-};
+const ProgressScreen = () => (
+  <Tab.Navigator>
+    <Tab.Screen name="Global" component={GlobalLeaderboard} />
+    <Tab.Screen name="Friends" component={FriendsLeaderboard} />
+  </Tab.Navigator>
+);
 
 // Styles
 const styles = StyleSheet.create({
@@ -80,7 +72,7 @@ const styles = StyleSheet.create({
   rank: { fontSize: 18, fontWeight: 'bold' },
   name: { fontSize: 18 },
   points: { fontSize: 18, fontWeight: 'bold' },
-  highlight: { backgroundColor: '#d1f7c4' }, // Highlight the user row
+  highlight: { backgroundColor: '#d1f7c4' },
 });
 
 export default ProgressScreen;
