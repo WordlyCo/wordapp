@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { View, Text, StyleSheet, Button, FlatList } from 'react-native';
+import { ProgressBar } from 'react-native-paper'; // For progress bar
 
 // Dummy leaderboard data
 const globalLeaderboard = [
@@ -23,6 +24,13 @@ const levels = [
   { level: 4, minPoints: 1500 },
   { level: 5, minPoints: 2000 },
 ];
+
+// Dummy stats for personal best
+const personalStats = {
+  highestScore: 350,
+  averageScore: 200,
+  gamesPlayed: 20,
+};
 
 // Helper function to calculate level
 const getCurrentLevel = (points) => {
@@ -75,9 +83,16 @@ const FriendsLeaderboard = () => {
   );
 };
 
-// User Level Display Component
+// User Level and Progress Bar
 const UserLevel = ({ userPoints }) => {
   const { currentLevel, nextLevel } = getCurrentLevel(userPoints);
+
+  // Calculate progress as a percentage
+  const progress =
+    nextLevel && nextLevel.minPoints > currentLevel.minPoints
+      ? (userPoints - currentLevel.minPoints) /
+        (nextLevel.minPoints - currentLevel.minPoints)
+      : 1; // Max level
 
   return (
     <View style={styles.levelBox}>
@@ -89,9 +104,25 @@ const UserLevel = ({ userPoints }) => {
       ) : (
         <Text style={styles.pointsText}>Max Level Reached</Text>
       )}
+      {/* Progress Bar */}
+      <ProgressBar
+        progress={progress}
+        color="#5856D6"
+        style={styles.progressBar}
+      />
     </View>
   );
 };
+
+// Personal Best Stats Component
+const PersonalBestStats = () => (
+  <View style={styles.statsBox}>
+    <Text style={styles.statsHeader}>Personal Best</Text>
+    <Text style={styles.statsText}>Highest Score: {personalStats.highestScore}</Text>
+    <Text style={styles.statsText}>Average Score: {personalStats.averageScore}</Text>
+    <Text style={styles.statsText}>Games Played: {personalStats.gamesPlayed}</Text>
+  </View>
+);
 
 // Main Progress Screen
 const ProgressScreen = () => {
@@ -128,6 +159,9 @@ const ProgressScreen = () => {
 
       {/* Leveling System */}
       <UserLevel userPoints={userPoints} />
+
+      {/* Personal Best Stats */}
+      <PersonalBestStats />
     </View>
   );
 };
@@ -168,6 +202,25 @@ const styles = StyleSheet.create({
   },
   levelText: { fontSize: 20, fontWeight: 'bold' },
   pointsText: { fontSize: 16, color: '#666' },
+  progressBar: {
+    height: 10,
+    borderRadius: 5,
+    marginTop: 10,
+    width: '90%',
+  },
+  statsBox: {
+    backgroundColor: '#fff',
+    padding: 20,
+    marginTop: 10,
+    borderTopWidth: 1,
+    borderColor: '#ddd',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 3,
+  },
+  statsHeader: { fontSize: 18, fontWeight: 'bold', marginBottom: 10 },
+  statsText: { fontSize: 16, color: '#666' },
   tabBar: {
     flexDirection: 'row',
     justifyContent: 'space-evenly',
@@ -177,5 +230,6 @@ const styles = StyleSheet.create({
 });
 
 export default ProgressScreen;
+
 
 
