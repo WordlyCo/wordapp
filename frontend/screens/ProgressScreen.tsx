@@ -62,11 +62,24 @@ const FriendsLeaderboard = () => {
 const ProgressScreen = () => {
   return (
     <Tab.Navigator>
-      <Tab.Screen name="Global" component={GlobalLeaderboard} />
-      <Tab.Screen name="Friends" component={FriendsLeaderboard} />
+      <Tab.Screen
+        name="Global"
+        component={(props) => {
+          console.log("Global Tab Active");
+          return <GlobalLeaderboard {...props} />;
+        }}
+      />
+      <Tab.Screen
+        name="Friends"
+        component={(props) => {
+          console.log("Friends Tab Active");
+          return <FriendsLeaderboard {...props} />;
+        }}
+      />
     </Tab.Navigator>
   );
 };
+
 
 
 const styles = StyleSheet.create({
