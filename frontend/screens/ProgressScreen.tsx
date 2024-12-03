@@ -59,8 +59,8 @@ const FriendsLeaderboard = () => {
 const ProgressScreen = () => {
   return (
     <Tab.Navigator>
-      <Tab.Screen name="Global" component={GlobalLeaderboard} />
-      <Tab.Screen name="Friends" component={FriendsLeaderboard} />
+      <Tab.Screen name="Global" component={GlobalLeaderboard} /> {/* Correctly maps to GlobalLeaderboard */}
+      <Tab.Screen name="Friends" component={FriendsLeaderboard} /> {/* Correctly maps to FriendsLeaderboard */}
     </Tab.Navigator>
   );
 };
@@ -84,4 +84,5 @@ const styles = StyleSheet.create({
 });
 
 export default ProgressScreen;
+
 
