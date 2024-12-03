@@ -17,7 +17,6 @@ const friendsLeaderboard = [
   { id: '3', name: 'Another Friend', points: 1000 },
 ];
 
-// Points needed for each level
 const levels = [
   { level: 1, minPoints: 0 },
   { level: 2, minPoints: 500 },
@@ -85,11 +84,19 @@ const UserLevel = ({ userPoints }) => {
 };
 
 const ProgressScreen = () => {
-  const userPoints = 1200; // Replace this with dynamic data from your backend or state
+  const userPoints = 1200; // Replace with dynamic data as needed
 
   return (
     <View style={{ flex: 1 }}>
-      <Tab.Navigator>
+      <Tab.Navigator
+        lazy
+        screenOptions={{
+          tabBarStyle: { backgroundColor: '#282828' },
+          tabBarIndicatorStyle: { backgroundColor: '#5856D6', height: 4 },
+          tabBarActiveTintColor: '#FFFFFF',
+          tabBarInactiveTintColor: '#BBBBBB',
+        }}
+      >
         <Tab.Screen name="Global" component={GlobalLeaderboard} />
         <Tab.Screen name="Friends" component={FriendsLeaderboard} />
       </Tab.Navigator>
@@ -99,8 +106,17 @@ const ProgressScreen = () => {
 };
 
 const styles = StyleSheet.create({
-  container: { flex: 1, padding: 20, backgroundColor: '#fff' },
-  header: { fontSize: 24, fontWeight: 'bold', marginBottom: 20 },
+  container: {
+    flex: 1,
+    padding: 20,
+    marginTop: 10, // Added spacing between tabs and content
+    backgroundColor: '#fff',
+  },
+  header: {
+    fontSize: 24,
+    fontWeight: 'bold',
+    marginBottom: 20,
+  },
   row: {
     flexDirection: 'row',
     justifyContent: 'space-between',
@@ -114,14 +130,19 @@ const styles = StyleSheet.create({
   points: { fontSize: 18, fontWeight: 'bold' },
   highlight: { backgroundColor: '#d1f7c4' },
   levelBox: {
-    backgroundColor: '#f0f0f0',
+    backgroundColor: '#f8f9fa',
     padding: 20,
     alignItems: 'center',
     borderTopWidth: 1,
     borderColor: '#ddd',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 3,
   },
   levelText: { fontSize: 20, fontWeight: 'bold' },
   pointsText: { fontSize: 16, color: '#666' },
 });
 
 export default ProgressScreen;
+
