@@ -97,24 +97,23 @@ const UserLevel = ({ userPoints }) => {
       : 1; // Max level reached
 
   return (
-    <View style={styles.levelBox}>
-      <Text style={styles.levelText}>Your Level: {currentLevel.level}</Text>
-      {nextLevel ? (
-        <Text style={styles.pointsText}>
-          {nextLevel.minPoints - userPoints} points to Level {nextLevel.level}
-        </Text>
-      ) : (
-        <Text style={styles.pointsText}>Max Level Reached</Text>
-      )}
-      {/* Progress Bar */}
-      <ProgressBar
-        progress={progress}
-        color="#5856D6"
-        style={styles.progressBar}
+    <View style={[styles.levelRow, { backgroundColor: '#f0f8ff' }]}>
+      <View
+        style={[
+          styles.progressFill,
+          { width: `${progress * 100}%`, backgroundColor: '#b3d9ff' }, // Baby blue
+        ]}
       />
+      <Text style={styles.levelRowText}>
+        Your Level: {currentLevel.level} |{' '}
+        {nextLevel
+          ? `${nextLevel.minPoints - userPoints} points to Level ${nextLevel.level}`
+          : 'Max Level Reached'}
+      </Text>
     </View>
   );
 };
+
 
 
 // Modal for Personal Best Stats
@@ -212,26 +211,33 @@ const styles = StyleSheet.create({
   name: { fontSize: 18 },
   points: { fontSize: 18, fontWeight: 'bold' },
   highlight: { backgroundColor: '#d1f7c4' },
-  levelBox: {
-    backgroundColor: '#f8f9fa',
-    padding: 20,
-    alignItems: 'center',
-    borderTopWidth: 1,
-    borderColor: '#ddd',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 3,
-  },
-  levelText: { fontSize: 20, fontWeight: 'bold' },
-  pointsText: { fontSize: 16, color: '#666' },
-  progressBar: {
-    height: 8,
+
+  // Updated Level Row Styles
+  levelRow: {
+    height: 40,
+    marginTop: 20,
+    marginHorizontal: 10,
     borderRadius: 5,
-    marginTop: 10,
-    width: '90%',
-    alignSelf: 'center',
+    overflow: 'hidden', // Ensures the fill doesn't go outside the box
+    justifyContent: 'center',
+    alignItems: 'center',
+    position: 'relative',
+    backgroundColor: '#f0f8ff', // Light background for contrast
   },
+  progressFill: {
+    position: 'absolute',
+    top: 0,
+    bottom: 0,
+    left: 0,
+    backgroundColor: '#b3d9ff', // Baby blue for progress
+  },
+  levelRowText: {
+    color: '#333', // Dark text for readability
+    fontWeight: 'bold',
+    fontSize: 16,
+    textAlign: 'center',
+  },
+
   buttonContainer: {
     marginTop: 20,
     alignItems: 'center',
