@@ -52,8 +52,8 @@ const FriendsLeaderboard = () => (
 // Main Progress Screen with Tabs
 const ProgressScreen = () => (
   <Tab.Navigator>
-    <Tab.Screen name="Global" component={GlobalLeaderboard} />
-    <Tab.Screen name="Friends" component={FriendsLeaderboard} />
+    <Tab.Screen name="Global" component={GlobalLeaderboard} /> {/* Correctly mapped */}
+    <Tab.Screen name="Friends" component={FriendsLeaderboard} /> {/* Correctly mapped */}
   </Tab.Navigator>
 );
 
@@ -72,9 +72,10 @@ const styles = StyleSheet.create({
   rank: { fontSize: 18, fontWeight: 'bold' },
   name: { fontSize: 18 },
   points: { fontSize: 18, fontWeight: 'bold' },
-  highlight: { backgroundColor: '#d1f7c4' },
+  highlight: { backgroundColor: '#d1f7c4' }, // Highlight the user row
 });
 
 export default ProgressScreen;
+
 
 
