@@ -4,7 +4,7 @@ import { createMaterialTopTabNavigator } from '@react-navigation/material-top-ta
 
 const Tab = createMaterialTopTabNavigator();
 
-// Dummy leaderboard data
+// Sample leaderboard data of how global leaderboard would look like
 const globalLeaderboard = [
   { id: '1', name: 'Alice', points: 1500 },
   { id: '2', name: 'Bob', points: 1400 },
@@ -13,9 +13,9 @@ const globalLeaderboard = [
 ];
 
 const friendsLeaderboard = [
-  { id: '1', name: 'Your Best Friend', points: 1300 },
+  { id: '1', name: 'Friend 1', points: 1300 },
   { id: '2', name: 'You', points: 1200 },
-  { id: '3', name: 'Another Friend', points: 1000 },
+  { id: '3', name: 'Friend 2', points: 1000 },
 ];
 
 // Levels for leveling system
@@ -24,10 +24,10 @@ const levels = [
   { level: 2, minPoints: 500 },
   { level: 3, minPoints: 1000 },
   { level: 4, minPoints: 1500 },
-  { level: 5, minPoints: 2000 },
+  { level: 5, minPoints: 2000 }, //Need to figure out how to create level ranking boundaries
 ];
 
-// Helper function to calculate level
+//  function to calculate level and how many more points to get to next level
 const getCurrentLevel = (points) => {
   let currentLevel = levels[0];
   let nextLevel = levels[1];
@@ -58,7 +58,7 @@ const Leaderboard = ({ data }) => (
 
 // Global Leaderboard Screen
 const GlobalLeaderboard = () => {
-  console.log("Rendering GlobalLeaderboard");
+  console.log("Rendering GlobalLeaderboard"); //for testing to see if screen is rendering for every tab switch
   return (
     <View style={styles.container}>
       <Text style={styles.header}>Global Leaderboard</Text>
@@ -69,7 +69,7 @@ const GlobalLeaderboard = () => {
 
 // Friends Leaderboard Screen
 const FriendsLeaderboard = () => {
-  console.log("Rendering FriendsLeaderboard");
+  console.log("Rendering FriendsLeaderboard"); //testing tab switching through logging
   return (
     <View style={styles.container}>
       <Text style={styles.header}>Friends Leaderboard</Text>
@@ -78,7 +78,7 @@ const FriendsLeaderboard = () => {
   );
 };
 
-// User Level Display Component
+// User Level Display Function
 const UserLevel = ({ userPoints }) => {
   const { currentLevel, nextLevel } = getCurrentLevel(userPoints);
 
