@@ -14,7 +14,7 @@ import GameScreen from "../screens/GameScreen";
 import HelpCenterScreen from "../screens/HelpCenterScreen";
 import PrivacyPolicyScreen from "../screens/PrivacyPolicyScreen";
 import SettingsScreen from "../screens/SettingsScreen";
-import { useTheme } from "react-native-paper";
+import useTheme from "@/hooks/useTheme";
 
 const Tab = createMaterialBottomTabNavigator();
 

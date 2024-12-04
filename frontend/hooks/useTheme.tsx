@@ -76,6 +76,7 @@ export const lightTheme = {
     inverseSurface: palette.neutral[900],
     inverseOnSurface: palette.neutral[50],
     inversePrimary: palette.purple.light,
+    progress: "#50D85D",
 
     // Elevation
     elevation: {
@@ -143,6 +144,7 @@ export const darkTheme = {
     inverseSurface: palette.neutral[50],
     inverseOnSurface: palette.neutral[900],
     inversePrimary: palette.purple.main,
+    progress: "#50D85D",
 
     // Elevation
     elevation: {
@@ -172,6 +174,7 @@ const useTheme = () => {
 
   return {
     theme,
+    ...theme,
   };
 };
 

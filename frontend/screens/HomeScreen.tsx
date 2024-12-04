@@ -11,7 +11,7 @@ const HomeScreen = () => {
   return (
     <View style={styles.container}>
       <ScrollView contentContainerStyle={styles.scrollViewContainer}>
-        <Card style={styles.card} elevation={2}>
+        <Card elevation={2}>
           <Card.Title
             title="Today's Learning Goals"
             titleStyle={{ fontSize: 24 }}
@@ -24,7 +24,7 @@ const HomeScreen = () => {
           </Card.Content>
         </Card>
 
-        <Card style={styles.card} elevation={1}>
+        <Card elevation={1}>
           <Card.Title
             title="Motivation for You"
             titleStyle={{ fontSize: 24 }}
@@ -51,8 +51,5 @@ const styles = StyleSheet.create({
     paddingVertical: 15,
     marginHorizontal: 15,
     gap: 15,
-  },
-  card: {
-    marginBottom: 15,
   },
 });

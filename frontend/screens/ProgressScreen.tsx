@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState } from "react";
 import {
   View,
   Text,
@@ -7,24 +7,25 @@ import {
   FlatList,
   Modal,
   TouchableOpacity,
-} from 'react-native';
-import { ProgressBar } from 'react-native-paper'; // For progress bar
+} from "react-native";
+import { ProgressBar, Button as PaperButton } from "react-native-paper"; // For progress bar
+import useTheme from "@/hooks/useTheme";
 
 // Sample leaderboard data
 const globalLeaderboard = [
-  { id: '1', name: 'Alice', points: 1500 },
-  { id: '2', name: 'Bob', points: 1400 },
-  { id: '3', name: 'You', points: 1200 },
-  { id: '4', name: 'Charlie', points: 1100 },
+  { id: "1", name: "Alice", points: 1500 },
+  { id: "2", name: "Bob", points: 1400 },
+  { id: "3", name: "You", points: 1200 },
+  { id: "4", name: "Charlie", points: 1100 },
 ];
 
 const friendsLeaderboard = [
-  { id: '1', name: 'Friend 1', points: 1300 },
-  { id: '2', name: 'You', points: 1200 },
-  { id: '3', name: 'Friend 2', points: 1000 },
+  { id: "1", name: "Friend 1", points: 1300 },
+  { id: "2", name: "You", points: 1200 },
+  { id: "3", name: "Friend 2", points: 1000 },
 ];
 
-// Levels for leveling system, can add more later 
+// Levels for leveling system, can add more later
 const levels = [
   { level: 1, minPoints: 0 },
   { level: 2, minPoints: 500 },
@@ -41,7 +42,7 @@ const personalStats = {
 };
 
 // Helper function to calculate level
-const getCurrentLevel = (points) => {
+const getCurrentLevel = (points: any) => {
   let currentLevel = levels[0];
   let nextLevel = levels[1];
 
@@ -55,39 +56,67 @@ const getCurrentLevel = (points) => {
 };
 
 // Leaderboard Component
-const Leaderboard = ({ data }) => (
-  <FlatList
-    data={data}
-    keyExtractor={(item) => item.id}
-    renderItem={({ item, index }) => (
-      <View style={[styles.row, item.name === 'You' && styles.highlight]}>
-        <Text style={styles.rank}>{index + 1}</Text>
-        <Text style={styles.name}>{item.name}</Text>
-        <Text style={styles.points}>{item.points} pts</Text>
-      </View>
-    )}
-  />
-);
+const Leaderboard = ({ data }: any) => {
+  const { colors } = useTheme();
+
+  return (
+    <FlatList
+      data={data}
+      keyExtractor={(item) => item.id}
+      renderItem={({ item, index }) => (
+        <View
+          style={[
+            styles.row,
+            { borderColor: colors.inversePrimary },
+            item.name === "You" && { backgroundColor: colors.tertiary },
+          ]}
+        >
+          <Text style={[styles.rank, { color: colors.onSurface }]}>
+            {index + 1}
+          </Text>
+          <Text style={[styles.name, { color: colors.onSurface }]}>
+            {item.name}
+          </Text>
+          <Text style={[styles.points, { color: colors.onSurface }]}>
+            {item.points} pts
+          </Text>
+        </View>
+      )}
+    />
+  );
+};
 
 // Global Leaderboard Screen
-const GlobalLeaderboard = () => (
-  <View style={styles.container}>
-    <Text style={styles.header}>Global Leaderboard</Text>
-    <Leaderboard data={globalLeaderboard} />
-  </View>
-);
+const GlobalLeaderboard = () => {
+  const { colors } = useTheme();
+
+  return (
+    <View style={styles.container}>
+      <Text style={[styles.header, { color: colors.onSurface }]}>
+        Global Leaderboard
+      </Text>
+      <Leaderboard data={globalLeaderboard} />
+    </View>
+  );
+};
 
 // Friends Leaderboard Screen
-const FriendsLeaderboard = () => (
-  <View style={styles.container}>
-    <Text style={styles.header}>Friends Leaderboard</Text>
-    <Leaderboard data={friendsLeaderboard} />
-  </View>
-);
+const FriendsLeaderboard = () => {
+  const { colors } = useTheme();
+  return (
+    <View style={styles.container}>
+      <Text style={[styles.header, { color: colors.onSurface }]}>
+        Friends Leaderboard
+      </Text>
+      <Leaderboard data={friendsLeaderboard} />
+    </View>
+  );
+};
 
 // User Level and Progress Bar
-const UserLevel = ({ userPoints }) => {
+const UserLevel = ({ userPoints }: any) => {
   const { currentLevel, nextLevel } = getCurrentLevel(userPoints);
+  const { colors } = useTheme();
 
   // Calculate progress as a percentage
   const progress =
@@ -97,34 +126,39 @@ const UserLevel = ({ userPoints }) => {
       : 1; // Max level reached
 
   return (
-    <View style={[styles.levelRow, { backgroundColor: '#f0f8ff' }]}>
+    <View style={[styles.levelRow, { backgroundColor: "#292729" }]}>
       <View
         style={[
           styles.progressFill,
-          { width: `${progress * 100}%`, backgroundColor: '#b3d9ff' }, // Baby blue
+          { backgroundColor: colors.progress },
+          { width: `${progress * 100}%` }, // Baby blue
         ]}
       />
-      <Text style={styles.levelRowText}>
-        Your Level: {currentLevel.level} |{' '}
+      <Text style={[styles.levelRowText, { color: "white" }]}>
+        Your Level: {currentLevel.level} |{" "}
         {nextLevel
           ? `${nextLevel.minPoints - userPoints} points to Level ${nextLevel.level}`
-          : 'Max Level Reached'}
+          : "Max Level Reached"}
       </Text>
     </View>
   );
 };
 
-
-
 // Modal for Personal Best Stats
-const PersonalBestModal = ({ visible, onClose }) => (
+const PersonalBestModal = ({ visible, onClose }: any) => (
   <Modal visible={visible} transparent={true} animationType="slide">
     <View style={styles.modalOverlay}>
       <View style={styles.modalContent}>
         <Text style={styles.statsHeader}>Personal Best</Text>
-        <Text style={styles.statsText}>Highest Score: {personalStats.highestScore}</Text>
-        <Text style={styles.statsText}>Average Score: {personalStats.averageScore}</Text>
-        <Text style={styles.statsText}>Games Played: {personalStats.gamesPlayed}</Text>
+        <Text style={styles.statsText}>
+          Highest Score: {personalStats.highestScore}
+        </Text>
+        <Text style={styles.statsText}>
+          Average Score: {personalStats.averageScore}
+        </Text>
+        <Text style={styles.statsText}>
+          Games Played: {personalStats.gamesPlayed}
+        </Text>
         <TouchableOpacity onPress={onClose} style={styles.closeButton}>
           <Text style={styles.closeButtonText}>Close</Text>
         </TouchableOpacity>
@@ -135,14 +169,15 @@ const PersonalBestModal = ({ visible, onClose }) => (
 
 // Main Progress Screen
 const ProgressScreen = () => {
-  const [activeTab, setActiveTab] = useState('Global'); // Track active tab
+  const [activeTab, setActiveTab] = useState("Global"); // Track active tab
   const [modalVisible, setModalVisible] = useState(false); // Track modal visibility
   const userPoints = 1200; // Replace this with actual user points from state/backend
+  const { colors } = useTheme();
 
   const renderTabContent = () => {
-    if (activeTab === 'Global') {
+    if (activeTab === "Global") {
       return <GlobalLeaderboard />;
-    } else if (activeTab === 'Friends') {
+    } else if (activeTab === "Friends") {
       return <FriendsLeaderboard />;
     }
     return null;
@@ -151,32 +186,34 @@ const ProgressScreen = () => {
   return (
     <View style={{ flex: 1 }}>
       {/* Tab Switcher */}
-      <View style={styles.tabBar}>
+      <View style={[styles.tabBar, { backgroundColor: colors.surface }]}>
         <Button
           title="Global"
-          onPress={() => setActiveTab('Global')}
-          color={activeTab === 'Global' ? '#FFFFFF' : '#AAAAAA'}
+          onPress={() => setActiveTab("Global")}
+          color={
+            activeTab === "Global" ? colors.onSurface : colors.onSurfaceDisabled
+          }
         />
         <Button
           title="Friends"
-          onPress={() => setActiveTab('Friends')}
-          color={activeTab === 'Friends' ? '#FFFFFF' : '#AAAAAA'}
+          onPress={() => setActiveTab("Friends")}
+          color={
+            activeTab === "Friends"
+              ? colors.onSurface
+              : colors.onSurfaceDisabled
+          }
         />
       </View>
-
+      {/* Leveling System */}
+      <UserLevel userPoints={userPoints} />
       {/* Render Active Tab */}
       {renderTabContent()}
 
-      {/* Leveling System */}
-      <UserLevel userPoints={userPoints} />
-
       {/* Button to View Personal Best Stats */}
       <View style={styles.buttonContainer}>
-        <Button
-          title="View Personal Best Stats"
-          onPress={() => setModalVisible(true)}
-          color="#5856D6"
-        />
+        <PaperButton mode="contained" onPress={() => setModalVisible(true)}>
+          My Best Scores
+        </PaperButton>
       </View>
 
       {/* Personal Best Modal */}
@@ -192,25 +229,23 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     padding: 20,
-    backgroundColor: '#fff',
   },
   header: {
     fontSize: 24,
-    fontWeight: 'bold',
+    fontWeight: "bold",
     marginBottom: 20,
   },
   row: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
+    flexDirection: "row",
+    justifyContent: "space-between",
     padding: 10,
-    backgroundColor: '#f9f9f9',
     borderBottomWidth: 1,
-    borderColor: '#ddd',
+    borderColor: "#ddd",
   },
-  rank: { fontSize: 18, fontWeight: 'bold' },
+  rank: { fontSize: 18, fontWeight: "bold" },
   name: { fontSize: 18 },
-  points: { fontSize: 18, fontWeight: 'bold' },
-  highlight: { backgroundColor: '#d1f7c4' },
+  points: { fontSize: 18, fontWeight: "bold" },
+  highlight: { backgroundColor: "#d1f7c4" },
 
   // Updated Level Row Styles
   levelRow: {
@@ -218,65 +253,62 @@ const styles = StyleSheet.create({
     marginTop: 20,
     marginHorizontal: 10,
     borderRadius: 5,
-    overflow: 'hidden', // Ensures the fill doesn't go outside the box
-    justifyContent: 'center',
-    alignItems: 'center',
-    position: 'relative',
-    backgroundColor: '#f0f8ff', // Light background for contrast
+    overflow: "hidden", // Ensures the fill doesn't go outside the box
+    justifyContent: "center",
+    alignItems: "center",
+    position: "relative",
+    color: "white",
   },
   progressFill: {
-    position: 'absolute',
+    position: "absolute",
     top: 0,
     bottom: 0,
     left: 0,
-    backgroundColor: '#b3d9ff', // Baby blue for progress
+    backgroundColor: "#b3d9ff", // Baby blue for progress
   },
   levelRowText: {
-    color: '#333', // Dark text for readability
-    fontWeight: 'bold',
+    color: "#333", // Dark text for readability
+    fontWeight: "bold",
     fontSize: 16,
-    textAlign: 'center',
+    textAlign: "center",
   },
 
   buttonContainer: {
-    marginTop: 20,
-    alignItems: 'center',
+    marginVertical: 20,
+    alignItems: "center",
   },
   modalOverlay: {
     flex: 1,
-    backgroundColor: 'rgba(0,0,0,0.5)',
-    justifyContent: 'center',
-    alignItems: 'center',
+    backgroundColor: "rgba(0,0,0,0.5)",
+    justifyContent: "center",
+    alignItems: "center",
   },
   modalContent: {
-    width: '80%',
-    backgroundColor: '#fff',
+    width: "80%",
+    backgroundColor: "#fff",
     padding: 20,
     borderRadius: 10,
-    alignItems: 'center',
+    alignItems: "center",
   },
   closeButton: {
     marginTop: 20,
-    backgroundColor: '#5856D6',
+    backgroundColor: "#5856D6",
     padding: 10,
     borderRadius: 5,
   },
   closeButtonText: {
-    color: '#fff',
+    color: "#fff",
     fontSize: 16,
-    fontWeight: 'bold',
+    fontWeight: "bold",
   },
-  statsHeader: { fontSize: 18, fontWeight: 'bold', marginBottom: 10 },
-  statsText: { fontSize: 16, color: '#666' },
+  statsHeader: { fontSize: 18, fontWeight: "bold", marginBottom: 10 },
+  statsText: { fontSize: 16, color: "#666" },
   tabBar: {
-    flexDirection: 'row',
-    justifyContent: 'space-evenly',
+    flexDirection: "row",
+    justifyContent: "space-evenly",
     paddingVertical: 10,
-    backgroundColor: '#282828',
+    backgroundColor: "#282828",
   },
 });
 
 export default ProgressScreen;
-
-
-

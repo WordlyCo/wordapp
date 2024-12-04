@@ -6,7 +6,8 @@ import {
   Dimensions,
   TouchableOpacity,
 } from "react-native";
-import { Avatar, Text, Card, Button, useTheme } from "react-native-paper";
+import { Avatar, Text, Card, Button } from "react-native-paper";
+import useTheme from "@/hooks/useTheme";
 import { AuthContext } from "../context/AuthContext";
 
 const { width } = Dimensions.get("window");
