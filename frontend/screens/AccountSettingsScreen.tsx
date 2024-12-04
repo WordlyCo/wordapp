@@ -1,24 +1,35 @@
-import React, { useState } from 'react';
-import { View, StyleSheet, ScrollView } from 'react-native';
-import { Text, Avatar, Divider, List, TextInput, Button } from 'react-native-paper';
+import useTheme from "@/hooks/useTheme";
+import React, { useState } from "react";
+import { View, StyleSheet, ScrollView } from "react-native";
+import {
+  Text,
+  Avatar,
+  Divider,
+  List,
+  TextInput,
+  Button,
+} from "react-native-paper";
 
-const UserSettingsScreen = () => {
-  const [username, setUsername] = useState('John Doe');
-  const [email, setEmail] = useState('john.doe@example.com');
-  const [phone, setPhone] = useState('+1 234 567 8900');
+const AccountSettingsScreen = () => {
+  const [username, setUsername] = useState("John Doe");
+  const [email, setEmail] = useState("john.doe@example.com");
+  const [phone, setPhone] = useState("+1 234 567 8900");
+  const { colors } = useTheme();
 
   const handleSave = () => {
     // Handle saving user information
-    console.log('Saving user information...');
+    console.log("Saving user information...");
   };
 
   return (
-    <ScrollView style={styles.container}>
+    <ScrollView
+      style={[styles.container, { backgroundColor: colors.background }]}
+    >
       {/* Profile Header Section */}
       <View style={styles.profileHeader}>
         <Avatar.Image
           size={120}
-          source={require('../assets/images/headshot.png')}
+          source={require("../assets/images/headshot.png")}
           style={styles.avatar}
         />
         <Button mode="outlined" style={styles.changePhotoButton}>
@@ -53,11 +64,7 @@ const UserSettingsScreen = () => {
           style={styles.input}
           keyboardType="phone-pad"
         />
-        <Button 
-          mode="contained" 
-          onPress={handleSave}
-          style={styles.saveButton}
-        >
+        <Button mode="contained" onPress={handleSave} style={styles.saveButton}>
           Save Changes
         </Button>
       </View>
@@ -68,10 +75,10 @@ const UserSettingsScreen = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#fff',
+    backgroundColor: "#fff",
   },
   profileHeader: {
-    alignItems: 'center',
+    alignItems: "center",
     paddingVertical: 30,
   },
   avatar: {
@@ -82,7 +89,7 @@ const styles = StyleSheet.create({
   },
   divider: {
     height: 1,
-    backgroundColor: '#e0e0e0',
+    backgroundColor: "#e0e0e0",
     marginVertical: 10,
   },
   inputSection: {
@@ -96,4 +103,4 @@ const styles = StyleSheet.create({
   },
 });
 
-export default UserSettingsScreen; 
+export default AccountSettingsScreen;
