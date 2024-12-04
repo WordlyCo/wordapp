@@ -7,6 +7,8 @@ import FontAwesomeIcons from '@expo/vector-icons/FontAwesome';
 import HomeScreen from '../screens/HomeScreen';
 import ProfileScreen from '../screens/ProfileScreen';
 import UserSettingsScreen from '../screens/UserSettingsScreen';
+import ProgressScreen from '../screens/ProgressScreen';
+
 
 import GameScreen from '../screens/GameScreen';
 
@@ -65,7 +67,7 @@ const AppStack = () => (
    
     <Tab.Screen name="Home" component={HomeScreen}/>
     <Tab.Screen name="Games" component={GameScreen}/>
-    <Tab.Screen name="Progress" component={HomeScreen}/>
+    <Tab.Screen name="Progress" component={ProgressScreen}/>
     <Tab.Screen name="Profile" component={ProfileStackScreen}/>
   </Tab.Navigator>
 );
