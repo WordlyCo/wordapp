@@ -13,13 +13,9 @@ const App = () => {
     <AuthProvider>
       <PaperProvider theme={theme}>
         <SafeAreaProvider>
-          <SafeAreaView
-            style={{ flex: 1, backgroundColor: theme.colors.surface }}
-          >
-            <NavigationContainer>
-              <RootNavigator />
-            </NavigationContainer>
-          </SafeAreaView>
+          <NavigationContainer>
+            <RootNavigator />
+          </NavigationContainer>
         </SafeAreaProvider>
       </PaperProvider>
     </AuthProvider>

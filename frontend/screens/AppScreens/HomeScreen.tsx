@@ -1,7 +1,7 @@
 import React, { useContext } from "react";
 import { View, ScrollView, StyleSheet } from "react-native";
 import { Avatar, Text, Button, Card, Divider } from "react-native-paper";
-import { AuthContext } from "../context/AuthContext";
+import { AuthContext } from "@/context/AuthContext";
 
 const LeftContent = (props: any) => <Avatar.Icon {...props} icon="calendar" />;
 

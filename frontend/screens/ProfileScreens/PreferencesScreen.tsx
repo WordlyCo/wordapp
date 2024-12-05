@@ -12,10 +12,7 @@ const PreferencesScreen = () => {
 
   return (
     <ScrollView
-      contentContainerStyle={[
-        styles.container,
-        { backgroundColor: colors.background },
-      ]}
+      style={[styles.container, { backgroundColor: colors.background }]}
     >
       <View style={styles.header}>
         <Text style={styles.headerTitle}>Settings</Text>
