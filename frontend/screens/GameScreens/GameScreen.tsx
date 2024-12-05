@@ -23,7 +23,7 @@ type Game = {
   type: string;
 };
 
-const GameScreen = () => {
+const GameScreen = ({ navigation }: any) => {
   const { logout } = useContext(AuthContext);
   const { colors } = useTheme();
 
@@ -34,7 +34,7 @@ const GameScreen = () => {
       description: "Test your vocabulary with multiple-choice questions.",
       icon: "brain",
       elevation: 2,
-      type: "game",
+      type: "multipleChoice",
     },
     {
       id: "4",
@@ -54,13 +54,18 @@ const GameScreen = () => {
     },
   ];
 
-  const handleCardPress = (game: Game) => {
-    console.log(`Navigating to ${game.title}`);
-    // Navigation logic to the game screen
+  const handleCardPress = (type: string) => {
+    if (type === "") {
+      console.log("Provide a valid game screen type");
+      return;
+    }
+    if (type === "multipleChoice") {
+      navigation.navigate("MultipleChoice");
+    }
   };
 
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, { backgroundColor: colors.background }]}>
       <ScrollView contentContainerStyle={styles.scrollViewContainer}>
         <View style={styles.header}>
           <Text style={[styles.headerTitle, { color: colors.onSurface }]}>
@@ -74,7 +79,9 @@ const GameScreen = () => {
         {games.map((game) => (
           <TouchableOpacity
             key={game.id}
-            onPress={() => handleCardPress(game)}
+            onPress={() => {
+              handleCardPress(game.type);
+            }}
             activeOpacity={0.8}
           >
             <Card style={[styles.card, { elevation: game.elevation || 1 }]}>
@@ -94,7 +101,12 @@ const GameScreen = () => {
                 </Text>
               </Card.Content>
               <Card.Actions style={styles.cardButton}>
-                <Button mode="contained" onPress={() => handleCardPress(game)}>
+                <Button
+                  mode="contained"
+                  onPress={() => {
+                    handleCardPress(game.type);
+                  }}
+                >
                   Play
                 </Button>
               </Card.Actions>

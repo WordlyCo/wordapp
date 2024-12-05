@@ -2,7 +2,7 @@ import { createStackNavigator } from "@react-navigation/stack";
 import HelpCenterScreen from "@/screens/ProfileScreens/HelpCenterScreen";
 import PrivacyPolicyScreen from "@/screens/ProfileScreens/PrivacyPolicyScreen";
 import Preferences from "@/screens/ProfileScreens/PreferencesScreen";
-import ProfileScreen from "@/screens/AppScreens/ProfileScreen";
+import ProfileScreen from "@/screens/ProfileScreens/ProfileScreen";
 import AccountSettingsScreen from "@/screens/ProfileScreens/AccountSettingsScreen";
 import useTheme from "@/hooks/useTheme";
 import FontAwesome from "@expo/vector-icons/FontAwesome";
