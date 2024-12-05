@@ -55,10 +55,10 @@ export const lightTheme = {
     onQuaternaryContainer: "#2C1B1B",
 
     // Error states
-    error: "#DC2626",
+    error: "#FF9B9B",
     onError: "#FFFFFF",
-    errorContainer: "#FECACA",
-    onErrorContainer: "#7F1D1D",
+    errorContainer: "#FFE2E2",
+    onErrorContainer: "#8C5F5F",
 
     // Background and surface
     background: palette.neutral[50],
@@ -123,10 +123,10 @@ export const darkTheme = {
     onQuaternaryContainer: palette.coral.light,
 
     // Error states
-    error: "#EF4444",
+    error: "#FDA29B",
     onError: "#FFFFFF",
-    errorContainer: "#991B1B",
-    onErrorContainer: "#FEE2E2",
+    errorContainer: "#A42941",
+    onErrorContainer: "#FFE2E2",
 
     // Background and surface
     background: palette.neutral[900],
