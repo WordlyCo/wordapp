@@ -8,7 +8,7 @@ import {
 } from "react-native";
 import { Avatar, Text, Card, Button } from "react-native-paper";
 import useTheme from "@/hooks/useTheme";
-import { AuthContext } from "../context/AuthContext";
+import { AuthContext } from "@/context/AuthContext";
 
 const { width } = Dimensions.get("window");
 // const CARD_WIDTH = (width - 45) / 2.2; // Adjust for margins

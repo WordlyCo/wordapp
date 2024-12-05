@@ -4,8 +4,9 @@ import { Text, List, Avatar, Divider, Button } from "react-native-paper";
 import { useNavigation } from "@react-navigation/native";
 import { StackNavigationProp } from "@react-navigation/stack";
 import { useContext } from "react";
-import { AuthContext } from "../context/AuthContext";
+import { AuthContext } from "@/context/AuthContext";
 import useTheme from "@/hooks/useTheme";
+import FontAwesome from "@expo/vector-icons/FontAwesome";
 
 type ProfileStackParamList = {
   ProfileMain: undefined;
@@ -27,10 +28,11 @@ const ProfileScreen = () => {
     >
       {/* Profile Header Section */}
       <View style={styles.profileHeader}>
-        <Avatar.Image
+        <FontAwesome
+          name="user-circle"
+          color={colors.onSurface}
           size={120}
-          source={require("../assets/images/headshot.png")}
-          style={styles.avatar}
+          style={styles.profileHeader}
         />
         <Text style={styles.userName}>John Doe</Text>
         <Text style={styles.userEmail}>john.doe@example.com</Text>
@@ -97,10 +99,10 @@ const styles = StyleSheet.create({
   },
   profileHeader: {
     alignItems: "center",
-    paddingVertical: 30,
+    paddingVertical: 20,
   },
   avatar: {
-    marginBottom: 15,
+    marginVertical: 15,
   },
   userName: {
     fontSize: 24,
@@ -113,7 +115,6 @@ const styles = StyleSheet.create({
   },
   divider: {
     height: 1,
-    backgroundColor: "#e0e0e0",
     marginVertical: 10,
   },
   logoutContainer: {

@@ -9,6 +9,7 @@ import {
   TextInput,
   Button,
 } from "react-native-paper";
+import FontAwesome from "@expo/vector-icons/FontAwesome";
 
 const AccountSettingsScreen = () => {
   const [username, setUsername] = useState("John Doe");
@@ -27,10 +28,11 @@ const AccountSettingsScreen = () => {
     >
       {/* Profile Header Section */}
       <View style={styles.profileHeader}>
-        <Avatar.Image
+        <FontAwesome
+          name="user-circle"
+          color={colors.onSurface}
           size={120}
-          source={require("../assets/images/headshot.png")}
-          style={styles.avatar}
+          style={styles.profileHeader}
         />
         <Button mode="outlined" style={styles.changePhotoButton}>
           Change Photo
@@ -89,7 +91,6 @@ const styles = StyleSheet.create({
   },
   divider: {
     height: 1,
-    backgroundColor: "#e0e0e0",
     marginVertical: 10,
   },
   inputSection: {

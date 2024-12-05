@@ -71,13 +71,28 @@ const Leaderboard = ({ data }: any) => {
             item.name === "You" && { backgroundColor: colors.tertiary },
           ]}
         >
-          <Text style={[styles.rank, { color: colors.onSurface }]}>
+          <Text
+            style={[
+              styles.rank,
+              { color: item.name === "You" ? "white" : colors.onSurface },
+            ]}
+          >
             {index + 1}
           </Text>
-          <Text style={[styles.name, { color: colors.onSurface }]}>
+          <Text
+            style={[
+              styles.name,
+              { color: item.name === "You" ? "white" : colors.onSurface },
+            ]}
+          >
             {item.name}
           </Text>
-          <Text style={[styles.points, { color: colors.onSurface }]}>
+          <Text
+            style={[
+              styles.points,
+              { color: item.name === "You" ? "white" : colors.onSurface },
+            ]}
+          >
             {item.points} pts
           </Text>
         </View>
