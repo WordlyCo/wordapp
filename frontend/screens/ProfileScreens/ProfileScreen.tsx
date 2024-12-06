@@ -7,6 +7,7 @@ import { useContext } from "react";
 import { AuthContext } from "@/context/AuthContext";
 import useTheme from "@/hooks/useTheme";
 import FontAwesome from "@expo/vector-icons/FontAwesome";
+import StickyHeader from "@/components/StickyHeader";
 
 type ProfileStackParamList = {
   ProfileMain: undefined;
@@ -23,73 +24,76 @@ const ProfileScreen = () => {
   const { logout } = useContext(AuthContext);
   const { colors } = useTheme();
   return (
-    <ScrollView
-      style={[styles.container, { backgroundColor: colors.background }]}
-    >
-      {/* Profile Header Section */}
-      <View style={styles.profileHeader}>
-        <FontAwesome
-          name="user-circle"
-          color={colors.onSurface}
-          size={120}
-          style={styles.profileHeader}
-        />
-        <Text style={styles.userName}>John Doe</Text>
-        <Text style={styles.userEmail}>john.doe@example.com</Text>
-      </View>
+    <>
+      <ScrollView
+        style={[styles.container, { backgroundColor: colors.background }]}
+      >
+        <StickyHeader />
+        {/* Profile Header Section */}
+        <View style={styles.profileHeader}>
+          <FontAwesome
+            name="user-circle"
+            color={colors.onSurface}
+            size={120}
+            style={styles.profileHeader}
+          />
+          <Text style={styles.userName}>John Doe</Text>
+          <Text style={styles.userEmail}>john.doe@example.com</Text>
+        </View>
 
-      <Divider style={styles.divider} />
+        <Divider style={styles.divider} />
 
-      {/* Menu Items */}
-      <List.Section>
-        <List.Item
-          title="Account Settings"
-          left={(props) => <List.Icon {...props} icon="account-cog" />}
-          right={(props) => <List.Icon {...props} icon="chevron-right" />}
-          onPress={() => navigation.navigate("AccountSettings" as never)}
-        />
-        <List.Item
-          title="Preferences"
-          left={(props) => <List.Icon {...props} icon="cog" />}
-          right={(props) => <List.Icon {...props} icon="chevron-right" />}
-          onPress={() => navigation.navigate("Preferences" as never)}
-        />
-        <List.Item
-          title="Payment Methods"
-          left={(props) => <List.Icon {...props} icon="credit-card" />}
-          right={(props) => <List.Icon {...props} icon="chevron-right" />}
-          onPress={() => {
-            /* Handle navigation */
-          }}
-        />
-        <List.Item
-          title="Help Center"
-          left={(props) => <List.Icon {...props} icon="help-circle" />}
-          right={(props) => <List.Icon {...props} icon="chevron-right" />}
-          onPress={() => navigation.navigate("HelpCenter")}
-        />
-        <List.Item
-          title="Privacy Policy"
-          left={(props) => <List.Icon {...props} icon="shield-account" />}
-          right={(props) => <List.Icon {...props} icon="chevron-right" />}
-          onPress={() => navigation.navigate("PrivacyPolicy")}
-        />
-      </List.Section>
+        {/* Menu Items */}
+        <List.Section>
+          <List.Item
+            title="Account Settings"
+            left={(props) => <List.Icon {...props} icon="account-cog" />}
+            right={(props) => <List.Icon {...props} icon="chevron-right" />}
+            onPress={() => navigation.navigate("AccountSettings" as never)}
+          />
+          <List.Item
+            title="Preferences"
+            left={(props) => <List.Icon {...props} icon="cog" />}
+            right={(props) => <List.Icon {...props} icon="chevron-right" />}
+            onPress={() => navigation.navigate("Preferences" as never)}
+          />
+          <List.Item
+            title="Payment Methods"
+            left={(props) => <List.Icon {...props} icon="credit-card" />}
+            right={(props) => <List.Icon {...props} icon="chevron-right" />}
+            onPress={() => {
+              /* Handle navigation */
+            }}
+          />
+          <List.Item
+            title="Help Center"
+            left={(props) => <List.Icon {...props} icon="help-circle" />}
+            right={(props) => <List.Icon {...props} icon="chevron-right" />}
+            onPress={() => navigation.navigate("HelpCenter")}
+          />
+          <List.Item
+            title="Privacy Policy"
+            left={(props) => <List.Icon {...props} icon="shield-account" />}
+            right={(props) => <List.Icon {...props} icon="chevron-right" />}
+            onPress={() => navigation.navigate("PrivacyPolicy")}
+          />
+        </List.Section>
 
-      <Divider style={styles.divider} />
+        <Divider style={styles.divider} />
 
-      {/* Logout Button */}
-      <View style={styles.logoutContainer}>
-        <Button
-          icon="logout"
-          mode="contained"
-          onPress={logout}
-          style={styles.logoutButton}
-        >
-          Logout
-        </Button>
-      </View>
-    </ScrollView>
+        {/* Logout Button */}
+        <View style={styles.logoutContainer}>
+          <Button
+            icon="logout"
+            mode="contained"
+            onPress={logout}
+            style={styles.logoutButton}
+          >
+            Logout
+          </Button>
+        </View>
+      </ScrollView>
+    </>
   );
 };
 
