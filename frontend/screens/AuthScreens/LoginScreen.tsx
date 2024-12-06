@@ -29,7 +29,7 @@ const LoginScreen: React.FC = () => {
             fontWeight: "200",
           }}
         >
-          Welcome to CandyCue!
+          Welcome to WordBird!
         </Text>
         <Image
           style={styles.image}
