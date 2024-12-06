@@ -1,10 +1,12 @@
 import React from "react";
 import { View, Text, StyleSheet } from "react-native";
 import { Ionicons, MaterialCommunityIcons } from "@expo/vector-icons";
+import useTheme from "@/hooks/useTheme";
 
 const StickyHeader = () => {
+  const { colors } = useTheme();
   return (
-    <View style={styles.headerContainer}>
+    <View style={[styles.headerContainer, { backgroundColor: colors.surface }]}>
       {/* Left Section: Logo and Title */}
       <View style={styles.leftContainer}>
         <Ionicons name="book-outline" size={24} color="#6e85d3" />
@@ -38,7 +40,6 @@ const styles = StyleSheet.create({
     alignItems: "center",
     paddingVertical: 15,
     paddingHorizontal: 20,
-    backgroundColor: "#1e1e2c",
     borderBottomLeftRadius: 15,
     borderBottomRightRadius: 15,
     elevation: 5,

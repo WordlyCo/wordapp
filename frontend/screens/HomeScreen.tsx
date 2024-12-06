@@ -3,7 +3,9 @@ import { View, ScrollView, StyleSheet } from "react-native";
 import { Avatar, Text, Button, Card, Divider } from "react-native-paper";
 import { AuthContext } from "@/context/AuthContext";
 import StickyHeader from "@/components/StickyHeader";
-const LeftContent = (props: any) => <Avatar.Icon {...props} icon="calendar" />;
+const LeftContent = (props: any) => (
+  <Avatar.Icon size={props.size} icon="calendar" />
+);
 
 const HomeScreen = () => {
   const { logout } = useContext(AuthContext);
