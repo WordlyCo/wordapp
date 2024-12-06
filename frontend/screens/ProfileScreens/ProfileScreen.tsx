@@ -44,43 +44,40 @@ const ProfileScreen = () => {
         <Divider style={styles.divider} />
 
         {/* Menu Items */}
-        <List.Section>
+        <List.Section style={styles.listContainer}>
           <List.Item
             title="Account Settings"
-            left={(props) => <List.Icon {...props} icon="account-cog" />}
-            right={(props) => <List.Icon {...props} icon="chevron-right" />}
+            left={(props) => <List.Icon icon="account-cog" />}
+            right={(props) => <List.Icon icon="chevron-right" />}
             onPress={() => navigation.navigate("AccountSettings" as never)}
           />
           <List.Item
             title="Preferences"
-            left={(props) => <List.Icon {...props} icon="cog" />}
-            right={(props) => <List.Icon {...props} icon="chevron-right" />}
+            left={(props) => <List.Icon icon="cog" />}
+            right={(props) => <List.Icon icon="chevron-right" />}
             onPress={() => navigation.navigate("Preferences" as never)}
           />
           <List.Item
             title="Payment Methods"
-            left={(props) => <List.Icon {...props} icon="credit-card" />}
-            right={(props) => <List.Icon {...props} icon="chevron-right" />}
+            left={(props) => <List.Icon icon="credit-card" />}
+            right={(props) => <List.Icon icon="chevron-right" />}
             onPress={() => {
               /* Handle navigation */
             }}
           />
           <List.Item
             title="Help Center"
-            left={(props) => <List.Icon {...props} icon="help-circle" />}
-            right={(props) => <List.Icon {...props} icon="chevron-right" />}
+            left={(props) => <List.Icon icon="help-circle" />}
+            right={(props) => <List.Icon icon="chevron-right" />}
             onPress={() => navigation.navigate("HelpCenter")}
           />
           <List.Item
             title="Privacy Policy"
-            left={(props) => <List.Icon {...props} icon="shield-account" />}
-            right={(props) => <List.Icon {...props} icon="chevron-right" />}
+            left={(props) => <List.Icon icon="shield-account" />}
+            right={(props) => <List.Icon icon="chevron-right" />}
             onPress={() => navigation.navigate("PrivacyPolicy")}
           />
         </List.Section>
-
-        <Divider style={styles.divider} />
-
         {/* Logout Button */}
         <View style={styles.logoutContainer}>
           <Button
@@ -92,6 +89,7 @@ const ProfileScreen = () => {
             Logout
           </Button>
         </View>
+        <Divider style={styles.divider} />
       </ScrollView>
     </>
   );
@@ -126,6 +124,9 @@ const styles = StyleSheet.create({
   },
   logoutButton: {
     backgroundColor: "#5856D6",
+  },
+  listContainer: {
+    paddingHorizontal: 20,
   },
 });
 

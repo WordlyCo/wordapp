@@ -10,7 +10,6 @@ const PrivacyPolicyScreen = () => {
       style={[styles.container, { backgroundColor: colors.background }]}
     >
       <View style={styles.content}>
-        <Text style={styles.title}>Privacy Policy</Text>
         <Text style={styles.section}>Last updated: [Date]</Text>
         <Text style={styles.paragraph}>
           This Privacy Policy describes our policies and procedures on the

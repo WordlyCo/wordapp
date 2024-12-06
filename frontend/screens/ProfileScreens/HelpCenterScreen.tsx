@@ -9,27 +9,21 @@ const HelpCenterScreen = () => {
     <ScrollView
       style={[styles.container, { backgroundColor: colors.background }]}
     >
-      <View style={styles.header}>
-        <Text style={styles.headerTitle}>Help Center</Text>
-      </View>
-
-      <List.Section>
+      <List.Section style={styles.list}>
         <List.Item
           title="Frequently Asked Questions"
-          left={(props) => (
-            <List.Icon {...props} icon="frequently-asked-questions" />
-          )}
-          right={(props) => <List.Icon {...props} icon="chevron-right" />}
+          left={(props) => <List.Icon icon="frequently-asked-questions" />}
+          right={(props) => <List.Icon icon="chevron-right" />}
         />
         <List.Item
           title="Contact Support"
-          left={(props) => <List.Icon {...props} icon="message" />}
-          right={(props) => <List.Icon {...props} icon="chevron-right" />}
+          left={(props) => <List.Icon icon="message" />}
+          right={(props) => <List.Icon icon="chevron-right" />}
         />
         <List.Item
           title="Report a Problem"
-          left={(props) => <List.Icon {...props} icon="alert" />}
-          right={(props) => <List.Icon {...props} icon="chevron-right" />}
+          left={(props) => <List.Icon icon="alert" />}
+          right={(props) => <List.Icon icon="chevron-right" />}
         />
       </List.Section>
     </ScrollView>
@@ -39,6 +33,7 @@ const HelpCenterScreen = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+    paddingVertical: 20,
   },
   header: {
     padding: 20,
@@ -46,6 +41,9 @@ const styles = StyleSheet.create({
   headerTitle: {
     fontSize: 24,
     fontWeight: "bold",
+  },
+  list: {
+    marginHorizontal: 20,
   },
 });
 

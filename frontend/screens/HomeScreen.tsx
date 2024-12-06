@@ -33,7 +33,9 @@ const HomeScreen = () => {
             <Card.Title
               title="Motivation for You"
               titleStyle={{ fontSize: 24 }}
-              left={(props: any) => <Avatar.Icon {...props} icon="rocket" />}
+              left={(props: any) => (
+                <Avatar.Icon size={props.size} icon="rocket" />
+              )}
             ></Card.Title>
             <Card.Content>
               <Text variant="bodyLarge">

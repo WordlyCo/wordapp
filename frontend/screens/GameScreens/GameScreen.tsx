@@ -94,7 +94,7 @@ const GameScreen = ({ navigation }: any) => {
                   title={game.title}
                   titleStyle={styles.cardTitle}
                   titleNumberOfLines={2}
-                  left={() => <Avatar.Icon icon={game.icon} />}
+                  left={() => <Avatar.Icon size={40} icon={game.icon} />}
                 />
                 <Card.Content>
                   <Text
