@@ -3,6 +3,7 @@ import MultipleChoice from "@/screens/GameScreens/MultipleChoice";
 import useTheme from "@/hooks/useTheme";
 import MaterialCommunityIcons from "@expo/vector-icons/MaterialCommunityIcons";
 import GameScreen from "@/screens/GameScreens/GameScreen";
+import SentenceSage from "@/screens/GameScreens/SentenceSage";
 
 const Stack = createStackNavigator();
 
@@ -16,6 +17,7 @@ const GameStack = () => {
     >
       <Stack.Screen name="GameMain" component={GameScreen} />
       <Stack.Screen name="MultipleChoice" component={MultipleChoice} />
+      <Stack.Screen name="SentenceSage" component={SentenceSage} />
     </Stack.Navigator>
   );
 };
