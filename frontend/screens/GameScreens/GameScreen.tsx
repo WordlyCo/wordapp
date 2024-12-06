@@ -9,6 +9,7 @@ import {
 import { Avatar, Text, Card, Button } from "react-native-paper";
 import useTheme from "@/hooks/useTheme";
 import { AuthContext } from "@/context/AuthContext";
+import StickyHeader from "@/components/StickyHeader";
 
 const { width } = Dimensions.get("window");
 // const CARD_WIDTH = (width - 45) / 2.2; // Adjust for margins
@@ -67,56 +68,59 @@ const GameScreen = ({ navigation }: any) => {
   };
 
   return (
-    <View style={[styles.container, { backgroundColor: colors.background }]}>
-      <ScrollView contentContainerStyle={styles.scrollViewContainer}>
-        <View style={styles.header}>
-          <Text style={[styles.headerTitle, { color: colors.onSurface }]}>
-            Games Arena
-          </Text>
-          <Text style={[styles.headerSubtitle, { color: colors.onSurface }]}>
-            Choose a game to sharpen your skills
-          </Text>
-        </View>
+    <>
+      <View style={[styles.container, { backgroundColor: colors.background }]}>
+        <StickyHeader />
+        <ScrollView contentContainerStyle={styles.scrollViewContainer}>
+          <View style={styles.header}>
+            <Text style={[styles.headerTitle, { color: colors.onSurface }]}>
+              Games Arena
+            </Text>
+            <Text style={[styles.headerSubtitle, { color: colors.onSurface }]}>
+              Choose a game to sharpen your skills
+            </Text>
+          </View>
 
-        {games.map((game) => (
-          <TouchableOpacity
-            key={game.id}
-            onPress={() => {
-              handleCardPress(game.type);
-            }}
-            activeOpacity={0.8}
-          >
-            <Card style={[styles.card, { elevation: game.elevation || 1 }]}>
-              <Card.Title
-                title={game.title}
-                titleStyle={styles.cardTitle}
-                titleNumberOfLines={2}
-                left={(props) => <Avatar.Icon {...props} icon={game.icon} />}
-              />
-              <Card.Content>
-                <Text
-                  variant="bodyMedium"
-                  numberOfLines={3}
-                  style={styles.cardDescription}
-                >
-                  {game.description}
-                </Text>
-              </Card.Content>
-              <Card.Actions style={styles.cardButton}>
-                <Button
-                  mode="contained"
-                  onPress={() => {
-                    handleCardPress(game.type);
-                  }}
-                >
-                  Play
-                </Button>
-              </Card.Actions>
-            </Card>
-          </TouchableOpacity>
-        ))}
-      </ScrollView>
-    </View>
+          {games.map((game) => (
+            <TouchableOpacity
+              key={game.id}
+              onPress={() => {
+                handleCardPress(game.type);
+              }}
+              activeOpacity={0.8}
+            >
+              <Card style={[styles.card, { elevation: game.elevation || 1 }]}>
+                <Card.Title
+                  title={game.title}
+                  titleStyle={styles.cardTitle}
+                  titleNumberOfLines={2}
+                  left={(props) => <Avatar.Icon {...props} icon={game.icon} />}
+                />
+                <Card.Content>
+                  <Text
+                    variant="bodyMedium"
+                    numberOfLines={3}
+                    style={styles.cardDescription}
+                  >
+                    {game.description}
+                  </Text>
+                </Card.Content>
+                <Card.Actions style={styles.cardButton}>
+                  <Button
+                    mode="contained"
+                    onPress={() => {
+                      handleCardPress(game.type);
+                    }}
+                  >
+                    Play
+                  </Button>
+                </Card.Actions>
+              </Card>
+            </TouchableOpacity>
+          ))}
+        </ScrollView>
+      </View>
+    </>
   );
 };
 
