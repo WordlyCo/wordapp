@@ -1,12 +1,32 @@
-import React, { useContext } from "react";
+import React, { useContext, useEffect } from "react";
 import { View, ScrollView, StyleSheet } from "react-native";
 import { Avatar, Text, Button, Card, Divider } from "react-native-paper";
 import { AuthContext } from "@/context/AuthContext";
+import OpenAI from "openai";
+
+const client = new OpenAI({
+  apiKey: process.env["EXPO_PUBLIC_OPENAPI_KEY"], // This is the default and can be omitted
+});
 
 const LeftContent = (props: any) => <Avatar.Icon {...props} icon="calendar" />;
 
 const HomeScreen = () => {
   const { logout } = useContext(AuthContext);
+  const [result, setResult] = React.useState("");
+
+  // useEffect(() => {
+  //   const callAPI = async () => {
+  //     const chatCompletion = await client.chat.completions.create({
+  //       messages: [{ role: "user", content: "How to start a repo?" }],
+  //       model: "gpt-4o",
+  //       max_completion_tokens: 50
+  //     });
+  //     setResult(chatCompletion.choices);
+  //   };
+  //   callAPI();
+  // }, []);
+
+  // console.log("CHATGPT MESSAGE: ", result);
 
   return (
     <View style={styles.container}>

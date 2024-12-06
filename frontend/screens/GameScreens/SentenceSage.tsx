@@ -3,225 +3,235 @@ import {
   View,
   ScrollView,
   StyleSheet,
+  ActivityIndicator,
   Animated,
-  TouchableOpacity,
 } from "react-native";
-import { Text, Card, ProgressBar } from "react-native-paper";
+import { Text, Card, TextInput, Button, Snackbar } from "react-native-paper";
 import useTheme from "@/hooks/useTheme";
+import OpenAI from "openai";
 
-type WordData = {
+type Word = {
   word: string;
   correct: string;
   options: string[];
 };
 
-type OptionButtonProps = {
-  onPress: () => void;
-  disabled?: boolean;
+type OpenAIResponseType = {
   isCorrect: boolean;
-  isSelected: boolean;
-  showAnswer: boolean;
-  colors: any;
-  children: string;
+  correctUsage?: string;
+  message: string;
 };
 
-const OptionButton = ({
-  onPress,
-  disabled,
-  isCorrect,
-  isSelected,
-  showAnswer,
-  colors,
-  children,
-}: OptionButtonProps) => {
-  const getBackgroundColor = () => {
-    if (showAnswer && isCorrect) return colors.progress + "20";
-    return colors.surface;
-  };
+const client = new OpenAI({
+  apiKey: process.env["EXPO_PUBLIC_OPENAPI_KEY"],
+});
 
-  const getBorderColor = () => {
-    if (isSelected && !isCorrect) return colors.error;
-    return "transparent";
-  };
-
-  return (
-    <TouchableOpacity
-      onPress={onPress}
-      disabled={disabled}
-      style={[
-        styles.optionButton,
-        {
-          backgroundColor: getBackgroundColor(),
-          borderColor: getBorderColor(),
-          borderWidth: isSelected ? 2 : 0,
-        },
-      ]}
-    >
-      <Text style={[styles.optionText, { color: colors.onSurface }]}>
-        {children}
-      </Text>
-    </TouchableOpacity>
-  );
-};
-
-const MultipleChoice = () => {
-  const { colors } = useTheme();
-  const [questions, setQuestions] = useState<WordData[]>([]);
-  const [currentIndex, setCurrentIndex] = useState(0);
-  const [score, setScore] = useState(0);
-  const [showAnswer, setShowAnswer] = useState(false);
-  const [selectedAnswer, setSelectedAnswer] = useState<string | null>(null);
-  const [shakeAnimation] = useState(new Animated.Value(0));
-
-  const currentQuestion = questions[currentIndex];
-  const progress = (currentIndex + 1) / questions.length;
-  const isLastQuestion = currentIndex === questions.length - 1;
-
-  useEffect(() => {
-    const shuffledQuestions = shuffleArray([...wordData]);
-    setQuestions(shuffledQuestions);
-  }, []);
-
-  const handleAnswer = (answer: string) => {
-    setSelectedAnswer(answer);
-    setShowAnswer(true);
-
-    if (answer === currentQuestion.correct) {
-      setScore(score + 1);
-    } else {
-      shakeCard();
+function cleanJsonResponse(jsonString: any) {
+  try {
+    return JSON.parse(jsonString);
+  } catch (error) {
+    try {
+      let cleaned = jsonString.replace(/\\n/g, "\n");
+      cleaned = cleaned.replace(/\\"/g, '"');
+      cleaned = cleaned.replace(/\\/g, "");
+      return JSON.parse(cleaned);
+    } catch (error: any) {
+      throw new Error("Failed to parse JSON: " + error.message);
     }
-  };
+  }
+}
 
-  const shakeCard = () => {
-    Animated.sequence([
-      Animated.timing(shakeAnimation, {
-        toValue: 10,
-        duration: 100,
-        useNativeDriver: true,
-      }),
-      Animated.timing(shakeAnimation, {
-        toValue: -10,
-        duration: 100,
-        useNativeDriver: true,
-      }),
-      Animated.timing(shakeAnimation, {
-        toValue: 0,
-        duration: 100,
-        useNativeDriver: true,
-      }),
-    ]).start();
-  };
+const SentenceSage = () => {
+  const { colors } = useTheme();
+  const [words, setWords] = useState<Word[]>([]);
+  const [currentWordIndex, setCurrentWordIndex] = useState<number | null>(null);
+  const [sentence, setSentence] = useState<string>("");
+  const [shakeAnimation] = useState(new Animated.Value(0));
+  const [visible, setVisible] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const onToggleSnackBar = () => setVisible(!visible);
+  const onDismissSnackBar = () => setVisible(false);
+  const [openAIResponse, setOpenAIResponse] = useState<OpenAIResponseType>();
 
   const handleNext = () => {
-    if (!isLastQuestion) {
-      setCurrentIndex(currentIndex + 1);
-      setShowAnswer(false);
-      setSelectedAnswer(null);
-    } else {
-      handleRestart();
+    if (currentWordIndex !== null && currentWordIndex < words.length - 1) {
+      setCurrentWordIndex(currentWordIndex + 1);
+      setSentence("");
+      setOpenAIResponse(undefined);
     }
   };
 
-  const handleRestart = () => {
-    const shuffledQuestions = shuffleArray([...wordData]);
-    setQuestions(shuffledQuestions);
-    setCurrentIndex(0);
-    setScore(0);
-    setShowAnswer(false);
-    setSelectedAnswer(null);
+  const handleAnswer = async () => {
+    if (sentence.length === 0) {
+      onToggleSnackBar();
+      return;
+    }
+
+    setLoading(true);
+
+    try {
+      if (words.length === 0 || currentWordIndex === null) {
+        return;
+      }
+
+      const resp = await client.chat.completions.create({
+        messages: [
+          {
+            role: "system",
+            content: `You are a helpful assistant designed to output JSON.
+            Make sure your response does not include any extra characters.
+            The response should easily parse to JSON.
+
+            You are part of a word learning app. You will be given a word below,
+            and a sentence using that word. You determine the correct usage of the word in the
+            sentence provided.
+
+            The JSON response format should be this type declaration:
+
+            {
+              "isCorrect": boolean;
+              "correctUsage": string;
+              "message": string;
+            }
+
+            The message field should include a general message about the user's usage even if it was correct.
+            `,
+          },
+          {
+            role: "user",
+            content: `
+            Current Word: ${words[currentWordIndex].word}
+            Current Sentence: ${sentence}
+            `,
+          },
+        ],
+        model: "gpt-4o-mini",
+        response_format: { type: "json_object" },
+        max_completion_tokens: 100,
+      });
+
+      const JSONResponse = cleanJsonResponse(resp.choices[0].message.content);
+      setOpenAIResponse(JSONResponse as OpenAIResponseType);
+
+      if (!JSONResponse.isCorrect) {
+        Animated.sequence([
+          Animated.timing(shakeAnimation, {
+            toValue: 10,
+            duration: 100,
+            useNativeDriver: true,
+          }),
+          Animated.timing(shakeAnimation, {
+            toValue: -10,
+            duration: 100,
+            useNativeDriver: true,
+          }),
+          Animated.timing(shakeAnimation, {
+            toValue: 0,
+            duration: 100,
+            useNativeDriver: true,
+          }),
+        ]).start();
+      }
+    } catch (error) {
+      console.error("Error calling OpenAI:", error);
+    } finally {
+      setLoading(false);
+    }
   };
 
-  if (!currentQuestion) return null;
+  useEffect(() => {
+    if (wordData.length > 0) {
+      setWords(wordData);
+      setCurrentWordIndex(0);
+    }
+  }, []);
+
+  if (words.length === 0 || currentWordIndex === null) {
+    return <ActivityIndicator />;
+  }
 
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>
-      <ScrollView contentContainerStyle={styles.scrollContent}>
-        {/* Progress */}
-        <View style={styles.progressContainer}>
-          <Text style={[styles.progressText, { color: colors.onBackground }]}>
-            Question {currentIndex + 1} of {questions.length}
-          </Text>
-          <ProgressBar
-            progress={progress}
-            color={colors.progress}
-            style={styles.progressBar}
-          />
-          <Text style={[styles.scoreText, { color: colors.onBackground }]}>
-            Score: {score}/{currentIndex + 1}
-          </Text>
-        </View>
-
-        {/* Question */}
+      <ScrollView contentContainerStyle={styles.scrollViewContainer}>
         <Animated.View
-          style={[
-            styles.questionContainer,
-            { transform: [{ translateX: shakeAnimation }] },
-          ]}
+          style={[{ transform: [{ translateX: shakeAnimation }] }]}
         >
           <Card style={[styles.card, { backgroundColor: colors.surface }]}>
             <Card.Content>
               <Text style={[styles.wordText, { color: colors.primary }]}>
-                {currentQuestion.word}
+                {words[currentWordIndex].word}
               </Text>
               <Text style={[styles.questionText, { color: colors.onSurface }]}>
-                What does this word mean?
+                Write a sentence using this word
               </Text>
             </Card.Content>
           </Card>
         </Animated.View>
 
-        {/* Options */}
-        <View style={styles.optionsContainer}>
-          {currentQuestion.options.map((option, index) => (
-            <OptionButton
-              key={index}
-              onPress={() => handleAnswer(option)}
-              disabled={showAnswer}
-              isCorrect={option === currentQuestion.correct}
-              isSelected={selectedAnswer === option}
-              showAnswer={showAnswer}
-              colors={colors}
-            >
-              {option}
-            </OptionButton>
-          ))}
-        </View>
+        <TextInput
+          mode="outlined"
+          label="Write your sentence here"
+          value={sentence}
+          multiline={true}
+          style={{
+            minHeight: 100,
+          }}
+          onChangeText={(text) => setSentence(text)}
+        />
 
-        {/* Feedback */}
-        {showAnswer && (
-          <View style={styles.feedbackContainer}>
-            <View
-              style={[
-                styles.feedbackCard,
-                {
-                  backgroundColor:
-                    selectedAnswer === currentQuestion.correct
-                      ? colors.progress
-                      : colors.errorContainer,
-                },
-              ]}
-            >
-              <Text style={styles.feedbackText}>
-                {selectedAnswer === currentQuestion.correct
-                  ? "Correct! Well done!"
-                  : `Incorrect. The correct answer is: ${currentQuestion.correct}`}
-              </Text>
-            </View>
+        {loading ? (
+          <ActivityIndicator size="large" />
+        ) : (
+          <Button mode="contained" onPress={handleAnswer}>
+            Check Sentence
+          </Button>
+        )}
 
-            <TouchableOpacity
-              onPress={handleNext}
-              style={[styles.nextButton, { backgroundColor: colors.primary }]}
-            >
-              <Text
-                style={[styles.nextButtonText, { color: colors.onPrimary }]}
-              >
-                {isLastQuestion ? "Restart Quiz" : "Next Question"}
-              </Text>
-            </TouchableOpacity>
-          </View>
+        {openAIResponse && (
+          <Card
+            style={[
+              styles.responseCard,
+              {
+                backgroundColor: openAIResponse.isCorrect
+                  ? colors.progress
+                  : "#A42941",
+              },
+            ]}
+          >
+            <Card.Content>
+              <Text style={styles.responseText}>{openAIResponse.message}</Text>
+              {openAIResponse.isCorrect && (
+                <Button
+                  mode="contained"
+                  onPress={handleNext}
+                  style={styles.nextButton}
+                  disabled={currentWordIndex === words.length - 1}
+                >
+                  {currentWordIndex === words.length - 1
+                    ? "Completed!"
+                    : "Next Word"}
+                </Button>
+              )}
+            </Card.Content>
+          </Card>
         )}
       </ScrollView>
+
+      <Snackbar
+        visible={visible}
+        onDismiss={onDismissSnackBar}
+        style={{
+          bottom: -20,
+        }}
+        action={{
+          label: "OK",
+          onPress: () => {
+            // Do something
+          },
+        }}
+      >
+        Please write a sentence using the given word above.
+      </Snackbar>
     </View>
   );
 };
@@ -230,27 +240,10 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
   },
-  scrollContent: {
-    padding: 20,
-  },
-  progressContainer: {
-    marginBottom: 20,
-  },
-  progressText: {
-    textAlign: "center",
-    marginBottom: 5,
-  },
-  progressBar: {
-    height: 8,
-    borderRadius: 4,
-  },
-  scoreText: {
-    textAlign: "center",
-    marginTop: 5,
-    fontWeight: "bold",
-  },
-  questionContainer: {
-    marginBottom: 20,
+  scrollViewContainer: {
+    paddingVertical: 20,
+    paddingHorizontal: 15,
+    gap: 20,
   },
   card: {
     elevation: 4,
@@ -264,54 +257,21 @@ const styles = StyleSheet.create({
   questionText: {
     fontSize: 18,
     textAlign: "center",
+    marginBottom: 10,
   },
-  optionsContainer: {
-    gap: 12,
+  responseCard: {
+    elevation: 4,
   },
-  optionButton: {
-    padding: 16,
-    borderRadius: 8,
-    minHeight: 50,
-    justifyContent: "center",
-    elevation: 2,
-  },
-  optionText: {
+  responseText: {
     fontSize: 16,
-    textAlign: "center",
-    flexWrap: "wrap",
-  },
-  feedbackContainer: {
-    marginTop: 20,
-    alignItems: "center",
-  },
-  feedbackCard: {
-    width: "100%",
-    borderRadius: 8,
-    padding: 15,
-    marginBottom: 15,
-    justifyContent: "center",
-    alignItems: "center",
-  },
-  feedbackText: {
-    fontSize: 16,
-    fontWeight: "bold",
-    textAlign: "center",
     color: "white",
+    marginBottom: 10,
   },
   nextButton: {
-    width: "100%",
-    padding: 16,
-    borderRadius: 8,
-    alignItems: "center",
-  },
-  nextButtonText: {
-    fontSize: 16,
-    fontWeight: "bold",
+    marginTop: 10,
   },
 });
-
-// Word data would typically come from an API
-const wordData: WordData[] = [
+const wordData: Word[] = [
   {
     word: "Ephemeral",
     correct: "Lasting for a very short time",
@@ -567,13 +527,4 @@ const wordData: WordData[] = [
   },
 ];
 
-const shuffleArray = (array: WordData[]): WordData[] => {
-  const newArray = [...array];
-  for (let i = newArray.length - 1; i > 0; i--) {
-    const j = Math.floor(Math.random() * (i + 1));
-    [newArray[i], newArray[j]] = [newArray[j], newArray[i]];
-  }
-  return newArray;
-};
-
-export default MultipleChoice;
+export default SentenceSage;

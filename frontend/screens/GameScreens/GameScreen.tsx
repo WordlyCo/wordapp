@@ -50,7 +50,7 @@ const GameScreen = ({ navigation }: any) => {
       description: "Write sentences and get AI-checked feedback.",
       icon: "format-text",
       elevation: 1,
-      type: "game",
+      type: "sentenceSage",
     },
   ];
 
@@ -61,6 +61,8 @@ const GameScreen = ({ navigation }: any) => {
     }
     if (type === "multipleChoice") {
       navigation.navigate("MultipleChoice");
+    } else if (type === "sentenceSage") {
+      navigation.navigate("SentenceSage");
     }
   };
 
