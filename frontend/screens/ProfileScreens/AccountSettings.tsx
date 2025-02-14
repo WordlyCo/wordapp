@@ -18,7 +18,7 @@ const AccountSettingsScreen = () => {
   const { colors } = useTheme();
 
   const handleSave = () => {
-    // Handle saving user information
+    // TODO: Handle saving user information
     console.log("Saving user information...");
   };
 

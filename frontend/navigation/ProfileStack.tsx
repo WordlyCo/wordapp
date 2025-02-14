@@ -1,11 +1,10 @@
 import { createStackNavigator } from "@react-navigation/stack";
-import HelpCenterScreen from "@/screens/ProfileScreens/HelpCenterScreen";
-import PrivacyPolicyScreen from "@/screens/ProfileScreens/PrivacyPolicyScreen";
-import Preferences from "@/screens/ProfileScreens/PreferencesScreen";
-import ProfileScreen from "@/screens/ProfileScreens/ProfileScreen";
-import AccountSettingsScreen from "@/screens/ProfileScreens/AccountSettingsScreen";
+import HelpCenterScreen from "@/screens/ProfileScreens/HelpCenter";
+import PrivacyPolicyScreen from "@/screens/ProfileScreens/PrivacyPolicy";
+import Preferences from "@/screens/ProfileScreens/Preferences";
+import ProfileScreen from "@/screens/ProfileScreens/Profile";
+import AccountSettingsScreen from "@/screens/ProfileScreens/AccountSettings";
 import useTheme from "@/hooks/useTheme";
-import FontAwesome from "@expo/vector-icons/FontAwesome";
 import MaterialCommunityIcons from "@expo/vector-icons/MaterialCommunityIcons";
 
 const Stack = createStackNavigator();

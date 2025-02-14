@@ -16,7 +16,6 @@ const PrivacyPolicyScreen = () => {
           collection, use and disclosure of your information when you use our
           service.
         </Text>
-        {/* Add more privacy policy content as needed */}
       </View>
     </ScrollView>
   );
@@ -25,7 +24,6 @@ const PrivacyPolicyScreen = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#fff",
   },
   content: {
     padding: 20,

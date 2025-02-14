@@ -8,7 +8,7 @@ import {
   Modal,
   TouchableOpacity,
 } from "react-native";
-import { ProgressBar, Button as PaperButton } from "react-native-paper"; // For progress bar
+import { Button as PaperButton } from "react-native-paper"; // For progress bar
 import useTheme from "@/hooks/useTheme";
 
 // Sample leaderboard data
@@ -152,7 +152,9 @@ const UserLevel = ({ userPoints }: any) => {
       <Text style={[styles.levelRowText, { color: "white" }]}>
         Your Level: {currentLevel.level} |{" "}
         {nextLevel
-          ? `${nextLevel.minPoints - userPoints} points to Level ${nextLevel.level}`
+          ? `${nextLevel.minPoints - userPoints} points to Level ${
+              nextLevel.level
+            }`
           : "Max Level Reached"}
       </Text>
     </View>

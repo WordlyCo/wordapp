@@ -1,24 +1,25 @@
 import "react-native-gesture-handler";
 import React from "react";
 import { NavigationContainer } from "@react-navigation/native";
-import { AuthProvider } from "./context/AuthContext";
-import RootNavigator from "./navigation/RootNavigator";
-import { SafeAreaProvider, SafeAreaView } from "react-native-safe-area-context";
+import { SafeAreaProvider } from "react-native-safe-area-context";
 import { PaperProvider } from "react-native-paper";
 import useTheme from "./hooks/useTheme";
+import AppTabs from "./navigation/AppTabs";
+import AuthScreen from "./screens/AuthScreen";
+import { useStore } from "./stores/store";
 
 const App = () => {
   const { theme } = useTheme();
+  const isAuthenticated = useStore((state) => state.isAuthenticated);
+
   return (
-    <AuthProvider>
-      <PaperProvider theme={theme}>
-        <SafeAreaProvider>
-          <NavigationContainer>
-            <RootNavigator />
-          </NavigationContainer>
-        </SafeAreaProvider>
-      </PaperProvider>
-    </AuthProvider>
+    <PaperProvider theme={theme}>
+      <SafeAreaProvider>
+        <NavigationContainer>
+          {isAuthenticated ? <AppTabs /> : <AuthScreen />}
+        </NavigationContainer>
+      </SafeAreaProvider>
+    </PaperProvider>
   );
 };
 

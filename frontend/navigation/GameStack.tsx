@@ -1,14 +1,11 @@
 import { createStackNavigator } from "@react-navigation/stack";
 import MultipleChoice from "@/screens/GameScreens/MultipleChoice";
-import useTheme from "@/hooks/useTheme";
-import MaterialCommunityIcons from "@expo/vector-icons/MaterialCommunityIcons";
-import GameScreen from "@/screens/GameScreens/GameScreen";
+import GameScreen from "@/screens/GamesTab";
 import SentenceSage from "@/screens/GameScreens/SentenceSage";
 
 const Stack = createStackNavigator();
 
 const GameStack = () => {
-  const { colors } = useTheme();
   return (
     <Stack.Navigator
       screenOptions={{

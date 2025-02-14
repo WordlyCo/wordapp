@@ -8,7 +8,19 @@ import {
 } from "react-native";
 import { Text, Card, TextInput, Button, Snackbar } from "react-native-paper";
 import useTheme from "@/hooks/useTheme";
+import { useStore } from "@/stores/store";
+import WordMasteryProgress from "@/components/WordMasteryProgress";
+import { RouteProp, useNavigation, useRoute } from "@react-navigation/native";
 import OpenAI from "openai";
+
+type RootStackParamList = {
+  SentenceSage: {
+    initialWord?: string;
+    returnToMultipleChoice?: boolean;
+  };
+};
+
+type SentenceSageRouteProp = RouteProp<RootStackParamList, "SentenceSage">;
 
 type Word = {
   word: string;
@@ -43,6 +55,9 @@ function cleanJsonResponse(jsonString: any) {
 
 const SentenceSage = () => {
   const { colors } = useTheme();
+  const navigation = useNavigation();
+  const route = useRoute<SentenceSageRouteProp>();
+  const updateWordMastery = useStore((state) => state.updateWordMastery);
   const [words, setWords] = useState<Word[]>([]);
   const [currentWordIndex, setCurrentWordIndex] = useState<number | null>(null);
   const [sentence, setSentence] = useState<string>("");
@@ -53,13 +68,22 @@ const SentenceSage = () => {
   const onDismissSnackBar = () => setVisible(false);
   const [openAIResponse, setOpenAIResponse] = useState<OpenAIResponseType>();
 
-  const handleNext = () => {
-    if (currentWordIndex !== null && currentWordIndex < words.length - 1) {
-      setCurrentWordIndex(currentWordIndex + 1);
-      setSentence("");
-      setOpenAIResponse(undefined);
+  useEffect(() => {
+    if (route.params?.initialWord) {
+      // If we received an initial word, create a single-word array
+      const initialWordData: Word = {
+        word: route.params.initialWord,
+        correct: "", // Not needed for sentence formation
+        options: [], // Not needed for sentence formation
+      };
+      setWords([initialWordData]);
+      setCurrentWordIndex(0);
+    } else if (wordData.length > 0) {
+      // Otherwise use the regular word data
+      setWords(wordData);
+      setCurrentWordIndex(0);
     }
-  };
+  }, [route.params?.initialWord]);
 
   const handleAnswer = async () => {
     if (sentence.length === 0) {
@@ -105,13 +129,20 @@ const SentenceSage = () => {
             `,
           },
         ],
-        model: "gpt-4o-mini",
+        model: "gpt-4",
         response_format: { type: "json_object" },
-        max_completion_tokens: 100,
+        max_tokens: 150,
       });
 
       const JSONResponse = cleanJsonResponse(resp.choices[0].message.content);
       setOpenAIResponse(JSONResponse as OpenAIResponseType);
+
+      // Update word mastery based on the response
+      updateWordMastery(
+        words[currentWordIndex].word,
+        JSONResponse.isCorrect,
+        "usage"
+      );
 
       if (!JSONResponse.isCorrect) {
         Animated.sequence([
@@ -139,12 +170,18 @@ const SentenceSage = () => {
     }
   };
 
-  useEffect(() => {
-    if (wordData.length > 0) {
-      setWords(wordData);
-      setCurrentWordIndex(0);
+  const handleNext = () => {
+    if (route.params?.returnToMultipleChoice) {
+      navigation.goBack();
+    } else if (
+      currentWordIndex !== null &&
+      currentWordIndex < words.length - 1
+    ) {
+      setCurrentWordIndex(currentWordIndex + 1);
+      setSentence("");
+      setOpenAIResponse(undefined);
     }
-  }, []);
+  };
 
   if (words.length === 0 || currentWordIndex === null) {
     return <ActivityIndicator />;
@@ -153,6 +190,9 @@ const SentenceSage = () => {
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>
       <ScrollView contentContainerStyle={styles.scrollViewContainer}>
+        {/* Word Mastery Progress */}
+        <WordMasteryProgress word={words[currentWordIndex].word} />
+
         <Animated.View
           style={[{ transform: [{ translateX: shakeAnimation }] }]}
         >
@@ -205,9 +245,10 @@ const SentenceSage = () => {
                   mode="contained"
                   onPress={handleNext}
                   style={styles.nextButton}
-                  disabled={currentWordIndex === words.length - 1}
                 >
-                  {currentWordIndex === words.length - 1
+                  {route.params?.returnToMultipleChoice
+                    ? "Return to Quiz"
+                    : currentWordIndex === words.length - 1
                     ? "Completed!"
                     : "Next Word"}
                 </Button>

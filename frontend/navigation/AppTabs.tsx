@@ -1,9 +1,8 @@
 import React from "react";
 import { createMaterialBottomTabNavigator } from "react-native-paper/react-navigation";
 import MaterialCommunityIcons from "@expo/vector-icons/MaterialCommunityIcons";
-import FontAwesomeIcons from "@expo/vector-icons/FontAwesome";
-import HomeScreen from "@/screens/HomeScreen";
-import ProgressScreen from "@/screens/ProgressScreen";
+import HomeTab from "@/screens/HomeTab";
+import ProgressTab from "@/screens/ProgressTab";
 import ProfileStack from "./ProfileStack";
 import useTheme from "@/hooks/useTheme";
 import { SafeAreaView } from "react-native-safe-area-context";
@@ -11,7 +10,7 @@ import GameStack from "./GameStack";
 
 const Tab = createMaterialBottomTabNavigator();
 
-const AppStack = () => {
+const AppTabs = () => {
   const { colors } = useTheme();
 
   return (
@@ -33,54 +32,39 @@ const AppStack = () => {
         }}
         screenOptions={({ route }) => ({
           tabBarIcon: ({ focused }) => {
-            let iconName: any;
+            let iconName: keyof typeof MaterialCommunityIcons.glyphMap;
             const color = focused ? "white" : colors.onSurface;
 
-            if (route.name === "Home") {
-              iconName = focused ? "home" : "home";
-              return (
-                <MaterialCommunityIcons
-                  name={iconName}
-                  size={26}
-                  color={color}
-                />
-              );
-            } else if (route.name === "Games") {
-              iconName = focused ? "cards-playing" : "cards-playing";
-              return (
-                <MaterialCommunityIcons
-                  name={iconName}
-                  size={26}
-                  color={color}
-                />
-              );
-            } else if (route.name === "Progress") {
-              iconName = focused ? "chart-line-stacked" : "chart-line-stacked";
-              return (
-                <MaterialCommunityIcons
-                  name={iconName}
-                  size={26}
-                  color={color}
-                />
-              );
-            } else if (route.name === "Profile") {
-              iconName = focused ? "user" : "user";
-              return (
-                <FontAwesomeIcons name={iconName} size={26} color={color} />
-              );
+            switch (route.name) {
+              case "Home":
+                iconName = "home";
+                break;
+              case "Games":
+                iconName = "cards-playing";
+                break;
+              case "Progress":
+                iconName = "chart-line-stacked";
+                break;
+              case "Profile":
+                iconName = "account";
+                break;
+              default:
+                iconName = "help";
             }
 
-            return null;
+            return (
+              <MaterialCommunityIcons name={iconName} size={26} color={color} />
+            );
           },
         })}
       >
-        <Tab.Screen name="Home" component={HomeScreen} />
+        <Tab.Screen name="Home" component={HomeTab} />
         <Tab.Screen name="Games" component={GameStack} />
-        <Tab.Screen name="Progress" component={ProgressScreen} />
+        <Tab.Screen name="Progress" component={ProgressTab} />
         <Tab.Screen name="Profile" component={ProfileStack} />
       </Tab.Navigator>
     </SafeAreaView>
   );
 };
 
-export default AppStack;
+export default AppTabs;

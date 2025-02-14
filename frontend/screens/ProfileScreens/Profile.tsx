@@ -3,11 +3,10 @@ import { View, StyleSheet, Image, ScrollView } from "react-native";
 import { Text, List, Avatar, Divider, Button } from "react-native-paper";
 import { useNavigation } from "@react-navigation/native";
 import { StackNavigationProp } from "@react-navigation/stack";
-import { useContext } from "react";
-import { AuthContext } from "@/context/AuthContext";
 import useTheme from "@/hooks/useTheme";
 import FontAwesome from "@expo/vector-icons/FontAwesome";
 import StickyHeader from "@/components/StickyHeader";
+import { useStore } from "@/stores/store";
 
 type ProfileStackParamList = {
   ProfileMain: undefined;
@@ -21,8 +20,13 @@ type ProfileScreenNavigationProp = StackNavigationProp<ProfileStackParamList>;
 
 const ProfileScreen = () => {
   const navigation = useNavigation<ProfileScreenNavigationProp>();
-  const { logout } = useContext(AuthContext);
+  const logout = useStore((state) => state.logout);
   const { colors } = useTheme();
+
+  const handleLogout = () => {
+    console.log("Logging out...");
+    logout();
+  };
   return (
     <>
       <ScrollView
@@ -83,8 +87,10 @@ const ProfileScreen = () => {
           <Button
             icon="logout"
             mode="contained"
-            onPress={logout}
+            onPress={handleLogout}
             style={styles.logoutButton}
+            contentStyle={styles.logoutButtonContent}
+            labelStyle={styles.logoutButtonLabel}
           >
             Logout
           </Button>
@@ -127,6 +133,12 @@ const styles = StyleSheet.create({
   },
   listContainer: {
     paddingHorizontal: 20,
+  },
+  logoutButtonContent: {
+    height: 48,
+  },
+  logoutButtonLabel: {
+    color: "white",
   },
 });
 
