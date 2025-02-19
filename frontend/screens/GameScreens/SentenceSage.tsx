@@ -11,7 +11,6 @@ import useTheme from "@/hooks/useTheme";
 import { useStore } from "@/stores/store";
 import WordMasteryProgress from "@/components/WordMasteryProgress";
 import { RouteProp, useNavigation, useRoute } from "@react-navigation/native";
-import OpenAI from "openai";
 
 type RootStackParamList = {
   SentenceSage: {
@@ -28,36 +27,17 @@ type Word = {
   options: string[];
 };
 
-type OpenAIResponseType = {
+type SentenceCheckResponse = {
   isCorrect: boolean;
   correctUsage?: string;
   message: string;
 };
 
-const client = new OpenAI({
-  apiKey: process.env["EXPO_PUBLIC_OPENAPI_KEY"],
-});
-
-function cleanJsonResponse(jsonString: any) {
-  try {
-    return JSON.parse(jsonString);
-  } catch (error) {
-    try {
-      let cleaned = jsonString.replace(/\\n/g, "\n");
-      cleaned = cleaned.replace(/\\"/g, '"');
-      cleaned = cleaned.replace(/\\/g, "");
-      return JSON.parse(cleaned);
-    } catch (error: any) {
-      throw new Error("Failed to parse JSON: " + error.message);
-    }
-  }
-}
-
 const SentenceSage = () => {
   const { colors } = useTheme();
   const navigation = useNavigation();
   const route = useRoute<SentenceSageRouteProp>();
-  const updateWordMastery = useStore((state) => state.updateWordMastery);
+  const updateWordMastery = useStore((state: any) => state.updateWordMastery);
   const [words, setWords] = useState<Word[]>([]);
   const [currentWordIndex, setCurrentWordIndex] = useState<number | null>(null);
   const [sentence, setSentence] = useState<string>("");
@@ -66,7 +46,7 @@ const SentenceSage = () => {
   const [loading, setLoading] = useState(false);
   const onToggleSnackBar = () => setVisible(!visible);
   const onDismissSnackBar = () => setVisible(false);
-  const [openAIResponse, setOpenAIResponse] = useState<OpenAIResponseType>();
+  const [openAIResponse, setOpenAIResponse] = useState<SentenceCheckResponse>();
 
   useEffect(() => {
     if (route.params?.initialWord) {
@@ -98,44 +78,30 @@ const SentenceSage = () => {
         return;
       }
 
-      const resp = await client.chat.completions.create({
-        messages: [
-          {
-            role: "system",
-            content: `You are a helpful assistant designed to output JSON.
-            Make sure your response does not include any extra characters.
-            The response should easily parse to JSON.
-
-            You are part of a word learning app. You will be given a word below,
-            and a sentence using that word. You determine the correct usage of the word in the
-            sentence provided.
-
-            The JSON response format should be this type declaration:
-
-            {
-              "isCorrect": boolean;
-              "correctUsage": string;
-              "message": string;
-            }
-
-            The message field should include a general message about the user's usage even if it was correct.
-            `,
-          },
-          {
-            role: "user",
-            content: `
-            Current Word: ${words[currentWordIndex].word}
-            Current Sentence: ${sentence}
-            `,
-          },
-        ],
-        model: "gpt-4",
-        response_format: { type: "json_object" },
-        max_tokens: 150,
+      const apiUrl = `${process.env.EXPO_PUBLIC_API_URL}/api/check-sentence`;
+      console.log('Attempting API call to:', apiUrl);
+      console.log('Request payload:', {
+        word: words[currentWordIndex].word,
+        sentence: sentence,
+      });
+      
+      const response = await fetch(apiUrl, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          word: words[currentWordIndex].word,
+          sentence: sentence,
+        }),
       });
 
-      const JSONResponse = cleanJsonResponse(resp.choices[0].message.content);
-      setOpenAIResponse(JSONResponse as OpenAIResponseType);
+      if (!response.ok) {
+        throw new Error('Network response was not ok');
+      }
+
+      const JSONResponse: SentenceCheckResponse = await response.json();
+      setOpenAIResponse(JSONResponse);
 
       // Update word mastery based on the response
       updateWordMastery(
@@ -164,7 +130,7 @@ const SentenceSage = () => {
         ]).start();
       }
     } catch (error) {
-      console.error("Error calling OpenAI:", error);
+      console.error("Error checking sentence:", error);
     } finally {
       setLoading(false);
     }
