@@ -1,6 +1,9 @@
 from fastapi import FastAPI
 import asyncpg
 import os
+from dotenv import load_dotenv
+
+load_dotenv()
 
 pool = None 
 
@@ -8,6 +11,7 @@ def init_db(app: FastAPI):
     @app.on_event("startup")
     async def startup_event():
         await create_pool()
+        await create_tables()
 
     @app.on_event("shutdown")
     async def shutdown_event():
