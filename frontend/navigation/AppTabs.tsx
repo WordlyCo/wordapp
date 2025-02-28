@@ -1,12 +1,12 @@
 import React from "react";
 import { createMaterialBottomTabNavigator } from "react-native-paper/react-navigation";
 import MaterialCommunityIcons from "@expo/vector-icons/MaterialCommunityIcons";
-import HomeTab from "@/screens/HomeTab";
 import ProgressTab from "@/screens/ProgressTab";
 import ProfileStack from "./ProfileStack";
 import useTheme from "@/hooks/useTheme";
 import { SafeAreaView } from "react-native-safe-area-context";
-import GameStack from "./GameStack";
+import BankStack from "./BankStack";
+import HomeStack from "./HomeStack";
 
 const Tab = createMaterialBottomTabNavigator();
 
@@ -39,7 +39,7 @@ const AppTabs = () => {
               case "Home":
                 iconName = "home";
                 break;
-              case "Games":
+              case "Bank":
                 iconName = "cards-playing";
                 break;
               case "Progress":
@@ -58,8 +58,8 @@ const AppTabs = () => {
           },
         })}
       >
-        <Tab.Screen name="Home" component={HomeTab} />
-        <Tab.Screen name="Games" component={GameStack} />
+        <Tab.Screen name="Home" component={HomeStack} />
+        <Tab.Screen name="Bank" component={BankStack} />
         <Tab.Screen name="Progress" component={ProgressTab} />
         <Tab.Screen name="Profile" component={ProfileStack} />
       </Tab.Navigator>

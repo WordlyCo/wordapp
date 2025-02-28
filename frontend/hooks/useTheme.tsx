@@ -2,65 +2,97 @@ import { useEffect, useState } from "react";
 import { MD3DarkTheme, MD3LightTheme } from "react-native-paper";
 import { useColorScheme } from "react-native";
 
-// Brand colors and key palette values
 const palette = {
-  // Purple brand color preserved
+  // Primary brand color
   purple: {
-    main: "rgb(79, 76, 205)",
-    light: "rgb(226, 223, 255)",
-    dark: "rgb(54, 49, 180)",
+    main: "rgb(100, 96, 205)",
+    light: "rgb(177, 175, 237)",
+    dark: "rgb(63, 60, 148)",
   },
-  // Complementary accent color
+  // Accent colors
+  teal: {
+    main: "rgb(64, 186, 164)",
+    light: "rgb(184, 240, 230)",
+    dark: "rgb(38, 134, 115)",
+  },
+  amber: {
+    main: "rgb(255, 177, 66)",
+    light: "rgb(255, 224, 130)",
+    dark: "rgb(204, 128, 2)",
+  },
   coral: {
-    main: "#FF6B6B",
-    light: "#FFE2E2",
-    dark: "#CC4545",
+    main: "rgb(255, 107, 107)",
+    light: "rgb(255, 184, 184)",
+    dark: "rgb(204, 82, 82)",
   },
-  // Neutral grays
+  softBlue: {
+    main: "rgb(125, 145, 235)",
+    light: "rgb(184, 204, 255)",
+    dark: "rgb(74, 92, 155)",
+  },
+  green: {
+    main: "rgb(64, 186, 88)",
+    light: "rgb(184, 240, 196)",
+    dark: "rgb(38, 134, 55)",
+  },
+  difficulty: {
+    beginner: "rgb(76, 175, 80)",
+    intermediate: "rgb(255, 152, 0)",
+    advanced: "rgb(244, 67, 54)",
+    default: "rgb(117, 117, 117)",
+  },
+  stats: {
+    goal: "rgb(76, 175, 80)",
+    streak: "rgb(255, 152, 0)",
+    time: "rgb(92, 107, 192)",
+  },
+
   neutral: {
-    50: "#FAFAFA",
-    100: "#F5F5F5",
-    200: "#E5E5E5",
-    300: "#D4D4D4",
-    800: "#262626",
-    900: "#171717",
+    50: "rgb(250, 248, 235)",
+    100: "rgb(245, 245, 245)",
+    200: "rgb(229, 229, 229)",
+    300: "rgb(212, 212, 212)",
+    400: "rgb(163, 163, 163)",
+    500: "rgb(115, 115, 115)",
+    600: "rgb(82, 82, 82)",
+    700: "rgb(64, 64, 64)",
+    800: "rgb(38, 38, 38)",
+    900: "rgb(23, 23, 23)",
   },
 };
 
 export const lightTheme = {
   ...MD3LightTheme,
   colors: {
-    // Core colors - Using brand purple
     primary: palette.purple.main,
     onPrimary: "#FFFFFF",
     primaryContainer: palette.purple.light,
-    onPrimaryContainer: "rgb(12, 0, 106)",
+    onPrimaryContainer: palette.purple.dark,
 
-    // Secondary colors - Complementary coral
-    secondary: palette.coral.main,
+    secondary: palette.teal.main,
     onSecondary: "#FFFFFF",
-    secondaryContainer: palette.coral.light,
-    onSecondaryContainer: "#2C1B1B",
+    secondaryContainer: palette.teal.light,
+    onSecondaryContainer: palette.teal.dark,
 
-    // Tertiary colors - Softer purple
-    tertiary: palette.purple.main,
+    tertiary: palette.amber.main,
     onTertiary: "#FFFFFF",
-    tertiaryContainer: palette.purple.light,
-    onTertiaryContainer: "rgb(12, 0, 106)",
+    tertiaryContainer: palette.amber.light,
+    onTertiaryContainer: palette.amber.dark,
 
-    // Quaternary colors - Muted coral
     quaternary: palette.coral.main,
     onQuaternary: "#FFFFFF",
     quaternaryContainer: palette.coral.light,
-    onQuaternaryContainer: "#2C1B1B",
+    onQuaternaryContainer: palette.coral.dark,
 
-    // Error states
-    error: "#FF9B9B",
+    success: palette.green.main,
+    error: palette.coral.main,
+    warning: palette.amber.main,
+    info: palette.softBlue.main,
+
     onError: "#FFFFFF",
-    errorContainer: "#FFE2E2",
-    onErrorContainer: "#8C5F5F",
+    errorContainer: palette.coral.light,
+    onErrorContainer: palette.coral.dark,
 
-    // Background and surface
     background: palette.neutral[50],
     onBackground: palette.neutral[900],
     surface: palette.neutral[50],
@@ -68,7 +100,6 @@ export const lightTheme = {
     surfaceVariant: palette.neutral[100],
     onSurfaceVariant: palette.neutral[800],
 
-    // Other
     outline: palette.neutral[300],
     outlineVariant: palette.neutral[200],
     shadow: "rgba(0, 0, 0, 0.1)",
@@ -76,9 +107,8 @@ export const lightTheme = {
     inverseSurface: palette.neutral[900],
     inverseOnSurface: palette.neutral[50],
     inversePrimary: palette.purple.light,
-    progress: "#25A879",
+    progress: palette.green.main,
 
-    // Elevation
     elevation: {
       level0: "transparent",
       level1: palette.neutral[50],
@@ -88,7 +118,6 @@ export const lightTheme = {
       level5: palette.neutral[200],
     },
 
-    // Disabled states
     surfaceDisabled: "rgba(28, 27, 31, 0.12)",
     onSurfaceDisabled: "rgba(28, 27, 31, 0.38)",
     backdrop: "rgba(28, 27, 31, 0.4)",
@@ -98,37 +127,35 @@ export const lightTheme = {
 export const darkTheme = {
   ...MD3DarkTheme,
   colors: {
-    // Core colors - Using brand purple
     primary: palette.purple.main,
     onPrimary: "#FFFFFF",
     primaryContainer: palette.purple.dark,
     onPrimaryContainer: palette.purple.light,
 
-    // Secondary colors - Complementary coral
-    secondary: palette.coral.main,
+    secondary: palette.teal.main,
     onSecondary: "#FFFFFF",
-    secondaryContainer: palette.coral.dark,
-    onSecondaryContainer: palette.coral.light,
+    secondaryContainer: palette.teal.dark,
+    onSecondaryContainer: palette.teal.light,
 
-    // Tertiary colors - Softer purple
-    tertiary: palette.purple.main,
+    tertiary: palette.amber.main,
     onTertiary: "#FFFFFF",
-    tertiaryContainer: palette.purple.dark,
-    onTertiaryContainer: palette.purple.light,
+    tertiaryContainer: palette.amber.dark,
+    onTertiaryContainer: palette.amber.light,
 
-    // Quaternary colors - Muted coral
     quaternary: palette.coral.main,
     onQuaternary: "#FFFFFF",
     quaternaryContainer: palette.coral.dark,
     onQuaternaryContainer: palette.coral.light,
 
-    // Error states
-    error: "#FDA29B",
-    onError: "#FFFFFF",
-    errorContainer: "#A42941",
-    onErrorContainer: "#FFE2E2",
+    success: palette.green.main,
+    error: palette.coral.main,
+    warning: palette.amber.main,
+    info: palette.softBlue.main,
 
-    // Background and surface
+    onError: "#FFFFFF",
+    errorContainer: palette.coral.dark,
+    onErrorContainer: palette.coral.light,
+
     background: palette.neutral[900],
     onBackground: palette.neutral[50],
     surface: palette.neutral[800],
@@ -136,40 +163,127 @@ export const darkTheme = {
     surfaceVariant: palette.neutral[800],
     onSurfaceVariant: palette.neutral[100],
 
-    // Other
-    outline: palette.neutral[300],
-    outlineVariant: palette.neutral[800],
+    outline: palette.neutral[400],
+    outlineVariant: palette.neutral[700],
     shadow: "rgba(0, 0, 0, 0.3)",
     scrim: "rgba(0, 0, 0, 0.5)",
     inverseSurface: palette.neutral[50],
     inverseOnSurface: palette.neutral[900],
     inversePrimary: palette.purple.main,
-    progress: "#25A879",
+    progress: palette.green.main,
 
-    // Elevation
     elevation: {
       level0: "transparent",
       level1: palette.neutral[800],
-      level2: palette.neutral[800],
-      level3: palette.neutral[800],
-      level4: palette.neutral[800],
-      level5: palette.neutral[800],
+      level2: "rgb(43, 43, 43)",
+      level3: "rgb(48, 48, 48)",
+      level4: "rgb(53, 53, 53)",
+      level5: "rgb(58, 58, 58)",
     },
 
-    // Disabled states
     surfaceDisabled: "rgba(229, 225, 230, 0.12)",
     onSurfaceDisabled: "rgba(229, 225, 230, 0.38)",
     backdrop: "rgba(0, 0, 0, 0.4)",
   },
 };
 
+export type ColorType = typeof lightTheme.colors &
+  typeof darkTheme.colors &
+  WordBirdColors;
+
+type WordBirdColors = {
+  streak: string;
+  streakContainer: string;
+  goal: string;
+  goalContainer: string;
+  timer: string;
+  timerContainer: string;
+  categories: {
+    books: string;
+    movies: string;
+    philosophy: string;
+    science: string;
+    technology: string;
+    music: string;
+  };
+  difficulty: {
+    beginner: string;
+    intermediate: string;
+    advanced: string;
+    default: string;
+  };
+};
+
+const lightExtendedColors: WordBirdColors = {
+  streak: palette.stats.streak,
+  streakContainer: palette.amber.light,
+  goal: palette.stats.goal,
+  goalContainer: palette.green.light,
+  timer: palette.stats.time,
+  timerContainer: palette.softBlue.light,
+  categories: {
+    books: palette.purple.main,
+    movies: palette.softBlue.main,
+    philosophy: palette.teal.main,
+    science: palette.amber.main,
+    technology: palette.coral.main,
+    music: palette.green.main,
+  },
+  difficulty: {
+    beginner: palette.difficulty.beginner,
+    intermediate: palette.difficulty.intermediate,
+    advanced: palette.difficulty.advanced,
+    default: palette.difficulty.default,
+  },
+};
+
+const darkExtendedColors: WordBirdColors = {
+  streak: palette.stats.streak,
+  streakContainer: palette.amber.dark,
+  goal: palette.stats.goal,
+  goalContainer: palette.green.dark,
+  timer: palette.stats.time,
+  timerContainer: palette.softBlue.dark,
+  categories: {
+    books: palette.purple.main,
+    movies: palette.softBlue.main,
+    philosophy: palette.teal.main,
+    science: palette.amber.main,
+    technology: palette.coral.main,
+    music: palette.green.main,
+  },
+  difficulty: {
+    beginner: palette.difficulty.beginner,
+    intermediate: palette.difficulty.intermediate,
+    advanced: palette.difficulty.advanced,
+    default: palette.difficulty.default,
+  },
+};
+
+const extendedLightTheme = {
+  ...lightTheme,
+  colors: {
+    ...lightTheme.colors,
+    ...lightExtendedColors,
+  },
+};
+
+const extendedDarkTheme = {
+  ...darkTheme,
+  colors: {
+    ...darkTheme.colors,
+    ...darkExtendedColors,
+  },
+};
+
 const useTheme = () => {
-  const [theme, setTheme] = useState(darkTheme);
   const colorScheme = useColorScheme();
-  const currTheme = colorScheme === "light" ? lightTheme : darkTheme;
+  const [theme, setTheme] = useState(
+    colorScheme === "light" ? extendedLightTheme : extendedDarkTheme
+  );
 
   useEffect(() => {
-    setTheme(currTheme);
+    setTheme(colorScheme === "light" ? extendedLightTheme : extendedDarkTheme);
   }, [colorScheme]);
 
   return {

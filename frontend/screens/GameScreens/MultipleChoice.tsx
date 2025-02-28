@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from "react";
-import { View, ScrollView, StyleSheet } from "react-native";
+import React, { useState, useEffect, useRef } from "react";
+import { View, ScrollView, StyleSheet, Animated } from "react-native";
 import { Text, Card, Button, IconButton } from "react-native-paper";
 import useTheme from "@/hooks/useTheme";
 import WordMasteryProgress from "@/components/WordMasteryProgress";
@@ -32,7 +32,13 @@ const MultipleChoice = () => {
     totalTime: 0,
     masteryGained: 0,
   });
-  const [startTime] = useState<number>(Date.now());
+  const [startTime, setStartGame] = useState<number>(Date.now());
+
+  const fadeAnim = useRef(new Animated.Value(1)).current;
+  const scaleAnim = useRef(new Animated.Value(1)).current;
+  const slideAnim = useRef(new Animated.Value(0)).current;
+
+  const prevStateRef = useRef<CardState>("playing");
 
   const progress =
     (currentIndex + 1) / (currentSession?.sessionWords?.length || 0);
@@ -41,8 +47,69 @@ const MultipleChoice = () => {
 
   useEffect(() => {
     startSession(SESSION_TYPES.MCQ);
+  }, []);
+
+  useEffect(() => {
     setCurrentWord(currentSession?.sessionWords?.[currentIndex] || null);
   }, [currentIndex]);
+
+  // Animation when state changes - only handle summary state transition here
+  // since other transitions are managed in their respective handlers
+  useEffect(() => {
+    if (cardState !== prevStateRef.current) {
+      // Only animate automatically if we're not in the middle of a managed transition
+      // (meaning we're not transitioning from playing→review or review→playing)
+      const isUnmanagedTransition =
+        !(prevStateRef.current === "playing" && cardState === "review") &&
+        !(prevStateRef.current === "review" && cardState === "playing");
+
+      if (isUnmanagedTransition) {
+        // Animate out
+        Animated.parallel([
+          Animated.timing(fadeAnim, {
+            toValue: 0,
+            duration: 200,
+            useNativeDriver: true,
+          }),
+          Animated.timing(scaleAnim, {
+            toValue: 0.95,
+            duration: 200,
+            useNativeDriver: true,
+          }),
+          Animated.timing(slideAnim, {
+            toValue: -30,
+            duration: 200,
+            useNativeDriver: true,
+          }),
+        ]).start(() => {
+          // Reset animation values for animating in
+          slideAnim.setValue(30);
+
+          // Animate in
+          Animated.parallel([
+            Animated.timing(fadeAnim, {
+              toValue: 1,
+              duration: 250,
+              useNativeDriver: true,
+            }),
+            Animated.timing(scaleAnim, {
+              toValue: 1,
+              duration: 250,
+              useNativeDriver: true,
+            }),
+            Animated.timing(slideAnim, {
+              toValue: 0,
+              duration: 250,
+              useNativeDriver: true,
+            }),
+          ]).start();
+        });
+      }
+
+      // Always update the previous state reference
+      prevStateRef.current = cardState;
+    }
+  }, [cardState, fadeAnim, scaleAnim, slideAnim]);
 
   const handleNext = () => {
     if (isLastQuestion) {
@@ -52,39 +119,136 @@ const MultipleChoice = () => {
       }));
       setCardState("summary");
     } else {
-      setCurrentIndex(currentIndex + 1);
-      setSelectedAnswer(null);
-      setCardState("playing");
+      // Animate out current state
+      Animated.parallel([
+        Animated.timing(fadeAnim, {
+          toValue: 0,
+          duration: 200,
+          useNativeDriver: true,
+        }),
+        Animated.timing(slideAnim, {
+          toValue: -50,
+          duration: 200,
+          useNativeDriver: true,
+        }),
+      ]).start(() => {
+        setCurrentIndex(currentIndex + 1);
+        setSelectedAnswer(null);
+        setCardState("playing");
+
+        // Reset animation values for next question
+        slideAnim.setValue(50);
+
+        // Animate in next question
+        Animated.parallel([
+          Animated.timing(fadeAnim, {
+            toValue: 1,
+            duration: 250,
+            useNativeDriver: true,
+          }),
+          Animated.timing(slideAnim, {
+            toValue: 0,
+            duration: 250,
+            useNativeDriver: true,
+          }),
+        ]).start();
+      });
     }
   };
 
-  // const handleRestart = () => {
-  //   const shuffledWords = [...wordData].sort(() => Math.random() - 0.5);
-  //   const formattedQuestions = shuffledWords.map((word) => ({
-  //     word,
-  //     options: generateMultipleChoiceOptions(word, wordData),
-  //   }));
-  //   setQuestions(formattedQuestions);
-  //   setCurrentIndex(0);
-  //   setScore(0);
-  //   setSelectedAnswer(null);
-  //   setCardState("playing");
-  //   setGameStats({
-  //     correctAnswers: 0,
-  //     totalTime: 0,
-  //     masteryGained: 0,
-  //   });
-  // };
-
   const handleAnswer = (answer: string) => {
-    if (answer === currentWord?.definition) {
+    if (answer === currentWord?.correctAnswer) {
       setScore(score + 1);
     }
     setSelectedAnswer(answer);
-    setCardState("review");
+
+    // Start fade-out animation first
+    Animated.parallel([
+      Animated.timing(fadeAnim, {
+        toValue: 0,
+        duration: 200,
+        useNativeDriver: true,
+      }),
+      Animated.timing(scaleAnim, {
+        toValue: 0.95,
+        duration: 200,
+        useNativeDriver: true,
+      }),
+      Animated.timing(slideAnim, {
+        toValue: -20,
+        duration: 200,
+        useNativeDriver: true,
+      }),
+    ]).start(() => {
+      // Only change state after the fade-out is complete
+      setCardState("review");
+
+      // Reset animation values for the review state to animate in
+      slideAnim.setValue(20);
+
+      // Animate in the review state
+      Animated.parallel([
+        Animated.timing(fadeAnim, {
+          toValue: 1,
+          duration: 250,
+          useNativeDriver: true,
+        }),
+        Animated.timing(scaleAnim, {
+          toValue: 1,
+          duration: 250,
+          useNativeDriver: true,
+        }),
+        Animated.timing(slideAnim, {
+          toValue: 0,
+          duration: 250,
+          useNativeDriver: true,
+        }),
+      ]).start();
+    });
   };
 
-  console.log(currentWord);
+  const playAgain = () => {
+    // Animate out summary
+    Animated.parallel([
+      Animated.timing(fadeAnim, {
+        toValue: 0,
+        duration: 300,
+        useNativeDriver: true,
+      }),
+      Animated.timing(scaleAnim, {
+        toValue: 0.9,
+        duration: 300,
+        useNativeDriver: true,
+      }),
+    ]).start(() => {
+      setCurrentIndex(0);
+      setScore(0);
+      setCardState("playing");
+      setStartGame(Date.now());
+
+      // Reset animation values for new game
+      slideAnim.setValue(30);
+
+      // Animate in new game
+      Animated.parallel([
+        Animated.timing(fadeAnim, {
+          toValue: 1,
+          duration: 400,
+          useNativeDriver: true,
+        }),
+        Animated.timing(scaleAnim, {
+          toValue: 1,
+          duration: 350,
+          useNativeDriver: true,
+        }),
+        Animated.timing(slideAnim, {
+          toValue: 0,
+          duration: 350,
+          useNativeDriver: true,
+        }),
+      ]).start();
+    });
+  };
 
   if (!currentWord) return null;
 
@@ -92,22 +256,43 @@ const MultipleChoice = () => {
     switch (cardState) {
       case "playing":
         return (
-          <QuestionCard
-            currentIndex={currentIndex}
-            word={currentWord}
-            wordCount={currentSession?.sessionWords?.length || 0}
-            progress={progress}
-            score={score}
-            colors={colors}
-            handleAnswer={handleAnswer}
-            selectedAnswer={selectedAnswer}
-            setSelectedAnswer={setSelectedAnswer}
-          />
+          <Animated.View
+            style={{
+              opacity: fadeAnim,
+              transform: [
+                { scale: scaleAnim },
+                { translateX: slideAnim }
+              ],
+            }}
+          >
+            <QuestionCard
+              currentIndex={currentIndex}
+              word={currentWord}
+              wordCount={currentSession?.sessionWords?.length || 0}
+              progress={progress}
+              score={score}
+              colors={colors}
+              handleAnswer={handleAnswer}
+              selectedAnswer={selectedAnswer}
+              setSelectedAnswer={setSelectedAnswer}
+            />
+          </Animated.View>
         );
 
       case "review":
         return (
-          <View style={styles.feedbackContainer}>
+          <Animated.View
+            style={[
+              styles.feedbackContainer,
+              {
+                opacity: fadeAnim,
+                transform: [
+                  { scale: scaleAnim },
+                  { translateX: slideAnim }
+                ],
+              }
+            ]}
+          >
             <Card
               style={[
                 styles.feedbackCard,
@@ -164,7 +349,7 @@ const MultipleChoice = () => {
                     >
                       {selectedAnswer === currentWord?.correctAnswer
                         ? "Well done! Keep up the good work."
-                        : `The correct answer is: ${currentWord?.definition}`}
+                        : `The correct answer is: ${currentWord?.correctAnswer}`}
                     </Text>
 
                     <Text
@@ -223,54 +408,64 @@ const MultipleChoice = () => {
                 </Button>
               </Card.Actions>
             </Card>
-          </View>
+          </Animated.View>
         );
 
       case "summary":
         return (
-          <Card style={styles.summaryCard}>
-            <Card.Content>
-              <Text variant="headlineMedium" style={styles.summaryTitle}>
-                Quiz Complete!
-              </Text>
-              <View style={styles.statsContainer}>
-                <View style={styles.statItem}>
-                  <Text variant="titleMedium">Score</Text>
-                  <Text
-                    variant="displaySmall"
-                    style={{ color: colors.primary }}
-                  >
-                    {score}/{currentSession?.sessionWords?.length || 0}
-                  </Text>
+          <Animated.View
+            style={{
+              opacity: fadeAnim,
+              transform: [
+                { scale: scaleAnim },
+                { translateX: slideAnim }
+              ],
+            }}
+          >
+            <Card style={styles.summaryCard}>
+              <Card.Content>
+                <Text variant="headlineMedium" style={styles.summaryTitle}>
+                  Quiz Complete!
+                </Text>
+                <View style={styles.statsContainer}>
+                  <View style={styles.statItem}>
+                    <Text variant="titleMedium">Score</Text>
+                    <Text
+                      variant="headlineSmall"
+                      style={{ color: colors.primary }}
+                    >
+                      {score}/{currentSession?.sessionWords?.length || 0}
+                    </Text>
+                  </View>
+                  <View style={styles.statItem}>
+                    <Text variant="titleMedium">Time</Text>
+                    <Text
+                      variant="headlineSmall"
+                      style={{ color: colors.primary }}
+                    >
+                      {Math.round(gameStats.totalTime)}s
+                    </Text>
+                  </View>
+                  <View style={styles.statItem}>
+                    <Text variant="titleMedium">Mastery Gained</Text>
+                    <Text
+                      variant="headlineSmall"
+                      style={{ color: colors.primary }}
+                    >
+                      +{Math.round(gameStats.masteryGained)}%
+                    </Text>
+                  </View>
                 </View>
-                <View style={styles.statItem}>
-                  <Text variant="titleMedium">Time</Text>
-                  <Text
-                    variant="displaySmall"
-                    style={{ color: colors.primary }}
-                  >
-                    {Math.round(gameStats.totalTime)}s
-                  </Text>
-                </View>
-                <View style={styles.statItem}>
-                  <Text variant="titleMedium">Mastery Gained</Text>
-                  <Text
-                    variant="displaySmall"
-                    style={{ color: colors.primary }}
-                  >
-                    +{Math.round(gameStats.masteryGained)}%
-                  </Text>
-                </View>
-              </View>
-              <Button
-                mode="contained"
-                onPress={() => {}}
-                style={styles.restartButton}
-              >
-                Play Again
-              </Button>
-            </Card.Content>
-          </Card>
+                <Button
+                  mode="contained"
+                  onPress={playAgain}
+                  style={styles.restartButton}
+                >
+                  Play Again
+                </Button>
+              </Card.Content>
+            </Card>
+          </Animated.View>
         );
     }
   };
@@ -351,7 +546,6 @@ const styles = StyleSheet.create({
   feedbackCard: {
     width: "100%",
     borderRadius: 12,
-    overflow: "hidden",
   },
   feedbackContentContainer: {
     flexDirection: "row",

@@ -1,6 +1,9 @@
-import { Animated, StyleSheet } from "react-native";
+import React from "react";
+import { Animated, StyleSheet, View } from "react-native";
 import { Card, Text, Avatar } from "react-native-paper";
 import { CARD_HEIGHT, SCROLL_DISTANCE_PER_CARD } from "@/stores/enums";
+import useTheme from "@/hooks/useTheme";
+
 interface CardData {
   id: string;
   title: string;
@@ -17,6 +20,7 @@ const AnimatedCard = ({
   scrollY: Animated.Value;
   index: number;
 }) => {
+  const { colors } = useTheme();
   const animatedValue = scrollY.interpolate({
     inputRange: [
       -SCROLL_DISTANCE_PER_CARD,
@@ -43,26 +47,37 @@ const AnimatedCard = ({
     outputRange: [1, 0],
   });
 
+  const animatedCardStyle = {
+    opacity,
+    transform: [{ translateY }, { scale }, { perspective: 1000 }],
+  };
+
   return (
-    <Animated.View
-      style={[
-        styles.cardContainer,
-        {
-          opacity,
-          transform: [{ translateY }, { scale }, { perspective: 1000 }],
-        },
-      ]}
-    >
-      <Card elevation={2} style={styles.card}>
-        <Card.Title
-          title={card.title}
-          titleStyle={{ fontSize: 24 }}
-          left={(props: any) => (
-            <Avatar.Icon size={props.size} icon={card.icon} />
-          )}
-        />
+    <Animated.View style={[styles.animatedCard, animatedCardStyle]}>
+      <Card style={styles.card}>
         <Card.Content>
-          <Text variant="bodyLarge">{card.content}</Text>
+          <View style={styles.categoryHeader}>
+            <Avatar.Icon
+              size={24}
+              icon={card.icon}
+              style={[styles.headerIcon, { backgroundColor: colors.primary }]}
+            />
+            <Text variant="titleLarge" style={{ color: colors.onSurface }}>
+              {card.title}
+            </Text>
+          </View>
+          <View
+            style={[
+              styles.categoryDivider,
+              { backgroundColor: colors.primary },
+            ]}
+          />
+          <Text
+            variant="bodyLarge"
+            style={{ marginTop: 10, color: colors.onSurfaceVariant }}
+          >
+            {card.content}
+          </Text>
         </Card.Content>
       </Card>
     </Animated.View>
@@ -80,7 +95,7 @@ const styles = StyleSheet.create({
   cardsContainer: {
     gap: 15,
   },
-  cardContainer: {
+  animatedCard: {
     height: CARD_HEIGHT,
     marginBottom: 15,
   },
@@ -101,7 +116,6 @@ const styles = StyleSheet.create({
     marginBottom: 5,
   },
   headerIcon: {
-    backgroundColor: "#6e85d3",
     marginRight: 10,
   },
   heading: {
@@ -117,14 +131,12 @@ const styles = StyleSheet.create({
   categoryDivider: {
     marginTop: 10,
     height: 2,
-    backgroundColor: "#6e85d3",
   },
   categoryButton: {
     width: "47%",
     marginHorizontal: "1.5%",
     marginVertical: 8,
     borderRadius: 12,
-    overflow: "hidden",
   },
   categoryContent: {
     flexDirection: "row",

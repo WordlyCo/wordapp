@@ -5,13 +5,30 @@ import useTheme from "@/hooks/useTheme";
 import { WordCategory } from "@/stores/types";
 import { IconSource } from "react-native-paper/lib/typescript/components/Icon";
 
-const CategoryItem = ({ item }: { item: WordCategory }) => {
+const CategoryItem = ({
+  item,
+  onPress,
+}: {
+  item: WordCategory;
+  onPress: () => void;
+}) => {
   const { colors } = useTheme();
+
+  // Get the category-specific color from the theme
+  const getCategoryColor = () => {
+    if (item.name.toLowerCase() in colors.categories) {
+      return colors.categories[
+        item.name.toLowerCase() as keyof typeof colors.categories
+      ];
+    }
+    return colors.primary;
+  };
+
   return (
     <Button
       style={[styles.categoryButton, { backgroundColor: colors.surface }]}
       mode="elevated"
-      onPress={() => {}}
+      onPress={onPress}
       contentStyle={{
         paddingVertical: 12,
       }}
@@ -23,7 +40,7 @@ const CategoryItem = ({ item }: { item: WordCategory }) => {
           style={[
             styles.categoryIcon,
             {
-              backgroundColor: colors.primary,
+              backgroundColor: getCategoryColor(),
             },
           ]}
           color={colors.onSurface}
@@ -44,7 +61,6 @@ const styles = StyleSheet.create({
     marginHorizontal: "1.5%",
     marginVertical: 8,
     borderRadius: 12,
-    overflow: "hidden",
   },
   categoryContent: {
     flexDirection: "row",

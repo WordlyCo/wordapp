@@ -17,6 +17,8 @@ const LevelDots = ({
   maxLevel: number;
   color: string;
 }) => {
+  const { colors } = useTheme();
+
   return (
     <View style={styles.dotsContainer}>
       {[...Array(maxLevel)].map((_, index) => (
@@ -25,7 +27,7 @@ const LevelDots = ({
           style={[
             styles.dot,
             {
-              backgroundColor: index < level ? color : "rgba(0,0,0,0.1)",
+              backgroundColor: index < level ? color : colors.surfaceDisabled,
               borderColor: color,
             },
           ]}
@@ -35,11 +37,8 @@ const LevelDots = ({
   );
 };
 
-const WordMasteryProgress: React.FC<WordMasteryProgressProps> = ({ word }) => {
-  // const getWordMastery = useStore((state) => state.getWordMastery);
-  // const getMasteryScore = useStore((state) => state.getMasteryScore);
+const WordMasteryProgress: React.FC<WordMasteryProgressProps> = () => {
   const { colors } = useTheme();
-  const mastery = 0;
   const masteryScore = 0;
 
   return (

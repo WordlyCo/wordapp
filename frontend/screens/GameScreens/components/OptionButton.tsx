@@ -24,11 +24,6 @@ const OptionButton = ({
     return colors.surface;
   };
 
-  const getBorderColor = () => {
-    if (isSelected && !isCorrect) return colors.error;
-    return "transparent";
-  };
-
   return (
     <TouchableOpacity
       onPress={onPress}
@@ -37,7 +32,6 @@ const OptionButton = ({
         styles.optionButton,
         {
           backgroundColor: getBackgroundColor(),
-          borderColor: getBorderColor(),
           borderWidth: isSelected ? 2 : 0,
         },
       ]}
@@ -111,7 +105,6 @@ const styles = StyleSheet.create({
   feedbackCard: {
     width: "100%",
     borderRadius: 12,
-    overflow: "hidden",
   },
   feedbackContentContainer: {
     flexDirection: "row",

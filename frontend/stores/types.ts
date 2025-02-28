@@ -1,4 +1,11 @@
-import { DifficultyLevel, NotificationType, SessionType, Theme } from "./enums";
+import {
+  DifficultyLevel,
+  NotificationType,
+  SessionType,
+  Theme,
+  DIFFICULTY_LEVELS,
+  PARTS_OF_SPEECH,
+} from "./enums";
 import { IconSource } from "react-native-paper/lib/typescript/components/Icon";
 
 // Base type for common fields
@@ -113,3 +120,13 @@ export type SessionWord = BaseEntity &
     wasCorrect: boolean;
     timeTaken: number;
   };
+
+export interface WordList {
+  id: string;
+  title: string;
+  description: string;
+  imageUrl: string;
+  category: string;
+  difficulty: (typeof DIFFICULTY_LEVELS)[keyof typeof DIFFICULTY_LEVELS];
+  wordCount: number;
+}

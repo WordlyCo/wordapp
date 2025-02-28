@@ -9,23 +9,33 @@ const StickyHeader = () => {
     <View style={[styles.headerContainer, { backgroundColor: colors.surface }]}>
       {/* Left Section: Logo and Title */}
       <View style={styles.leftContainer}>
-        <Ionicons name="book-outline" size={24} color="#6e85d3" />
-        <Text style={styles.title}>WordBird</Text>
+        <Ionicons name="book-outline" size={24} color={colors.primary} />
+        <Text style={[styles.title, { color: colors.onSurface }]}>
+          WordBird
+        </Text>
       </View>
 
       {/* Right Section: Stats */}
       <View style={styles.rightContainer}>
         <View style={styles.statItem}>
-          <Text style={styles.statValue}>69</Text>
+          <Text style={[styles.statValue, { color: colors.onSurface }]}>
+            67,042
+          </Text>
           <MaterialCommunityIcons
-            name="lightning-bolt"
+            name="diamond"
             size={20}
-            color="#ffd700"
+            color={colors.info}
           />
         </View>
         <View style={styles.statItem}>
-          <Text style={styles.statValue}>67,042</Text>
-          <MaterialCommunityIcons name="diamond" size={20} color="#00bcd4" />
+          <Text style={[styles.statValue, { color: colors.onSurface }]}>
+            69
+          </Text>
+          <MaterialCommunityIcons
+            name="lightning-bolt"
+            size={20}
+            color={colors.streak}
+          />
         </View>
       </View>
     </View>
@@ -51,7 +61,6 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 18,
     fontWeight: "bold",
-    color: "#fff",
     marginLeft: 10,
   },
   rightContainer: {
@@ -65,7 +74,6 @@ const styles = StyleSheet.create({
   },
   statValue: {
     fontSize: 16,
-    color: "#fff",
     marginRight: 5,
   },
 });

@@ -1,6 +1,6 @@
 import React from "react";
-import { View, StyleSheet, Image, ScrollView } from "react-native";
-import { Text, List, Avatar, Divider, Button } from "react-native-paper";
+import { View, StyleSheet, ScrollView } from "react-native";
+import { Text, List, Divider, Button } from "react-native-paper";
 import { useNavigation } from "@react-navigation/native";
 import { StackNavigationProp } from "@react-navigation/stack";
 import useTheme from "@/hooks/useTheme";
@@ -28,11 +28,9 @@ const ProfileScreen = () => {
     logout();
   };
   return (
-    <>
-      <ScrollView
-        style={[styles.container, { backgroundColor: colors.background }]}
-      >
-        <StickyHeader />
+    <View style={[styles.container, { backgroundColor: colors.background }]}>
+      <StickyHeader />
+      <ScrollView>
         {/* Profile Header Section */}
         <View style={styles.profileHeader}>
           <FontAwesome
@@ -41,11 +39,17 @@ const ProfileScreen = () => {
             size={120}
             style={styles.profileHeader}
           />
-          <Text style={styles.userName}>John Doe</Text>
-          <Text style={styles.userEmail}>john.doe@example.com</Text>
+          <Text style={[styles.userName, { color: colors.onSurface }]}>
+            John Doe
+          </Text>
+          <Text style={[styles.userEmail, { color: colors.onSurfaceVariant }]}>
+            john.doe@example.com
+          </Text>
         </View>
 
-        <Divider style={styles.divider} />
+        <Divider
+          style={[styles.divider, { backgroundColor: colors.outline }]}
+        />
 
         {/* Menu Items */}
         <List.Section style={styles.listContainer}>
@@ -85,19 +89,17 @@ const ProfileScreen = () => {
         {/* Logout Button */}
         <View style={styles.logoutContainer}>
           <Button
-            icon="logout"
             mode="contained"
+            icon="logout"
+            style={[styles.logoutButton, { backgroundColor: colors.error }]}
             onPress={handleLogout}
-            style={styles.logoutButton}
-            contentStyle={styles.logoutButtonContent}
-            labelStyle={styles.logoutButtonLabel}
           >
-            Logout
+            Log Out
           </Button>
         </View>
         <Divider style={styles.divider} />
       </ScrollView>
-    </>
+    </View>
   );
 };
 
@@ -119,7 +121,6 @@ const styles = StyleSheet.create({
   },
   userEmail: {
     fontSize: 16,
-    color: "#666",
   },
   divider: {
     height: 1,
@@ -128,9 +129,7 @@ const styles = StyleSheet.create({
   logoutContainer: {
     padding: 20,
   },
-  logoutButton: {
-    backgroundColor: "#5856D6",
-  },
+  logoutButton: {},
   listContainer: {
     paddingHorizontal: 20,
   },

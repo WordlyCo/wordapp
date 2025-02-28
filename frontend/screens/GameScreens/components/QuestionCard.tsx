@@ -6,9 +6,10 @@ import {
   StyleSheet,
 } from "react-native";
 import { Card, ProgressBar } from "react-native-paper";
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { SessionWord } from "@/stores/types";
 import OptionButton from "./OptionButton";
+import { shuffleArray } from "@/utils";
 
 type QuestionCardProps = {
   word: SessionWord;
@@ -33,7 +34,13 @@ const QuestionCard = ({
   selectedAnswer,
   setSelectedAnswer,
 }: QuestionCardProps) => {
-  const [shakeAnimation] = useState(new Animated.Value(0));
+  const [randomizedOptions, setRandomizedOptions] = useState<string[]>([]);
+
+  useEffect(() => {
+    if (word && word.options) {
+      setRandomizedOptions(shuffleArray(word.options));
+    }
+  }, [word, currentIndex]);
 
   return (
     <>
@@ -54,7 +61,6 @@ const QuestionCard = ({
       <Animated.View
         style={[
           styles.questionContainer,
-          { transform: [{ translateX: shakeAnimation }] },
         ]}
       >
         <Card style={[styles.card, { backgroundColor: colors.surface }]}>
@@ -70,7 +76,7 @@ const QuestionCard = ({
       </Animated.View>
 
       <View style={styles.optionsContainer}>
-        {word.synonyms.map((option: string, index: number) => (
+        {randomizedOptions.map((option: string, index: number) => (
           <OptionButton
             key={index}
             onPress={() => handleAnswer(option)}
@@ -150,7 +156,6 @@ const styles = StyleSheet.create({
   feedbackCard: {
     width: "100%",
     borderRadius: 12,
-    overflow: "hidden",
   },
   feedbackContentContainer: {
     flexDirection: "row",

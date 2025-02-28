@@ -21,7 +21,7 @@ const ProfileStack = () => {
         },
         headerStatusBarHeight: 0,
         headerBackTitleStyle: {
-          color: "#4F4CCD",
+          color: colors.primary,
         },
         headerBackImage: (props) => {
           return (

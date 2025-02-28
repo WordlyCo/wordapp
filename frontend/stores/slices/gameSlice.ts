@@ -10,6 +10,7 @@ import { categories } from "../mockData";
 import { SessionType } from "../enums";
 import uuid from "react-native-uuid";
 import { wordData } from "../mockData";
+import { shuffleArray } from "@/utils";
 
 export interface GameSlice {
   isLoading: boolean;
@@ -48,6 +49,11 @@ export const createGameSlice: StateCreator<GameSlice> = (set, get) => ({
   startSession: async (sessionType: SessionType) => {
     set({ isLoading: true });
     await new Promise((resolve) => setTimeout(resolve, 200));
+    const end = Math.random() * (wordData.length - 0) + 0;
+    const begin = Math.random() * (end - 0) + 0;
+
+    const shuffledWords = shuffleArray(wordData);
+
     set({
       currentSession: {
         id: uuid.v4(),
@@ -59,7 +65,7 @@ export const createGameSlice: StateCreator<GameSlice> = (set, get) => ({
         correctAnswers: 0,
         createdAt: new Date(),
         updatedAt: new Date(),
-        sessionWords: wordData.slice(0, 10).map((word) => ({
+        sessionWords: shuffledWords.slice(0, 10).map((word) => ({
           ...word,
           wasCorrect: false,
           timeTaken: 0,

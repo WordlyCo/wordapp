@@ -79,16 +79,16 @@ const SentenceSage = () => {
       }
 
       const apiUrl = `${process.env.EXPO_PUBLIC_API_URL}/api/check-sentence`;
-      console.log('Attempting API call to:', apiUrl);
-      console.log('Request payload:', {
+      console.log("Attempting API call to:", apiUrl);
+      console.log("Request payload:", {
         word: words[currentWordIndex].word,
         sentence: sentence,
       });
-      
+
       const response = await fetch(apiUrl, {
-        method: 'POST',
+        method: "POST",
         headers: {
-          'Content-Type': 'application/json',
+          "Content-Type": "application/json",
         },
         body: JSON.stringify({
           word: words[currentWordIndex].word,
@@ -97,7 +97,7 @@ const SentenceSage = () => {
       });
 
       if (!response.ok) {
-        throw new Error('Network response was not ok');
+        throw new Error("Network response was not ok");
       }
 
       const JSONResponse: SentenceCheckResponse = await response.json();
@@ -200,7 +200,7 @@ const SentenceSage = () => {
               {
                 backgroundColor: openAIResponse.isCorrect
                   ? colors.progress
-                  : "#A42941",
+                  : colors.error,
               },
             ]}
           >
