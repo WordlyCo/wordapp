@@ -1,6 +1,9 @@
 from fastapi import FastAPI
 import asyncpg
 import os
+from dotenv import load_dotenv
+
+load_dotenv()
 
 pool = None 
 
@@ -8,6 +11,7 @@ def init_db(app: FastAPI):
     @app.on_event("startup")
     async def startup_event():
         await create_pool()
+        await create_tables()
 
     @app.on_event("shutdown")
     async def shutdown_event():
@@ -36,3 +40,14 @@ async def close_pool():
     if pool is not None:
         await pool.close()
         pool = None
+
+async def create_tables():
+    """Executes the schema.sql file to create tables."""
+    global pool
+    if pool is None:
+        await create_pool()
+    
+    async with pool.acquire() as conn:
+        with open("db/schema.sql", "r") as f:
+            sql = f.read()
+        await conn.execute(sql)
