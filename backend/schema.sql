@@ -1,14 +1,13 @@
--- Base Table (Automatically Add Creation & Update Timestamps)
-CREATE TABLE users (
+CREATE TABLE IF NOT EXISTS users (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     email VARCHAR(100) UNIQUE NOT NULL,
     username VARCHAR(50) UNIQUE NOT NULL,
-    password_hash TEXT NOT NULL,  -- Store hashed password
+    password_hash TEXT NOT NULL,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
-CREATE TABLE user_preferences (
+CREATE TABLE IF NOT EXISTS user_preferences (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     user_id UUID REFERENCES users(id) ON DELETE CASCADE,
     daily_word_goal INT NOT NULL DEFAULT 10,
@@ -20,7 +19,7 @@ CREATE TABLE user_preferences (
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
-CREATE TABLE user_stats (
+CREATE TABLE IF NOT EXISTS user_stats (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     user_id UUID REFERENCES users(id) ON DELETE CASCADE,
     total_words_learned INT DEFAULT 0,
@@ -32,7 +31,7 @@ CREATE TABLE user_stats (
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
-CREATE TABLE word_categories (
+CREATE TABLE IF NOT EXISTS word_categories (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     name VARCHAR(100) NOT NULL,
     description TEXT,
@@ -43,11 +42,12 @@ CREATE TABLE word_categories (
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
-CREATE TABLE words (
+CREATE TABLE IF NOT EXISTS words (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     word VARCHAR(100) UNIQUE NOT NULL,
     definition TEXT NOT NULL,
     difficulty_level VARCHAR(20) NOT NULL,
+    category_id UUID REFERENCES word_categories(id) ON DELETE SET NULL,
     part_of_speech VARCHAR(50),
     example_sentences TEXT[],
     synonyms TEXT[],
@@ -63,17 +63,24 @@ CREATE TABLE words (
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
-CREATE TABLE user_word_lists (
+CREATE TABLE IF NOT EXISTS user_word_lists (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     user_id UUID REFERENCES users(id) ON DELETE CASCADE,
     name VARCHAR(100) NOT NULL,
     description TEXT,
-    words UUID[],
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
-CREATE TABLE word_progress (
+CREATE TABLE IF NOT EXISTS user_list_words (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    list_id UUID REFERENCES user_word_lists(id) ON DELETE CASCADE,
+    word_id UUID REFERENCES words(id) ON DELETE CASCADE,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    UNIQUE(list_id, word_id)
+);
+
+CREATE TABLE IF NOT EXISTS word_progress (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     user_id UUID REFERENCES users(id) ON DELETE CASCADE,
     word_id UUID REFERENCES words(id) ON DELETE CASCADE,
@@ -87,7 +94,7 @@ CREATE TABLE word_progress (
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
-CREATE TABLE achievements (
+CREATE TABLE IF NOT EXISTS achievements (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     name VARCHAR(100) NOT NULL,
     description TEXT,
@@ -99,29 +106,20 @@ CREATE TABLE achievements (
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
-CREATE TABLE user_achievements (
+CREATE TABLE IF NOT EXISTS user_achievements (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     user_id UUID REFERENCES users(id) ON DELETE CASCADE,
     achievement_id UUID REFERENCES achievements(id) ON DELETE CASCADE,
     achieved_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
-CREATE TABLE practice_sessions (
-    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    user_id UUID REFERENCES users(id) ON DELETE CASCADE,
-    session_type VARCHAR(50) NOT NULL,
-    start_time TIMESTAMP NOT NULL,
-    end_time TIMESTAMP NOT NULL,
-    total_questions INT NOT NULL,
-    correct_answers INT NOT NULL,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-);
-
-CREATE TABLE session_words (
-    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    practice_session_id UUID REFERENCES practice_sessions(id) ON DELETE CASCADE,
-    word_id UUID REFERENCES words(id) ON DELETE CASCADE,
-    was_correct BOOLEAN NOT NULL,
-    time_taken INT NOT NULL
-);
+CREATE INDEX IF NOT EXISTS idx_user_preferences_user_id ON user_preferences(user_id);
+CREATE INDEX IF NOT EXISTS idx_user_stats_user_id ON user_stats(user_id);
+CREATE INDEX IF NOT EXISTS idx_words_category_id ON words(category_id);
+CREATE INDEX IF NOT EXISTS idx_user_word_lists_user_id ON user_word_lists(user_id);
+CREATE INDEX IF NOT EXISTS idx_user_list_words_list_id ON user_list_words(list_id);
+CREATE INDEX IF NOT EXISTS idx_user_list_words_word_id ON user_list_words(word_id);
+CREATE INDEX IF NOT EXISTS idx_word_progress_user_id ON word_progress(user_id);
+CREATE INDEX IF NOT EXISTS idx_word_progress_word_id ON word_progress(word_id);
+CREATE INDEX IF NOT EXISTS idx_user_achievements_user_id ON user_achievements(user_id);
+CREATE INDEX IF NOT EXISTS idx_user_achievements_achievement_id ON user_achievements(achievement_id);

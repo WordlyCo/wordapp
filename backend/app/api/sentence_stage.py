@@ -5,27 +5,31 @@ import os
 from typing import Optional
 import json
 
-router = APIRouter()
+router = APIRouter(prefix="/sentence-stage", tags=["sentence-stage"])
 client = OpenAI(api_key=os.getenv("EXPO_PUBLIC_OPENAPI_KEY"))
+
 
 class SentenceCheckRequest(BaseModel):
     word: str
     sentence: str
+
 
 class SentenceCheckResponse(BaseModel):
     isCorrect: bool
     correctUsage: Optional[str]
     message: str
 
+
 def clean_json_response(json_string: str):
     try:
         return json.loads(json_string)
     except:
         # Clean up common JSON formatting issues
-        cleaned = json_string.replace('\\n', '\n')
+        cleaned = json_string.replace("\\n", "\n")
         cleaned = cleaned.replace('\\"', '"')
-        cleaned = cleaned.replace('\\', '')
+        cleaned = cleaned.replace("\\", "")
         return json.loads(cleaned)
+
 
 @router.post("/check-sentence", response_model=SentenceCheckResponse)
 async def check_sentence(request: SentenceCheckRequest):
@@ -51,23 +55,23 @@ async def check_sentence(request: SentenceCheckRequest):
                     }
 
                     The message field should include a general message about the user's usage even if it was correct.
-                    """
+                    """,
                 },
                 {
                     "role": "user",
                     "content": f"""
                     Current Word: {request.word}
                     Current Sentence: {request.sentence}
-                    """
-                }
+                    """,
+                },
             ],
             model="gpt-4o",
             response_format={"type": "json_object"},
-            max_tokens=150
+            max_tokens=150,
         )
 
         json_response = clean_json_response(response.choices[0].message.content)
         return json_response
 
     except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e)) 
+        raise HTTPException(status_code=500, detail=str(e))

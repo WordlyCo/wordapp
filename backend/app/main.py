@@ -1,12 +1,10 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from app.api import api_router
-from app.db import init_db
-from .api.sentence_sage import router as sentence_sage_router
+from app.api.routes import api_router
+from app.config.db import lifespan
 
-app = FastAPI(title="WordApp")
+app = FastAPI(title="WordApp", lifespan=lifespan)
 
-# middleware setup
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
@@ -15,9 +13,4 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# routes
-app.include_router(api_router, prefix="")
-app.include_router(sentence_sage_router, prefix="/api", tags=["sentence-sage"])
-
-# database initialization
-init_db(app) 
+app.include_router(api_router, prefix="/api")

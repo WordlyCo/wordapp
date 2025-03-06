@@ -1,26 +1,23 @@
 # Word App Backend
 
-Instructions
-1. Install Docker and Docker Compose.
+### How to run
 
-These are typically installed by default if you install [Docker Desktop](https://www.docker.com/products/docker-desktop/). 
-<br>
-Look up how to install it for your OS.
+Create database with docker
 
-2. Start the backend by this command
+1. `docker-compose up -d`
 
-```docker-compose up --build```
+Install python deps
 
-The above command will build and run two separate docker services
-- postgres database 
-- python backend code
+2. `pip install -r requirements.txt`
 
-After running the command, you should be able to see the API live at `http://localhost:8000`
+Run the server
 
-Stop the project by CTRL+C or 
+3. `uvicorn app.main:app --reload`
 
-```docker-compose down```
+### If you install libraries
 
+Don't forget to do
 
-### Resources
-Fully fledged fastAPI template with postgres you can learn from - https://github.com/fastapi/full-stack-fastapi-template
+`pip freeze -> requirements.txt`
+
+Otherwise I will find you.

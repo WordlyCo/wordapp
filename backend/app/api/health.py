@@ -1,7 +1,8 @@
 from fastapi import APIRouter, Depends
-from app.db import get_pool, close_pool
+from app.config.db import get_pool
 
 router = APIRouter()
+
 
 @router.get("/health")
 async def get_health(db=Depends(get_pool)):
@@ -9,4 +10,3 @@ async def get_health(db=Depends(get_pool)):
     if result:
         print("Database fully operational")
     return "All systems operational"
-
