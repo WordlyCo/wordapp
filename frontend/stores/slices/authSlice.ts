@@ -26,44 +26,42 @@ export const createAuthSlice: StateCreator<AuthSlice> = (set, get) => ({
   stats: null,
 
   login: async (email: string, password: string) => {
-    // TODO: Implement actual login logic with backend
-    const mockUser: User = {
-      id: "1",
-      email,
-      username: email.split("@")[0],
-      passwordHash: "", // Not stored in frontend
-      createdAt: new Date(),
-      updatedAt: new Date(),
-      preferences: {
-        id: "1",
-        userId: "1",
-        dailyWordGoal: 5,
-        difficultyLevel: "beginner",
-        notificationEnabled: true,
-        notificationType: "daily",
-        theme: "system",
-        createdAt: new Date(),
-        updatedAt: new Date(),
-      },
-      stats: {
-        id: "1",
-        userId: "1",
-        totalWordsLearned: 0,
-        currentStreak: 0,
-        longestStreak: 0,
-        totalPracticeTime: 0,
-        averageAccuracy: 0,
-        createdAt: new Date(),
-        updatedAt: new Date(),
-      },
-    };
+    try {
+      const response = await fetch("http://localhost:8000/users/token", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ username: email, password }),
+      });
 
-    set({
-      user: mockUser,
-      isAuthenticated: true,
-      preferences: mockUser.preferences,
-      stats: mockUser.stats,
-    });
+      if (!response.ok) {
+        throw new Error("Invalid email or password");
+      }
+
+      const data = await response.json();
+
+      // Store token in localStorage for persistence
+      localStorage.setItem("token", data.access_token);
+
+      // Fetch user details after successful login
+      const userResponse = await fetch("http://localhost:8000/users/me", {
+        headers: { Authorization: `Bearer ${data.access_token}` },
+      });
+
+      if (!userResponse.ok) {
+        throw new Error("Failed to fetch user data");
+      }
+
+      const user = await userResponse.json();
+
+      set({
+        user,
+        isAuthenticated: true,
+        preferences: user.preferences || null,
+        stats: user.stats || null,
+      });
+    } catch (error: any) {
+      console.error("Login failed:", error.message);
+    }
   },
 
   register: async (email: string, password: string, username: string) => {
