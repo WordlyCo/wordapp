@@ -591,7 +591,7 @@ export const wordLists = [
     description:
       "This comprehensive vocabulary list helps middle school students build essential language skills and prepare for academic success.",
     imageUrl:
-      "https://i5.walmartimages.com/seo/The-Picture-of-Dorian-Gray-Barnes-amp-Noble-Collectible-E-9781435159587_1cff8b31-2c2e-4a2a-a8d0-f28cb5d18213.8618330d61e7f993505b1c8d6ebb5626.jpeg",
+      "https://images.unsplash.com/photo-1588072432836-e100327743c6?ixlib=rb-1.2.1&auto=format&fit=crop&w=600",
     category: "Education",
     difficulty: DIFFICULTY_LEVELS.BEGINNER,
     wordCount: 100,
@@ -602,7 +602,7 @@ export const wordLists = [
     description:
       "Master the most frequently appearing words in SAT exams with this carefully curated list.",
     imageUrl:
-      "https://m.media-amazon.com/images/I/71YDWVRi3sL._AC_UF1000,1000_QL80_.jpg",
+      "https://images.unsplash.com/photo-1501504905252-473c47e087f8?ixlib=rb-1.2.1&auto=format&fit=crop&w=600",
     category: "Education",
     difficulty: DIFFICULTY_LEVELS.ADVANCED,
     wordCount: 500,
@@ -613,7 +613,7 @@ export const wordLists = [
     description:
       "Essential vocabulary for business professionals, including common terms used in meetings, emails, and presentations.",
     imageUrl:
-      "https://m.media-amazon.com/images/I/71af5OwfbGL._AC_UF1000,1000_QL80_.jpg",
+      "https://images.unsplash.com/photo-1552581234-26160f608093?ixlib=rb-1.2.1&auto=format&fit=crop&w=600",
     category: "Business",
     difficulty: DIFFICULTY_LEVELS.INTERMEDIATE,
     wordCount: 200,
@@ -624,7 +624,7 @@ export const wordLists = [
     description:
       "A foundational list of medical terms and vocabulary essential for healthcare professionals and students.",
     imageUrl:
-      "https://m.media-amazon.com/images/I/71jqb2rVEtL._AC_UF1000,1000_QL80_.jpg",
+      "https://images.unsplash.com/photo-1532938911079-1b06ac7ceec7?ixlib=rb-1.2.1&auto=format&fit=crop&w=600",
     category: "Medical",
     difficulty: DIFFICULTY_LEVELS.ADVANCED,
     wordCount: 300,
@@ -635,7 +635,7 @@ export const wordLists = [
     description:
       "Stay up-to-date with essential technology vocabulary used in software development and IT.",
     imageUrl:
-      "https://m.media-amazon.com/images/I/71RiQZ0J2+L._AC_UF1000,1000_QL80_.jpg",
+      "https://images.unsplash.com/photo-1518770660439-4636190af475?ixlib=rb-1.2.1&auto=format&fit=crop&w=600",
     category: "Technology",
     difficulty: DIFFICULTY_LEVELS.INTERMEDIATE,
     wordCount: 150,
@@ -646,7 +646,7 @@ export const wordLists = [
     description:
       "Explore the language of literature with this comprehensive list of literary terms and devices.",
     imageUrl:
-      "https://m.media-amazon.com/images/I/61BWsc9eGbL._AC_UF1000,1000_QL80_.jpg",
+      "https://images.unsplash.com/photo-1495446815901-a7297e633e8d?ixlib=rb-1.2.1&auto=format&fit=crop&w=600",
     category: "Literature",
     difficulty: DIFFICULTY_LEVELS.ADVANCED,
     wordCount: 120,
@@ -657,7 +657,7 @@ export const wordLists = [
     description:
       "Essential legal vocabulary for law students, paralegals, and anyone interested in legal terminology.",
     imageUrl:
-      "https://m.media-amazon.com/images/I/71af5OwfbGL._AC_UF1000,1000_QL80_.jpg",
+      "https://images.unsplash.com/photo-1589829545856-d10d557cf95f?ixlib=rb-1.2.1&auto=format&fit=crop&w=600",
     category: "Legal",
     difficulty: DIFFICULTY_LEVELS.ADVANCED,
     wordCount: 250,
@@ -668,7 +668,7 @@ export const wordLists = [
     description:
       "Improve your daily communication with this collection of commonly used phrases and expressions.",
     imageUrl:
-      "https://m.media-amazon.com/images/I/71YZ5+DiKQL._AC_UF1000,1000_QL80_.jpg",
+      "https://images.unsplash.com/photo-1488521787991-ed7bbaae773c?ixlib=rb-1.2.1&auto=format&fit=crop&w=600",
     category: "General",
     difficulty: DIFFICULTY_LEVELS.BEGINNER,
     wordCount: 100,
@@ -679,7 +679,7 @@ export const wordLists = [
     description:
       "Enhance your academic writing with sophisticated vocabulary commonly used in research papers and essays.",
     imageUrl:
-      "https://m.media-amazon.com/images/I/71nqUwxGTYL._AC_UF1000,1000_QL80_.jpg",
+      "https://images.unsplash.com/photo-1455390582262-044cdead138a?ixlib=rb-1.2.1&auto=format&fit=crop&w=600",
     category: "Academic",
     difficulty: DIFFICULTY_LEVELS.ADVANCED,
     wordCount: 200,
@@ -690,7 +690,7 @@ export const wordLists = [
     description:
       "Expand your creative writing vocabulary with descriptive words and phrases for storytelling.",
     imageUrl:
-      "https://m.media-amazon.com/images/I/61BWsc9eGbL._AC_UF1000,1000_QL80_.jpg",
+      "https://images.unsplash.com/photo-1516979187457-637abb4f9353?ixlib=rb-1.2.1&auto=format&fit=crop&w=600",
     category: "Creative",
     difficulty: DIFFICULTY_LEVELS.INTERMEDIATE,
     wordCount: 150,

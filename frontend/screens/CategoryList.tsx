@@ -2,12 +2,27 @@ import React, { useState } from "react";
 import { Text, Card, Button, Searchbar } from "react-native-paper";
 import StickyHeader from "@/components/StickyHeader";
 import { FlashList } from "@shopify/flash-list";
-import { Image, StyleSheet, View, Pressable } from "react-native";
+import {
+  Image,
+  StyleSheet,
+  View,
+  Pressable,
+  TouchableOpacity,
+} from "react-native";
 import useTheme, { ColorType } from "@/hooks/useTheme";
 import { wordLists } from "@/stores/mockData";
 import { WordList } from "@/stores/types";
 import MaterialCommunityIcons from "@expo/vector-icons/MaterialCommunityIcons";
 import { DIFFICULTY_LEVELS } from "@/stores/enums";
+import { useNavigation } from "@react-navigation/native";
+import { StackNavigationProp } from "@react-navigation/stack";
+
+type CategoryStackParamList = {
+  CategoryList: undefined;
+  ListDetails: { listId: string };
+};
+
+type CategoryListNavigationProp = StackNavigationProp<CategoryStackParamList>;
 
 const Header = ({ colors }: { colors: ColorType }) => {
   return (
@@ -82,6 +97,7 @@ const MetadataItem = ({
 const CategoryList = () => {
   const { colors } = useTheme();
   const [searchQuery, setSearchQuery] = useState("");
+  const navigation = useNavigation<CategoryListNavigationProp>();
 
   // Filter word lists based on search query
   const filteredLists = wordLists.filter(
@@ -91,12 +107,16 @@ const CategoryList = () => {
       list.category.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
+  const handleSearch = (text: string) => {
+    setSearchQuery(text);
+  };
+
   const renderItem = ({ item }: { item: WordList }) => {
     const difficultyColor = getDifficultyColor(item.difficulty, colors);
     const categoryIcon = getCategoryIcon(item.category);
 
     const handleCardPress = () => {
-      console.log("View details for:", item.title);
+      navigation.navigate("ListDetails", { listId: item.id });
     };
 
     return (
@@ -114,7 +134,12 @@ const CategoryList = () => {
         />
         <Card.Content>
           <View style={styles.contentContainer}>
-            <View style={styles.textContainer}>
+            <View
+              style={[
+                styles.textContainer,
+                !item.imageUrl && styles.fullWidthTextContainer,
+              ]}
+            >
               <Text
                 style={[styles.description, { color: colors.onSurfaceVariant }]}
               >
@@ -170,8 +195,8 @@ const CategoryList = () => {
                 </Button>
               </View>
             </View>
-            <View style={styles.imageContainer}>
-              {item.imageUrl && (
+            {item.imageUrl && (
+              <View style={styles.imageContainer}>
                 <Image
                   style={styles.image}
                   resizeMode="cover"
@@ -179,8 +204,8 @@ const CategoryList = () => {
                     uri: item.imageUrl,
                   }}
                 />
-              )}
-            </View>
+              </View>
+            )}
           </View>
         </Card.Content>
       </Card>
@@ -197,9 +222,34 @@ const CategoryList = () => {
             <View style={styles.searchContainer}>
               <Searchbar
                 placeholder="Search word lists..."
-                onChangeText={setSearchQuery}
+                onChangeText={handleSearch}
                 value={searchQuery}
-                style={[styles.searchBar, { borderColor: colors.outline }]}
+                style={[
+                  styles.searchBar,
+                  {
+                    backgroundColor: colors.surface,
+                    borderColor: colors.outline,
+                  },
+                ]}
+                elevation={0}
+                icon={() => (
+                  <MaterialCommunityIcons
+                    name="magnify"
+                    size={24}
+                    color={colors.onSurfaceVariant}
+                  />
+                )}
+                clearIcon={() =>
+                  searchQuery ? (
+                    <TouchableOpacity onPress={() => handleSearch("")}>
+                      <MaterialCommunityIcons
+                        name="close"
+                        size={24}
+                        color={colors.primary}
+                      />
+                    </TouchableOpacity>
+                  ) : null
+                }
               />
             </View>
             <Header colors={colors} />
@@ -228,6 +278,7 @@ const styles = StyleSheet.create({
     marginBottom: 15,
     elevation: 0,
     borderWidth: 1,
+    borderRadius: 12,
   },
   listContainer: {
     paddingBottom: 20,
@@ -263,6 +314,10 @@ const styles = StyleSheet.create({
     flex: 2,
     paddingRight: 12,
     justifyContent: "space-between",
+  },
+  fullWidthTextContainer: {
+    flex: 1,
+    paddingRight: 0,
   },
   description: {
     marginBottom: 12,
