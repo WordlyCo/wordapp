@@ -1,26 +1,22 @@
 import { createStackNavigator } from "@react-navigation/stack";
-import HomeTab from "@/screens/HomeTab";
+import StoreTab from "@/screens/StoreTab";
 import CategoryList from "@/screens/CategoryList";
 import ListDetails from "@/screens/ListDetails";
-import MultipleChoice from "@/screens/GameScreens/MultipleChoice";
-import SentenceSage from "@/screens/GameScreens/SentenceSage";
 
 const Stack = createStackNavigator();
 
-const HomeStack = () => {
+const StoreStack = () => {
   return (
     <Stack.Navigator
       screenOptions={{
         headerShown: false,
       }}
     >
-      <Stack.Screen name="HomeMain" component={HomeTab} />
+      <Stack.Screen name="StoreMain" component={StoreTab} />
       <Stack.Screen name="CategoryList" component={CategoryList} />
       <Stack.Screen name="ListDetails" component={ListDetails} />
-      <Stack.Screen name="MultipleChoice" component={MultipleChoice} />
-      <Stack.Screen name="SentenceSage" component={SentenceSage} />
     </Stack.Navigator>
   );
 };
 
-export default HomeStack;
+export default StoreStack;

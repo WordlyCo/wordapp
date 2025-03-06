@@ -73,7 +73,12 @@ export const WordListCard = ({
       />
       <Card.Content>
         <View style={styles.contentLayout}>
-          <View style={styles.textSection}>
+          <View
+            style={[
+              styles.textSection,
+              !list.imageUrl && styles.fullWidthTextSection,
+            ]}
+          >
             <Text
               variant="bodyMedium"
               style={[styles.description, { color: colors.onSurfaceVariant }]}
@@ -164,6 +169,10 @@ const styles = StyleSheet.create({
   textSection: {
     flex: 3,
     paddingRight: 12,
+  },
+  fullWidthTextSection: {
+    flex: 1,
+    paddingRight: 0,
   },
   imageSection: {
     flex: 1,
