@@ -1,10 +1,12 @@
 import { StateCreator } from "zustand";
 import { User, UserPreferences, UserStats } from "../types";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 
 export interface AuthSlice {
   user: User | null;
   isAuthenticated: boolean;
   preferences: UserPreferences | null;
+  token: string | null;
   stats: UserStats | null;
 
   // Methods
@@ -24,7 +26,9 @@ export const createAuthSlice: StateCreator<AuthSlice> = (set, get) => ({
   isAuthenticated: false,
   preferences: null,
   stats: null,
+  token: null,
 
+  //LOGIN USER
   login: async (email: string, password: string) => {
     try {
       const response = await fetch("http://localhost:8000/users/token", {
@@ -39,10 +43,10 @@ export const createAuthSlice: StateCreator<AuthSlice> = (set, get) => ({
 
       const data = await response.json();
 
-      // Store token in localStorage for persistence
-      localStorage.setItem("token", data.access_token);
+      // Store token in AsyncStorage
+      await AsyncStorage.setItem("token", data.access_token);
 
-      // Fetch user details after successful login
+      // Fetch user details after login
       const userResponse = await fetch("http://localhost:8000/users/me", {
         headers: { Authorization: `Bearer ${data.access_token}` },
       });
@@ -56,6 +60,7 @@ export const createAuthSlice: StateCreator<AuthSlice> = (set, get) => ({
       set({
         user,
         isAuthenticated: true,
+        token: data.access_token, // Save token in Zustand state
         preferences: user.preferences || null,
         stats: user.stats || null,
       });
@@ -64,51 +69,37 @@ export const createAuthSlice: StateCreator<AuthSlice> = (set, get) => ({
     }
   },
 
+  //REGISTER USER
   register: async (email: string, password: string, username: string) => {
-    // TODO: Implement actual registration logic with backend
-    const mockUser: User = {
-      id: Math.random().toString(),
-      email,
-      username,
-      passwordHash: "",
-      createdAt: new Date(),
-      updatedAt: new Date(),
-      preferences: {
-        id: Math.random().toString(),
-        userId: "1",
-        dailyWordGoal: 5,
-        difficultyLevel: "beginner",
-        notificationEnabled: true,
-        notificationType: "daily",
-        theme: "system",
-        createdAt: new Date(),
-        updatedAt: new Date(),
-      },
-      stats: {
-        id: Math.random().toString(),
-        userId: "1",
-        totalWordsLearned: 0,
-        currentStreak: 0,
-        longestStreak: 0,
-        totalPracticeTime: 0,
-        averageAccuracy: 0,
-        createdAt: new Date(),
-        updatedAt: new Date(),
-      },
-    };
+    try {
+      const response = await fetch("http://localhost:8000/users/register", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email, password, username }),
+      });
 
-    set({
-      user: mockUser,
-      isAuthenticated: true,
-      preferences: mockUser.preferences,
-      stats: mockUser.stats,
-    });
+      if (!response.ok) {
+        throw new Error("Registration failed");
+      }
+
+      // Auto-login after successful registration
+      await get().login(email, password);
+
+      // check the token is stored properly
+      const token = await AsyncStorage.getItem("token");
+      if (!token) throw new Error("Token not found after registration");
+    } catch (error: any) {
+      console.error("Registration failed:", error.message);
+    }
   },
 
-  logout: () => {
+  logout: async () => {
+    await AsyncStorage.removeItem("token"); // Remove token from storage
+
     set({
       user: null,
       isAuthenticated: false,
+      token: null,
       preferences: null,
       stats: null,
     });
@@ -127,6 +118,40 @@ export const createAuthSlice: StateCreator<AuthSlice> = (set, get) => ({
     }
   },
 
+  //FETCH USER
+  fetchUser: async () => {
+    try {
+      const token = await AsyncStorage.getItem("token");
+      if (!token) return;
+
+      const response = await fetch("http://localhost:8000/users/me", {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+
+      if (response.status === 401) {
+        console.error("Session expired. Logging out...");
+        await get().logout();
+        return;
+      }
+
+      if (!response.ok) throw new Error("User fetch failed");
+
+      const user = await response.json();
+
+      set({
+        user,
+        isAuthenticated: true,
+        token,
+        preferences: user.preferences || null,
+        stats: user.stats || null,
+      });
+    } catch (error) {
+      console.error("Fetching user failed:", error);
+      await get().logout();
+    }
+  },
+
+  //UPDATE USER STATS
   updateStats: (newStats: Partial<UserStats>) => {
     const currentStats = get().stats;
     if (currentStats) {
