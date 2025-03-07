@@ -6,6 +6,8 @@ Create database with docker
 
 1. `docker-compose up -d`
 
+2. `alembic upgrade head`
+
 Install python deps
 
 2. `pip install -r requirements.txt`
