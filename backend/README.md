@@ -1,25 +1,31 @@
 # Word App Backend
+- Welcome to the Word Bird App! Follow this step-by-step guide to get everything running locally.
 
-### How to run
+# How to run
 
-Create database with docker
+### Step 1: Install Python Dependencies
 
-1. `docker-compose up -d`
+```bash
+pip install -r requirements.txt
+```
 
-2. `alembic upgrade head`
+### Step 2: Create database with docker
+```bash
+docker-compose up -d
+```
+#### Once the database is up, apply migrations in a new terminal:
+```bash
+alembic upgrade head
+```
 
-Install python deps
-
-2. `pip install -r requirements.txt`
-
-Run the server
-
-3. `uvicorn app.main:app --reload`
-
-### If you install libraries
+### Step 3: Run the FastAPI server
+```bash
+uvicorn app.main:app --reload
+```
+### If you installed new libraries
 
 Don't forget to do
-
-`pip freeze -> requirements.txt`
-
+```bash
+pip freeze -> requirements.txt
+```
 Otherwise I will find you.
