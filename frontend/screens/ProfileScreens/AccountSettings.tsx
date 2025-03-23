@@ -19,14 +19,33 @@ const AccountSettingsScreen = () => {
   const updatePreferences = useStore((state) => state.updatePreferences);
   const preferences = useStore((state) => state.preferences);
 
-  const [username, setUsername] = useState("John Doe");
+  const [displayName, setDisplayName] = useState("John Doe");
+  const [username, setUsername] = useState("johndoe");
   const [email, setEmail] = useState("john.doe@example.com");
   const [phone, setPhone] = useState("+1 234 567 8900");
+  
+  // State for revealing masked fields
+  const [revealEmail, setRevealEmail] = useState(false);
+  const [revealPhone, setRevealPhone] = useState(false);
   
   // Get current profile background color index
   const [selectedColorIndex, setSelectedColorIndex] = useState(
     preferences?.profileBackgroundColorIndex ?? 0
   );
+
+  // Function to mask email
+  const maskEmail = (email: string) => {
+    if (!email || !email.includes('@')) return email;
+    const [username, domain] = email.split('@');
+    return '•'.repeat(username.length) + '@' + domain;
+  };
+
+  // Function to mask phone number
+  const maskPhone = (phone: string) => {
+    if (!phone || phone.length < 4) return phone;
+    const lastFourDigits = phone.slice(-4);
+    return '•'.repeat(phone.length - 4) + lastFourDigits;
+  };
 
   const handleSave = () => {
     // Save user preferences including color
@@ -71,28 +90,49 @@ const AccountSettingsScreen = () => {
       {/* Edit Profile Section */}
       <View style={styles.inputSection}>
         <TextInput
-          label="Username"
+          label="DISPLAY NAME"
+          value={displayName}
+          onChangeText={setDisplayName}
+          mode="outlined"
+          style={styles.input}
+        />
+        <TextInput
+          label="USERNAME"
           value={username}
           onChangeText={setUsername}
           mode="outlined"
           style={styles.input}
         />
-        <TextInput
-          label="Email"
-          value={email}
-          onChangeText={setEmail}
-          mode="outlined"
-          style={styles.input}
-          keyboardType="email-address"
-        />
-        <TextInput
-          label="Phone Number"
-          value={phone}
-          onChangeText={setPhone}
-          mode="outlined"
-          style={styles.input}
-          keyboardType="phone-pad"
-        />
+        <View style={styles.sensitiveFieldWrapper}>
+          <TextInput
+            label="EMAIL"
+            value={revealEmail ? email : maskEmail(email)}
+            onChangeText={setEmail}
+            mode="outlined"
+            style={styles.input}
+            keyboardType="email-address"
+          />
+          <TouchableOpacity onPress={() => setRevealEmail(!revealEmail)}>
+            <Text style={[styles.revealText, { color: colors.primary }]}>
+              {revealEmail ? "Hide" : "Reveal"}
+            </Text>
+          </TouchableOpacity>
+        </View>
+        <View style={styles.sensitiveFieldWrapper}>
+          <TextInput
+            label="PHONE NUMBER"
+            value={revealPhone ? phone : maskPhone(phone)}
+            onChangeText={setPhone}
+            mode="outlined"
+            style={styles.input}
+            keyboardType="phone-pad"
+          />
+          <TouchableOpacity onPress={() => setRevealPhone(!revealPhone)}>
+            <Text style={[styles.revealText, { color: colors.primary }]}>
+              {revealPhone ? "Hide" : "Reveal"}
+            </Text>
+          </TouchableOpacity>
+        </View>
         
         {/* Profile Background Color Section */}
         <Text style={[styles.sectionTitle, { color: colors.onSurface }]}>
@@ -144,12 +184,22 @@ const styles = StyleSheet.create({
     padding: 20,
   },
   input: {
-    marginBottom: 15,
+    marginBottom: 5,
+  },
+  sensitiveFieldWrapper: {
+    marginBottom: 8,
+  },
+  revealText: {
+    fontSize: 14,
+    fontWeight: "600",
+    textAlign: "left",
+    marginTop: 2,
+    marginBottom: 0,
   },
   sectionTitle: {
     fontSize: 18,
     fontWeight: "bold",
-    marginTop: 20,
+    marginTop: 10,
     marginBottom: 15,
   },
   colorList: {
