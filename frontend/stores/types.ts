@@ -30,6 +30,7 @@ export type UserPreferences = BaseEntity & {
   notificationEnabled: boolean;
   notificationType: NotificationType;
   theme: Theme;
+  profileBackgroundColorIndex: number;
 };
 
 export type UserStats = BaseEntity & {

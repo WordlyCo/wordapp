@@ -6,6 +6,7 @@ import { StackNavigationProp } from "@react-navigation/stack";
 import useTheme from "@/hooks/useTheme";
 import StickyHeader from "@/components/StickyHeader";
 import { useStore } from "@/stores/store";
+import { PROFILE_BACKGROUND_COLORS } from "@/constants/profileColors";
 
 // Import local headshot image
 const headshotImage = require('@/assets/images/headshot.png');
@@ -22,27 +23,44 @@ const ProfileScreen = () => {
   const navigation = useNavigation<ProfileScreenNavigationProp>();
   const { colors } = useTheme();
   const [activeTab, setActiveTab] = useState('Stats');
+  
+  // Get profile background color from user preferences
+  const profileBackgroundColorIndex = useStore(
+    (state) => state.preferences?.profileBackgroundColorIndex ?? 0
+  );
 
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>
       <StickyHeader />
       
       <ScrollView>
-        {/* Profile Card */}
-        <View style={styles.profileCard}>
-          {/* Profile Header with Settings Button */}
+        {/* Profile Background */}
+        <View 
+          style={[
+            styles.profileBackground, 
+            { backgroundColor: PROFILE_BACKGROUND_COLORS[profileBackgroundColorIndex] }
+          ]}
+        >
+          {/* Settings Icon on top of background */}
           <View style={styles.profileHeader}>
             <View style={{ flex: 1 }} />
             <IconButton
               icon="cog"
               size={24}
+              iconColor="white"
               onPress={() => navigation.navigate("Settings" as never)}
               style={styles.settingsButton}
             />
           </View>
-          
+        </View>
+        
+        {/* Profile Card - positioned to overlap the background */}
+        <View style={styles.profileCard}>
           {/* Profile Image */}
-          <View style={[styles.avatarContainer, { backgroundColor: colors.primaryContainer }]}>
+          <View style={[styles.avatarContainer, { 
+            backgroundColor: colors.primaryContainer,
+            marginTop: -60, // Lift avatar up to overlap with background
+          }]}>
             <Image
               source={headshotImage}
               style={styles.avatar}
@@ -116,25 +134,33 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
   },
-  profileCard: {
-    alignItems: "center",
-    paddingVertical: 10,
-    paddingHorizontal: 20,
+  profileBackground: {
+    height: 150,
+    width: '100%',
+    borderBottomWidth: 1,
+    borderBottomColor: 'rgba(0,0,0,0.1)', // Subtle border at the bottom
+    borderTopWidth: 1,
+    borderTopColor: 'rgba(0,0,0,0.1)', // Subtle border at the top
   },
   profileHeader: {
     flexDirection: 'row',
     justifyContent: 'flex-end',
     width: '100%',
-    marginBottom: 5,
+    padding: 10,
   },
   settingsButton: {
     margin: 0,
   },
+  profileCard: {
+    alignItems: "center",
+    paddingVertical: 10,
+    paddingHorizontal: 20,
+    marginTop: -40, // Pull card up to overlap with background
+  },
   avatarContainer: {
-    marginVertical: 15,
+    marginBottom: 15,
     borderRadius: 100,
     padding: 4,
-    marginBottom: 15,
   },
   avatar: {
     width: 120,
