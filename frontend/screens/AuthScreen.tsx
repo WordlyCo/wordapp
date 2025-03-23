@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { View, StyleSheet, Alert, ScrollView, Image } from "react-native";
 import { Text, Button, TextInput, SegmentedButtons } from "react-native-paper";
+import { SafeAreaView } from "react-native-safe-area-context";
 import { useStore } from "@/stores/store";
 import useTheme from "@/hooks/useTheme";
 
@@ -52,17 +53,19 @@ const AuthScreen: React.FC = () => {
   };
 
   return (
-    <View style={[styles.container, { backgroundColor: colors.background }]}>
+    <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]} edges={['top']}>
       <ScrollView contentContainerStyle={styles.scrollViewContainer}>
-        <Text variant="headlineLarge" style={styles.title}>
-          Welcome to WordBird!
-        </Text>
+        <View style={styles.headerContainer}>
+          <Text variant="headlineLarge" style={styles.title}>
+            Welcome to WordBird!
+          </Text>
 
-        <Image
-          style={styles.image}
-          source={require("@/assets/images/CandyCueDarkishBlue.png")}
-          resizeMode="contain"
-        />
+          <Image
+            style={styles.image}
+            source={require("@/assets/images/CandyCueDarkishBlue.png")}
+            resizeMode="contain"
+          />
+        </View>
 
         <SegmentedButtons
           value={mode}
@@ -132,7 +135,7 @@ const AuthScreen: React.FC = () => {
           </Button>
         </View>
       </ScrollView>
-    </View>
+    </SafeAreaView>
   );
 };
 
@@ -144,6 +147,9 @@ const styles = StyleSheet.create({
   scrollViewContainer: {
     flexGrow: 1,
     gap: 15,
+  },
+  headerContainer: {
+    alignItems: 'center',
   },
   title: {
     textAlign: "center",
