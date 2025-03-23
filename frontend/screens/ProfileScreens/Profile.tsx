@@ -1,103 +1,112 @@
-import React from "react";
-import { View, StyleSheet, ScrollView } from "react-native";
-import { Text, List, Divider, Button } from "react-native-paper";
+import React, { useState } from "react";
+import { View, StyleSheet, ScrollView, Image, TouchableOpacity } from "react-native";
+import { Text, Button, IconButton } from "react-native-paper";
 import { useNavigation } from "@react-navigation/native";
 import { StackNavigationProp } from "@react-navigation/stack";
 import useTheme from "@/hooks/useTheme";
-import FontAwesome from "@expo/vector-icons/FontAwesome";
 import StickyHeader from "@/components/StickyHeader";
 import { useStore } from "@/stores/store";
 
+// Import local headshot image
+const headshotImage = require('@/assets/images/headshot.png');
+
 type ProfileStackParamList = {
   ProfileMain: undefined;
-  UserSettingsScreen: undefined;
   Settings: undefined;
-  HelpCenter: undefined;
-  PrivacyPolicy: undefined;
+  AccountSettings: undefined;
 };
 
 type ProfileScreenNavigationProp = StackNavigationProp<ProfileStackParamList>;
 
 const ProfileScreen = () => {
   const navigation = useNavigation<ProfileScreenNavigationProp>();
-  const logout = useStore((state) => state.logout);
   const { colors } = useTheme();
+  const [activeTab, setActiveTab] = useState('Stats');
 
-  const handleLogout = () => {
-    console.log("Logging out...");
-    logout();
-  };
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>
       <StickyHeader />
+      
       <ScrollView>
-        {/* Profile Header Section */}
-        <View style={styles.profileHeader}>
-          <FontAwesome
-            name="user-circle"
-            color={colors.onSurface}
-            size={120}
-            style={styles.profileHeader}
-          />
-          <Text style={[styles.userName, { color: colors.onSurface }]}>
-            John Doe
-          </Text>
-          <Text style={[styles.userEmail, { color: colors.onSurfaceVariant }]}>
-            john.doe@example.com
-          </Text>
+        {/* Profile Card */}
+        <View style={styles.profileCard}>
+          {/* Profile Header with Settings Button */}
+          <View style={styles.profileHeader}>
+            <View style={{ flex: 1 }} />
+            <IconButton
+              icon="cog"
+              size={24}
+              onPress={() => navigation.navigate("Settings" as never)}
+              style={styles.settingsButton}
+            />
+          </View>
+          
+          {/* Profile Image */}
+          <View style={[styles.avatarContainer, { backgroundColor: colors.primaryContainer }]}>
+            <Image
+              source={headshotImage}
+              style={styles.avatar}
+            />
+          </View>
+          
+          {/* User Info */}
+          <Text style={[styles.userName, { color: colors.onSurface }]}>John Doe</Text>
+          <Text style={[styles.userTitle, { color: colors.onSurfaceVariant }]}>Product Designer</Text>
+          <Text style={[styles.userLocation, { color: colors.onSurfaceVariant }]}>Los Angeles, CA</Text>
+          
+          {/* User Stats */}
+          <View style={styles.statsContainer}>
+            <View style={styles.statItem}>
+              <Text style={[styles.statNumber, { color: colors.primary }]}>205</Text>
+              <Text style={[styles.statLabel, { color: colors.onSurfaceVariant }]}>Followers</Text>
+            </View>
+            <View style={styles.statItem}>
+              <Text style={[styles.statNumber, { color: colors.primary }]}>178</Text>
+              <Text style={[styles.statLabel, { color: colors.onSurfaceVariant }]}>Following</Text>
+            </View>
+          </View>
+          
+          {/* Action Buttons */}
+          <View style={styles.actionContainer}>
+            <Button
+              mode="contained"
+              style={[styles.actionButton, { backgroundColor: colors.primary }]}
+              labelStyle={styles.actionButtonLabel}
+              onPress={() => navigation.navigate("AccountSettings" as never)}
+            >
+              Edit Profile
+            </Button>
+            <Button
+              mode="contained"
+              style={[styles.actionButton, { backgroundColor: colors.primary }]}
+              labelStyle={styles.actionButtonLabel}
+            >
+              Add Friends
+            </Button>
+          </View>
+          
+          {/* Tab Selection */}
+          <View style={[styles.tabContainer, { borderBottomColor: colors.outline }]}>
+            <TouchableOpacity 
+              style={[styles.tabButton, activeTab === 'Stats' && styles.activeTab, 
+                activeTab === 'Stats' && { borderBottomColor: colors.primary }]} 
+              onPress={() => setActiveTab('Stats')}>
+              <Text style={[
+                styles.tabText, 
+                { color: colors.onSurfaceVariant },
+                activeTab === 'Stats' && styles.activeTabText,
+                activeTab === 'Stats' && { color: colors.primary }
+              ]}>
+                Stats
+              </Text>
+            </TouchableOpacity>
+          </View>
+          
+          {/* Content Area */}
+          <View style={styles.contentArea}>
+            {/* Content will be added here */}
+          </View>
         </View>
-
-        <Divider
-          style={[styles.divider, { backgroundColor: colors.outline }]}
-        />
-
-        {/* Menu Items */}
-        <List.Section style={styles.listContainer}>
-          <List.Item
-            title="Account Settings"
-            left={(props) => <List.Icon icon="account-cog" />}
-            right={(props) => <List.Icon icon="chevron-right" />}
-            onPress={() => navigation.navigate("AccountSettings" as never)}
-          />
-          <List.Item
-            title="Preferences"
-            left={(props) => <List.Icon icon="cog" />}
-            right={(props) => <List.Icon icon="chevron-right" />}
-            onPress={() => navigation.navigate("Preferences" as never)}
-          />
-          <List.Item
-            title="Payment Methods"
-            left={(props) => <List.Icon icon="credit-card" />}
-            right={(props) => <List.Icon icon="chevron-right" />}
-            onPress={() => {
-              /* Handle navigation */
-            }}
-          />
-          <List.Item
-            title="Help Center"
-            left={(props) => <List.Icon icon="help-circle" />}
-            right={(props) => <List.Icon icon="chevron-right" />}
-            onPress={() => navigation.navigate("HelpCenter")}
-          />
-          <List.Item
-            title="Privacy Policy"
-            left={(props) => <List.Icon icon="shield-account" />}
-            right={(props) => <List.Icon icon="chevron-right" />}
-            onPress={() => navigation.navigate("PrivacyPolicy")}
-          />
-        </List.Section>
-        {/* Logout Button */}
-        <View style={styles.logoutContainer}>
-          <Button
-            mode="contained"
-            icon="logout"
-            style={[styles.logoutButton, { backgroundColor: colors.error }]}
-            onPress={handleLogout}
-          >
-            Log Out
-          </Button>
-        </View>
-        <Divider style={styles.divider} />
       </ScrollView>
     </View>
   );
@@ -107,37 +116,100 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
   },
-  profileHeader: {
+  profileCard: {
     alignItems: "center",
-    paddingVertical: 20,
+    paddingVertical: 10,
+    paddingHorizontal: 20,
+  },
+  profileHeader: {
+    flexDirection: 'row',
+    justifyContent: 'flex-end',
+    width: '100%',
+    marginBottom: 5,
+  },
+  settingsButton: {
+    margin: 0,
+  },
+  avatarContainer: {
+    marginVertical: 15,
+    borderRadius: 100,
+    padding: 4,
+    marginBottom: 15,
   },
   avatar: {
-    marginVertical: 15,
+    width: 120,
+    height: 120,
+    borderRadius: 60,
   },
   userName: {
     fontSize: 24,
     fontWeight: "bold",
     marginBottom: 5,
   },
-  userEmail: {
+  userTitle: {
     fontSize: 16,
+    marginBottom: 5,
   },
-  divider: {
-    height: 1,
+  userLocation: {
+    fontSize: 14,
+    marginBottom: 20,
+  },
+  statsContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-around',
+    width: '80%',
+    paddingHorizontal: 20,
+    marginVertical: 20,
+  },
+  statItem: {
+    alignItems: 'center',
+  },
+  statNumber: {
+    fontSize: 24,
+    fontWeight: 'bold',
+  },
+  statLabel: {
+    fontSize: 14,
+  },
+  actionContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    width: '100%',
+    marginVertical: 15,
+  },
+  actionButton: {
+    flex: 1,
+    marginHorizontal: 5,
+    borderRadius: 8,
+  },
+  actionButtonLabel: {
+    color: 'white',
+    fontSize: 14,
+  },
+  tabContainer: {
+    flexDirection: 'row',
+    width: '100%',
+    borderBottomWidth: 1,
     marginVertical: 10,
   },
-  logoutContainer: {
-    padding: 20,
-  },
-  logoutButton: {},
-  listContainer: {
+  tabButton: {
+    paddingVertical: 10,
     paddingHorizontal: 20,
+    borderBottomWidth: 2,
+    borderBottomColor: 'transparent',
   },
-  logoutButtonContent: {
-    height: 48,
+  activeTab: {
+    // Color will be set dynamically
   },
-  logoutButtonLabel: {
-    color: "white",
+  tabText: {
+    // Color will be set dynamically
+  },
+  activeTabText: {
+    fontWeight: 'bold',
+  },
+  contentArea: {
+    width: '100%',
+    minHeight: 300,
   },
 });
 
