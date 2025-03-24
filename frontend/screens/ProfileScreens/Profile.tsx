@@ -48,7 +48,7 @@ const ProfileScreen = () => {
               icon="cog"
               size={24}
               iconColor="white"
-              onPress={() => navigation.navigate("Settings" as never)}
+              onPress={() => navigation.navigate("Settings")}
               style={styles.settingsButton}
             />
           </View>
