@@ -37,7 +37,7 @@ async def get_current_user(
     )
     try:
         try:
-            payload = jwt.jwt.decode(token, jwt.signing_key, algorithms=[jwt.ALGORITHM])
+            payload = jwt.jwt.decode(token, jwt.signing_key, algorithms=[jwt.JWT_ALGORITHM])
         except Exception as jwt_error:
             error_msg = str(jwt_error)
             if "expired" in error_msg.lower():
@@ -119,14 +119,14 @@ async def login_for_access_token(
             detail="Incorrect username or password",
             headers={"WWW-Authenticate": "Bearer"},
         )
-    access_token_expires = timedelta(minutes=jwt.ACCESS_TOKEN_EXPIRE_MINUTES)
+    access_token_expires = timedelta(minutes=jwt.JWT_EXPIRE_MINUTES)
     access_token = jwt.create_access_token(
         data={"sub": user["username"]}, expires_delta=access_token_expires
     )
     return {
         "access_token": access_token,
         "token_type": "bearer",
-        "expires_in": jwt.ACCESS_TOKEN_EXPIRE_MINUTES * 60,  # in seconds
+        "expires_in": jwt.JWT_EXPIRE_MINUTES * 60,  # in seconds
         "user_id": str(user["id"]),
         "username": user["username"],
     }

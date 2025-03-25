@@ -4,6 +4,7 @@ import PrivacyPolicyScreen from "@/screens/ProfileScreens/PrivacyPolicy";
 import Preferences from "@/screens/ProfileScreens/Preferences";
 import ProfileScreen from "@/screens/ProfileScreens/Profile";
 import AccountSettingsScreen from "@/screens/ProfileScreens/AccountSettings";
+import SettingsScreen from "@/screens/ProfileScreens/Settings";
 import useTheme from "@/hooks/useTheme";
 import MaterialCommunityIcons from "@expo/vector-icons/MaterialCommunityIcons";
 
@@ -44,6 +45,11 @@ const ProfileStack = () => {
         options={{ headerShown: false, headerTitle: "Profile" }}
         name="ProfileMain"
         component={ProfileScreen}
+      />
+      <Stack.Screen
+        options={{ headerShown: false, headerTitle: "Settings" }}
+        name="Settings"
+        component={SettingsScreen}
       />
       <Stack.Screen
         options={{ headerTitle: "Account Settings" }}

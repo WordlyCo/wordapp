@@ -94,6 +94,38 @@ export const createAuthSlice: StateCreator<AuthSlice> = (set, get) => ({
       }
 
       const user = await userResponse.json();
+      // TODO: Implement actual login logic with backend
+      const mockUser: User = {
+        id: "1",
+        email,
+        username: email.split("@")[0],
+        passwordHash: "", // Not stored in frontend
+        createdAt: new Date(),
+        updatedAt: new Date(),
+        preferences: {
+          id: "1",
+          userId: "1",
+          dailyWordGoal: 5,
+          difficultyLevel: "beginner",
+          notificationEnabled: true,
+          notificationType: "daily",
+          theme: "system",
+          profileBackgroundColorIndex: 0,
+          createdAt: new Date(),
+          updatedAt: new Date(),
+        },
+        stats: {
+          id: "1",
+          userId: "1",
+          totalWordsLearned: 0,
+          currentStreak: 0,
+          longestStreak: 0,
+          totalPracticeTime: 0,
+          averageAccuracy: 0,
+          createdAt: new Date(),
+          updatedAt: new Date(),
+        },
+      };
 
       set({
         user,
@@ -129,6 +161,45 @@ export const createAuthSlice: StateCreator<AuthSlice> = (set, get) => ({
     } catch (error: any) {
       console.error("Registration failed:", error.message);
     }
+    // TODO: Implement actual registration logic with backend
+    const mockUser: User = {
+      id: Math.random().toString(),
+      email,
+      username,
+      passwordHash: "",
+      createdAt: new Date(),
+      updatedAt: new Date(),
+      preferences: {
+        id: Math.random().toString(),
+        userId: "1",
+        dailyWordGoal: 5,
+        difficultyLevel: "beginner",
+        notificationEnabled: true,
+        notificationType: "daily",
+        theme: "system",
+        profileBackgroundColorIndex: 0,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      },
+      stats: {
+        id: Math.random().toString(),
+        userId: "1",
+        totalWordsLearned: 0,
+        currentStreak: 0,
+        longestStreak: 0,
+        totalPracticeTime: 0,
+        averageAccuracy: 0,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      },
+    };
+
+    set({
+      user: mockUser,
+      isAuthenticated: true,
+      preferences: mockUser.preferences,
+      stats: mockUser.stats,
+    });
   },
 
   logout: async () => {
