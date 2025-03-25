@@ -14,16 +14,16 @@ async def get_word(
     word_id: uuid.UUID,
     word_service: WordService = Depends(get_word_service)
 ):
-    """Get a specific word by ID"""
-    pass
+    """Get a word by ID"""
+    return await word_service.get_word_by_id(word_id)
 
 @router.get("/category/{category_id}", response_model=List[Word])
-async def get_words_in_category(
+async def get_words_by_category(
     category_id: uuid.UUID,
     word_service: WordService = Depends(get_word_service)
 ):
     """Get all words in a category"""
-    pass
+    return await word_service.get_words_by_category(category_id)
 
 @router.get("/difficulty/{level}", response_model=List[Word])
 async def get_words_by_difficulty(
@@ -31,23 +31,24 @@ async def get_words_by_difficulty(
     word_service: WordService = Depends(get_word_service)
 ):
     """Get words by difficulty level"""
-    pass
+    return await word_service.get_words_by_difficulty(level)
 
 @router.get("/daily", response_model=List[Word])
 async def get_daily_words(
+    user_id: uuid.UUID,
     count: int = 10,
     word_service: WordService = Depends(get_word_service)
 ):
     """Get daily practice words"""
-    pass
+    return await word_service.get_daily_words(user_id, count)
 
 @router.get("/search", response_model=List[Word])
 async def search_words(
     query: str,
     word_service: WordService = Depends(get_word_service)
 ):
-    """Search for words"""
-    pass
+    """Search words"""
+    return await word_service.search_words(query)
 
 @router.get("/progress/{word_id}", response_model=WordProgress)
 async def get_word_progress(
@@ -56,7 +57,7 @@ async def get_word_progress(
     word_service: WordService = Depends(get_word_service)
 ):
     """Get user's progress for a specific word"""
-    pass
+    return await word_service.get_word_progress(user_id, word_id)
 
 @router.post("/progress/{word_id}")
 async def update_word_progress(
@@ -65,8 +66,8 @@ async def update_word_progress(
     success: bool,
     word_service: WordService = Depends(get_word_service)
 ):
-    """Update progress after practicing a word"""
-    pass
+    """Update user's progress for a word"""
+    return await word_service.update_word_progress(user_id, word_id, success)
 
 @router.get("/lists", response_model=List[UserWordList])
 async def get_user_word_lists(
@@ -74,7 +75,7 @@ async def get_user_word_lists(
     word_service: WordService = Depends(get_word_service)
 ):
     """Get all word lists for a user"""
-    pass
+    return await word_service.get_user_word_lists(user_id)
 
 @router.post("/lists", response_model=UserWordList)
 async def create_word_list(
@@ -84,7 +85,7 @@ async def create_word_list(
     word_service: WordService = Depends(get_word_service)
 ):
     """Create a new word list"""
-    pass
+    return await word_service.create_user_word_list(user_id, name, description)
 
 @router.post("/lists/{list_id}/words/{word_id}")
 async def add_word_to_list(
@@ -92,5 +93,5 @@ async def add_word_to_list(
     word_id: uuid.UUID,
     word_service: WordService = Depends(get_word_service)
 ):
-    """Add a word to a user's list"""
-    pass 
+    """Add a word to a list"""
+    return await word_service.add_word_to_list(list_id, word_id) 
