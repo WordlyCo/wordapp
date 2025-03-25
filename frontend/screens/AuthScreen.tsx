@@ -3,6 +3,7 @@ import { View, StyleSheet, Alert, ScrollView, Image } from "react-native";
 import { Text, Button, TextInput, SegmentedButtons } from "react-native-paper";
 import { useStore } from "@/stores/store";
 import useTheme from "@/hooks/useTheme";
+import { SafeAreaView } from "react-native-safe-area-context";
 
 type AuthMode = "login" | "register";
 
@@ -52,7 +53,9 @@ const AuthScreen: React.FC = () => {
   };
 
   return (
-    <View style={[styles.container, { backgroundColor: colors.background }]}>
+    <SafeAreaView
+      style={[styles.container, { backgroundColor: colors.background }]}
+    >
       <ScrollView contentContainerStyle={styles.scrollViewContainer}>
         <Text variant="headlineLarge" style={styles.title}>
           Welcome to WordBird!
@@ -132,7 +135,7 @@ const AuthScreen: React.FC = () => {
           </Button>
         </View>
       </ScrollView>
-    </View>
+    </SafeAreaView>
   );
 };
 
