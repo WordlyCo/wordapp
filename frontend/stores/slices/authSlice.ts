@@ -28,6 +28,44 @@ export const createAuthSlice: StateCreator<AuthSlice> = (set, get) => ({
   stats: null,
   token: null,
 
+  //API REQUEST HELPER FUNCTION
+  // 🔹 API Request Helper Function
+  apiRequest: async <T>(
+    endpoint: string,
+    method: "GET" | "POST" | "PUT" | "DELETE" = "GET",
+    body?: Record<string, unknown>
+  ): Promise<T> => {
+    try {
+      const token = await AsyncStorage.getItem("token");
+
+      const options: RequestInit = {
+        method,
+        headers: {
+          "Content-Type": "application/json",
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        },
+        body: body ? JSON.stringify(body) : undefined,
+      };
+
+      const response = await fetch(`http://localhost:8000${endpoint}`, options);
+
+      if (response.status === 401) {
+        console.error("Session expired. Logging out...");
+        await AsyncStorage.removeItem("token");
+        throw new Error("Unauthorized - Token expired");
+      }
+
+      if (!response.ok) {
+        throw new Error(`API error: ${response.statusText}`);
+      }
+
+      return (await response.json()) as T;
+    } catch (error) {
+      console.error("API request failed:", error);
+      throw error;
+    }
+  },
+
   //LOGIN USER
   login: async (email: string, password: string) => {
     try {
