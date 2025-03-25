@@ -59,14 +59,14 @@ async def get_word_progress(
     """Get user's progress for a specific word"""
     return await word_service.get_word_progress(user_id, word_id)
 
-@router.post("/progress/{word_id}")
+@router.put("/progress/{word_id}", response_model=WordProgress)
 async def update_word_progress(
     word_id: uuid.UUID,
     user_id: uuid.UUID,
     success: bool,
     word_service: WordService = Depends(get_word_service)
 ):
-    """Update user's progress for a word"""
+    """Update user's progress for a specific word"""
     return await word_service.update_word_progress(user_id, word_id, success)
 
 @router.get("/lists", response_model=List[UserWordList])

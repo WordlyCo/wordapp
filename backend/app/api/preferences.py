@@ -52,11 +52,11 @@ async def update_daily_goal(
 @router.put("/{user_id}/difficulty")
 async def update_difficulty(
     user_id: uuid.UUID,
-    level: str,
+    difficulty_level: str,
     preferences_service: PreferencesService = Depends(get_preferences_service)
 ):
     """Update user's difficulty level"""
-    return await preferences_service.update_difficulty_level(user_id, level)
+    return await preferences_service.update_difficulty(user_id, difficulty_level)
 
 @router.put("/{user_id}/notifications")
 async def update_notifications(
@@ -66,7 +66,7 @@ async def update_notifications(
     preferences_service: PreferencesService = Depends(get_preferences_service)
 ):
     """Update user's notification settings"""
-    return await preferences_service.update_notification_settings(user_id, enabled, notification_type)
+    return await preferences_service.update_notifications(user_id, enabled, notification_type)
 
 @router.put("/{user_id}/theme")
 async def update_theme(

@@ -29,7 +29,7 @@ async def get_user_achievements(
     """Get all achievements earned by a user"""
     return await achievement_service.get_user_achievements(user_id)
 
-@router.post("/user/{user_id}/award/{achievement_id}", response_model=UserAchievement)
+@router.post("/user/{user_id}/award/{achievement_id}")
 async def award_achievement(
     user_id: uuid.UUID,
     achievement_id: uuid.UUID,
@@ -55,7 +55,7 @@ async def check_word_achievements(
     """Check and award word-related achievements"""
     return await achievement_service.check_word_achievements(user_id, total_words)
 
-@router.post("/user/{user_id}/check/streak")
+@router.post("/user/{user_id}/check/streaks")
 async def check_streak_achievements(
     user_id: uuid.UUID,
     current_streak: int,
