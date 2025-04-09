@@ -1,162 +1,122 @@
-from app.models.word import Word, WordCategory, WordProgress, UserWordList
-import uuid
 from app.config.db import get_pool
-from typing import List, Optional
-from fastapi import HTTPException
+from app.models.word import Word, WordUpdate, WordAlreadyExistsError, WordNotFoundError
+import asyncpg
+from typing import List
+from fastapi import Depends
+
 
 class WordService:
-    pool = None
+    def __init__(self, pool: asyncpg.Pool):
+        self.pool = pool
 
-    async def create(self):
-        self.pool = await get_pool()
-
-    async def get_word_by_id(self, id: uuid.UUID) -> Word:
-        """Get a word by its ID"""
-        query = """ 
-            SELECT * FROM words
-            WHERE id = $1
-        """
-        word_record = await self.pool.fetchrow(query, id)
-        if word_record is None:
-            raise HTTPException(status_code=404, detail="Word not found")
-        return Word(**word_record)
-
-    async def get_words_by_category(self, category_id: uuid.UUID) -> List[Word]:
-        """Get all words in a specific category"""
-        query = """
-            SELECT * FROM words
-            WHERE category_id = $1
-        """
-        word_records = await self.pool.fetch(query, category_id)
-        return [Word(**record) for record in word_records]
-
-    async def get_word_progress(self, user_id: uuid.UUID, word_id: uuid.UUID) -> WordProgress:
-        """Get a user's progress for a specific word"""
-        query = """
-            SELECT * FROM word_progress
-            WHERE user_id = $1 AND word_id = $2
-        """
-        word_progress_record = await self.pool.fetchrow(query, user_id, word_id)
-        if word_progress_record is None:
-            raise HTTPException(status_code=404, detail="Word progress not found")
-        return WordProgress(**word_progress_record)
-
-    async def update_word_progress(self, user_id: uuid.UUID, word_id: uuid.UUID, success: bool) -> WordProgress:
-        """Update a user's progress after practicing a word"""
-        async with self.pool.acquire() as conn:
-            async with conn.transaction():
-                # Get current progress or create new
-                query = """
-                    INSERT INTO word_progress (user_id, word_id, practice_count, success_count, last_practiced)
-                    VALUES ($1, $2, 1, $3, CURRENT_TIMESTAMP)
-                    ON CONFLICT (user_id, word_id) DO UPDATE
-                    SET practice_count = word_progress.practice_count + 1,
-                        success_count = word_progress.success_count + $3,
-                        last_practiced = CURRENT_TIMESTAMP,
-                        updated_at = CURRENT_TIMESTAMP
+    async def insert_word(self, word: Word) -> Word:
+        try:
+            async with self.pool.acquire() as conn:
+                async with conn.transaction():
+                    db_word = await conn.fetchrow(
+                        """
+                    INSERT INTO words (
+                    word, 
+                    definition, 
+                    part_of_speech,
+                    difficulty_level,
+                    examples,
+                    synonyms,
+                    antonyms,
+                    tags,
+                    etymology,
+                    usage_notes,
+                    audio_url,
+                    image_url
+                    ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)
                     RETURNING *
-                """
-                success_count = 1 if success else 0
-                progress_record = await conn.fetchrow(query, user_id, word_id, success_count)
-                
-                # Calculate new mastery score
-                mastery_score = (progress_record['success_count'] / progress_record['practice_count']) * 100
-                
-                # Update mastery score
-                update_query = """
-                    UPDATE word_progress
-                    SET mastery_score = $1,
-                        updated_at = CURRENT_TIMESTAMP
-                    WHERE user_id = $2 AND word_id = $3
-                    RETURNING *
-                """
-                final_record = await conn.fetchrow(update_query, mastery_score, user_id, word_id)
-                
-                return WordProgress(**final_record)
+                    """,
+                        word.word,
+                        word.definition,
+                        word.part_of_speech,
+                        word.difficulty_level,
+                        word.examples or [],
+                        word.synonyms or [],
+                        word.antonyms or [],
+                        word.tags or [],
+                        word.etymology,
+                        word.usage_notes,
+                        word.audio_url,
+                        word.image_url,
+                    )
+                    return Word(**db_word)
+        except asyncpg.UniqueViolationError:
+            raise WordAlreadyExistsError("Word already exists in the database")
+        except Exception as e:
+            raise e
 
-    async def get_user_word_lists(self, user_id: uuid.UUID) -> List[UserWordList]:
-        """Get all word lists created by a user"""
-        query = """
-            SELECT * FROM user_word_lists
-            WHERE user_id = $1
-            ORDER BY created_at DESC
-        """
-        lists = await self.pool.fetch(query, user_id)
-        return [UserWordList(**list_record) for list_record in lists]
+    async def update_word(self, word_id: int, word_update: WordUpdate) -> Word:
+        update_fields = word_update.model_dump(exclude_unset=True)
+        if not update_fields:
+            return await self.get_word_by_id(word_id)
 
-    async def create_user_word_list(self, user_id: uuid.UUID, name: str, description: str) -> UserWordList:
-        """Create a new word list for a user"""
-        query = """
-            INSERT INTO user_word_lists (user_id, name, description)
-            VALUES ($1, $2, $3)
+        set_clauses = []
+        values = []
+        i = 1
+        for field, value in update_fields.items():
+            set_clauses.append(f"{field} = ${i}")
+            values.append(value)
+            i += 1
+
+        values.append(word_id)
+        query = f"""
+            UPDATE words
+            SET {', '.join(set_clauses)}, updated_at = CURRENT_TIMESTAMP
+            WHERE id = ${i}
             RETURNING *
-        """
-        list_record = await self.pool.fetchrow(query, user_id, name, description)
-        return UserWordList(**list_record)
+            """
 
-    async def add_word_to_list(self, list_id: uuid.UUID, word_id: uuid.UUID) -> None:
-        """Add a word to a user's word list"""
-        query = """
-            INSERT INTO user_list_words (list_id, word_id)
-            VALUES ($1, $2)
-            ON CONFLICT (list_id, word_id) DO NOTHING
-        """
-        await self.pool.execute(query, list_id, word_id)
+        try:
+            async with self.pool.acquire() as conn:
+                updated_word_data = await conn.fetchrow(query, *values)
+                if updated_word_data is None:
+                    raise WordNotFoundError(f"Word with ID {word_id} not found")
+                return Word(**updated_word_data)
+        except asyncpg.IntegrityConstraintViolationError as e:
+            raise ValueError(f"Update failed due to constraint violation: {e}")
+        except Exception as e:
+            print(f"Error updating word {word_id}: {e}")
+            raise Exception(f"Error updating word: {str(e)}")
 
-    async def get_words_by_difficulty(self, difficulty_level: str) -> List[Word]:
-        """Get words filtered by difficulty level"""
-        query = """
-            SELECT * FROM words
-            WHERE difficulty_level = $1
-            ORDER BY word ASC
-        """
-        word_records = await self.pool.fetch(query, difficulty_level)
-        return [Word(**record) for record in word_records]
+    async def get_word_by_id(self, word_id: int) -> Word:
+        try:
+            async with self.pool.acquire() as conn:
+                word_data = await conn.fetchrow(
+                    "SELECT * FROM words WHERE id = $1", word_id
+                )
+                if word_data is None:
+                    raise WordNotFoundError(f"Word with ID {word_id} not found")
 
-    async def get_daily_words(self, user_id: uuid.UUID, count: int) -> List[Word]:
-        """Get daily practice words for a user based on their level"""
-        # First get user's preferences for difficulty level
-        preferences_query = """
-            SELECT difficulty_level FROM user_preferences
-            WHERE user_id = $1
-        """
-        preferences = await self.pool.fetchrow(preferences_query, user_id)
-        if not preferences:
-            raise HTTPException(status_code=404, detail="User preferences not found")
+                return Word(**word_data)
+        except Exception as e:
+            raise e
 
-        # Get words that user hasn't practiced recently
-        query = """
-            WITH user_progress AS (
-                SELECT word_id, last_practiced
-                FROM word_progress
-                WHERE user_id = $1
-            )
-            SELECT w.*
-            FROM words w
-            LEFT JOIN user_progress up ON w.id = up.word_id
-            WHERE w.difficulty_level = $2
-            AND (up.last_practiced IS NULL OR up.last_practiced < CURRENT_DATE)
-            ORDER BY RANDOM()
-            LIMIT $3
-        """
-        word_records = await self.pool.fetch(query, user_id, preferences['difficulty_level'], count)
-        return [Word(**record) for record in word_records]
+    async def get_word_by_word(self, word: str) -> Word:
+        try:
+            async with self.pool.acquire() as conn:
+                word_data = await conn.fetchrow(
+                    "SELECT * FROM words WHERE word = $1", word
+                )
+                if word_data is None:
+                    raise WordNotFoundError(f"Word {word} not found")
+                return Word(**word_data)
+        except Exception as e:
+            raise e
 
-    async def search_words(self, query: str) -> List[Word]:
-        """Search words by text query"""
-        search_query = """
-            SELECT * FROM words
-            WHERE word ILIKE $1 
-            OR definition ILIKE $1
-            OR $1 = ANY(synonyms)
-            OR $1 = ANY(antonyms)
-            ORDER BY word ASC
-        """
-        search_pattern = f"%{query}%"
-        word_records = await self.pool.fetch(search_query, search_pattern)
-        return [Word(**record) for record in word_records]
+    async def get_all_words(self) -> List[Word]:
+        try:
+            async with self.pool.acquire() as conn:
+                words_data = await conn.fetch("SELECT * FROM words")
+                return [Word(**word) for word in words_data]
+        except Exception as e:
+            raise Exception(f"Error getting all words: {str(e)}")
 
-async def get_word_service():
-    service = WordService()
-    await service.create()
-    return service 
+
+async def get_word_service(pool: asyncpg.Pool = Depends(get_pool)) -> WordService:
+    service = WordService(pool=pool)
+    return service

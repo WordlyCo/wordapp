@@ -1,21 +1,27 @@
-from pydantic import BaseModel
 from datetime import datetime
-import uuid
 from typing import Optional
-
-from .word import BaseEntity
+from .base import BaseEntity, CamelModel
 
 
 class Achievement(BaseEntity):
     name: str
-    description: str
+    description: Optional[str] = None
     criteria: str
     points: int
     icon_url: Optional[str] = None
     icon_name: Optional[str] = None
 
 
-class UserAchievement(BaseEntity):
-    user_id: uuid.UUID
-    achievement_id: uuid.UUID
-    achieved_at: datetime 
+class AchievementUpdate(CamelModel):
+    name: Optional[str] = None
+    description: Optional[str] = None
+    criteria: Optional[str] = None
+    points: Optional[int] = None
+    icon_url: Optional[str] = None
+    icon_name: Optional[str] = None
+
+
+class UserAchievement(CamelModel):
+    user_id: int
+    achievement_id: int
+    achieved_at: datetime
