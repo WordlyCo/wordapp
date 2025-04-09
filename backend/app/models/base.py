@@ -24,7 +24,7 @@ class PageInfo(CamelModel):
     total_pages: int = Field(..., description="Total number of pages")
 
 
-class PaginatedData(CamelModel, Generic[ItemType]):
+class PaginatedPayload(CamelModel, Generic[ItemType]):
     items: List[ItemType] = Field(..., description="List of items on the current page")
     page_info: PageInfo = Field(..., description="Pagination details")
 
@@ -33,4 +33,4 @@ class Response(CamelModel, Generic[T]):
     success: bool
     message: str
     error_code: Optional[str] = None
-    data: Optional[T] = None
+    payload: Optional[T] = None

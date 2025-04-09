@@ -5,7 +5,7 @@ import { useNavigation } from "@react-navigation/native";
 import { StackNavigationProp } from "@react-navigation/stack";
 import useTheme from "@/hooks/useTheme";
 import MaterialCommunityIcons from "@expo/vector-icons/MaterialCommunityIcons";
-
+import { useStore } from "@/stores/store";
 type ProfileStackParamList = {
   ProfileMain: undefined;
   Settings: undefined;
@@ -20,6 +20,7 @@ type SettingsScreenNavigationProp = StackNavigationProp<ProfileStackParamList>;
 const SettingsScreen = () => {
   const navigation = useNavigation<SettingsScreenNavigationProp>();
   const { colors } = useTheme();
+  const { logout } = useStore();
 
   const renderSettingItem = (
     icon: keyof typeof MaterialCommunityIcons.glyphMap,
@@ -48,14 +49,14 @@ const SettingsScreen = () => {
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>
       <View style={styles.header}>
-        <TouchableOpacity 
+        <TouchableOpacity
           style={styles.backButton}
           onPress={() => navigation.goBack()}
         >
-          <MaterialCommunityIcons 
-            name="chevron-left" 
-            size={30} 
-            color={colors.onSurface} 
+          <MaterialCommunityIcons
+            name="chevron-left"
+            size={30}
+            color={colors.onSurface}
           />
         </TouchableOpacity>
         <Text style={[styles.headerTitle, { color: colors.onSurface }]}>
@@ -67,11 +68,14 @@ const SettingsScreen = () => {
       <ScrollView style={styles.scrollView}>
         {/* Account Section */}
         {renderSectionTitle("Account")}
-        <View style={[styles.sectionContainer, { backgroundColor: colors.surfaceVariant }]}>
-          {renderSettingItem(
-            "account",
-            "Edit profile",
-            () => navigation.navigate("AccountSettings")
+        <View
+          style={[
+            styles.sectionContainer,
+            { backgroundColor: colors.surfaceVariant },
+          ]}
+        >
+          {renderSettingItem("account", "Edit profile", () =>
+            navigation.navigate("AccountSettings")
           )}
           {renderSettingItem(
             "shield-account",
@@ -83,51 +87,58 @@ const SettingsScreen = () => {
             "Notifications",
             () => {} // Add navigation to Notifications screen when available
           )}
-          {renderSettingItem(
-            "lock",
-            "Privacy",
-            () => navigation.navigate("PrivacyPolicy")
+          {renderSettingItem("lock", "Privacy", () =>
+            navigation.navigate("PrivacyPolicy")
           )}
         </View>
-        
+
         {/* Support & About Section */}
         {renderSectionTitle("Support & About")}
-        <View style={[styles.sectionContainer, { backgroundColor: colors.surfaceVariant }]}>
+        <View
+          style={[
+            styles.sectionContainer,
+            { backgroundColor: colors.surfaceVariant },
+          ]}
+        >
           {renderSettingItem(
             "credit-card",
             "My Subscription",
             () => {} // Add navigation to Subscription screen when available
           )}
-          {renderSettingItem(
-            "help-circle",
-            "Help & Support",
-            () => navigation.navigate("HelpCenter")
+          {renderSettingItem("help-circle", "Help & Support", () =>
+            navigation.navigate("HelpCenter")
           )}
-          {renderSettingItem(
-            "file-document",
-            "Terms and Policies",
-            () => navigation.navigate("PrivacyPolicy")
+          {renderSettingItem("file-document", "Terms and Policies", () =>
+            navigation.navigate("PrivacyPolicy")
           )}
         </View>
-        
+
         {/* Cache & Cellular Section */}
         {renderSectionTitle("Cache & Cellular")}
-        <View style={[styles.sectionContainer, { backgroundColor: colors.surfaceVariant }]}>
+        <View
+          style={[
+            styles.sectionContainer,
+            { backgroundColor: colors.surfaceVariant },
+          ]}
+        >
           {renderSettingItem(
             "trash-can",
             "Free up space",
             () => {} // Add functionality to free up space
           )}
-          {renderSettingItem(
-            "data-matrix",
-            "Data Saver",
-            () => navigation.navigate("Preferences")
+          {renderSettingItem("data-matrix", "Data Saver", () =>
+            navigation.navigate("Preferences")
           )}
         </View>
-        
+
         {/* Actions Section */}
         {renderSectionTitle("Actions")}
-        <View style={[styles.sectionContainer, { backgroundColor: colors.surfaceVariant }]}>
+        <View
+          style={[
+            styles.sectionContainer,
+            { backgroundColor: colors.surfaceVariant },
+          ]}
+        >
           {renderSettingItem(
             "flag",
             "Report a problem",
@@ -141,11 +152,11 @@ const SettingsScreen = () => {
           {renderSettingItem(
             "logout",
             "Log out",
-            () => {}, // Add functionality to log out
+            () => logout(), // Add functionality to log out
             colors.error
           )}
         </View>
-        
+
         {/* Add some space at the bottom for better UX */}
         <View style={styles.bottomSpace} />
       </ScrollView>
@@ -204,7 +215,7 @@ const styles = StyleSheet.create({
   },
   bottomSpace: {
     height: 80,
-  }
+  },
 });
 
-export default SettingsScreen; 
+export default SettingsScreen;

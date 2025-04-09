@@ -1,10 +1,11 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import {
   View,
   StyleSheet,
   ScrollView,
   Image,
   TouchableOpacity,
+  ActivityIndicator,
 } from "react-native";
 import {
   Text,
@@ -18,23 +19,11 @@ import {
 import { RouteProp, useRoute } from "@react-navigation/native";
 import StickyHeader from "@/components/StickyHeader";
 import useTheme from "@/hooks/useTheme";
-import { Word } from "@/stores/types";
-import { wordLists, wordData } from "@/stores/mockData";
+import { Word } from "@/types/words";
 import MaterialCommunityIcons from "@expo/vector-icons/MaterialCommunityIcons";
-import { DIFFICULTY_LEVELS } from "@/stores/enums";
+import { DIFFICULTY_LEVELS } from "@/types/enums";
 import * as Speech from "expo-speech";
-
-type RootStackParamList = {
-  ListDetails: {
-    listId: string;
-  };
-};
-
-type ListDetailsRouteProp = RouteProp<RootStackParamList, "ListDetails">;
-
-const getWordsForList = (listId: string): Word[] => {
-  return wordData.slice(0, 10);
-};
+import { useStore } from "@/stores/store";
 
 const getDifficultyColor = (difficulty: string, colors: any) => {
   switch (difficulty) {
@@ -84,18 +73,11 @@ const getSpacing = (hasImage: boolean) => {
 };
 
 const ListDetails = () => {
-  const route = useRoute<ListDetailsRouteProp>();
-  const listId = route.params?.listId || "1";
+  const route = useRoute();
+  const { listId } = route.params as { listId: string };
   const { colors } = useTheme();
   const [searchQuery, setSearchQuery] = useState("");
-  const wordList = wordLists.find((list) => list.id === listId) || wordLists[0];
-  const words = getWordsForList(listId);
-  const filteredWords = words.filter(
-    (word) =>
-      word.word.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      word.definition.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      word.partOfSpeech.toLowerCase().includes(searchQuery.toLowerCase())
-  );
+  const { selectedList, fetchList, isFetchingList } = useStore();
 
   const handleSearch = (text: string) => {
     setSearchQuery(text);
@@ -111,8 +93,23 @@ const ListDetails = () => {
     });
   };
 
-  const difficultyColor = getDifficultyColor(wordList.difficulty, colors);
-  const categoryIcon = getCategoryIcon(wordList.category);
+  useEffect(() => {
+    fetchList(listId);
+  }, [fetchList, listId]);
+
+  const difficultyColor = getDifficultyColor(
+    selectedList?.difficultyLevel || "",
+    colors
+  );
+  const categoryIcon = getCategoryIcon(selectedList?.imageUrl || "");
+
+  if (isFetchingList) {
+    return (
+      <View style={styles.container}>
+        <ActivityIndicator size="large" color={colors.primary} />
+      </View>
+    );
+  }
 
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>
@@ -133,7 +130,7 @@ const ListDetails = () => {
               style={styles.headerIcon}
             />
             <Text style={[styles.title, { color: colors.onSurface }]}>
-              {wordList.title}
+              {selectedList?.name}
             </Text>
           </View>
 
@@ -143,21 +140,21 @@ const ListDetails = () => {
               style={[styles.chip, { backgroundColor: colors.surfaceVariant }]}
               textStyle={{ color: difficultyColor }}
             >
-              {wordList.difficulty.toLowerCase()}
+              {selectedList?.difficultyLevel.toLowerCase()}
             </Chip>
             <Chip
               icon="book-open-page-variant"
               style={[styles.chip, { backgroundColor: colors.surfaceVariant }]}
               textStyle={{ color: colors.secondary }}
             >
-              {wordList.wordCount} words
+              {selectedList?.words.length} words
             </Chip>
             <Chip
               icon="tag"
               style={[styles.chip, { backgroundColor: colors.surfaceVariant }]}
               textStyle={{ color: colors.primary }}
             >
-              {wordList.category}
+              {selectedList?.categoryId}
             </Chip>
           </View>
 
@@ -166,18 +163,18 @@ const ListDetails = () => {
               styles.description,
               {
                 color: colors.onSurfaceVariant,
-                marginBottom: getSpacing(Boolean(wordList.imageUrl))
+                marginBottom: getSpacing(Boolean(selectedList?.imageUrl))
                   .descriptionMargin,
               },
             ]}
           >
-            {wordList.description}
+            {selectedList?.description}
           </Text>
 
-          {wordList.imageUrl && (
+          {selectedList?.imageUrl && (
             <View style={styles.imageContainer}>
               <Image
-                source={{ uri: wordList.imageUrl }}
+                source={{ uri: selectedList?.imageUrl }}
                 style={styles.listImage}
                 resizeMode="cover"
               />
@@ -188,7 +185,8 @@ const ListDetails = () => {
             style={[
               styles.actionButtons,
               {
-                marginTop: getSpacing(Boolean(wordList.imageUrl)).actionsMargin,
+                marginTop: getSpacing(Boolean(selectedList?.imageUrl))
+                  .actionsMargin,
               },
             ]}
           >
@@ -257,7 +255,7 @@ const ListDetails = () => {
           </View>
 
           <View style={styles.wordsList}>
-            {filteredWords.length === 0 ? (
+            {selectedList?.words.length === 0 ? (
               <View style={styles.emptyStateContainer}>
                 <MaterialCommunityIcons
                   name="file-search-outline"
@@ -275,7 +273,7 @@ const ListDetails = () => {
                 </Text>
               </View>
             ) : (
-              filteredWords.map((word, index) => (
+              selectedList?.words.map((word, index) => (
                 <Card
                   key={word.id}
                   style={[styles.wordCard, { backgroundColor: colors.surface }]}
@@ -332,27 +330,26 @@ const ListDetails = () => {
                       {word.definition}
                     </Text>
 
-                    {word.exampleSentences &&
-                      word.exampleSentences.length > 0 && (
-                        <View style={styles.exampleContainer}>
-                          <Text
-                            style={[
-                              styles.exampleLabel,
-                              { color: colors.onSurfaceVariant },
-                            ]}
-                          >
-                            Example:
-                          </Text>
-                          <Text
-                            style={[
-                              styles.exampleText,
-                              { color: colors.onSurfaceVariant },
-                            ]}
-                          >
-                            "{word.exampleSentences[0]}"
-                          </Text>
-                        </View>
-                      )}
+                    {word.examples && word.examples.length > 0 && (
+                      <View style={styles.exampleContainer}>
+                        <Text
+                          style={[
+                            styles.exampleLabel,
+                            { color: colors.onSurfaceVariant },
+                          ]}
+                        >
+                          Example:
+                        </Text>
+                        <Text
+                          style={[
+                            styles.exampleText,
+                            { color: colors.onSurfaceVariant },
+                          ]}
+                        >
+                          "{word.examples[0]}"
+                        </Text>
+                      </View>
+                    )}
 
                     {word.synonyms && word.synonyms.length > 0 && (
                       <View style={styles.synonymContainer}>

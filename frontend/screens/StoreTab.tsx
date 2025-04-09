@@ -17,13 +17,13 @@ import { WordListCard } from "@/components/WordListCard";
 import { wordLists } from "@/stores/mockData";
 import MaterialCommunityIcons from "@expo/vector-icons/MaterialCommunityIcons";
 
-type HomeStackParamList = {
+export type HomeStackParamList = {
   HomeMain: undefined;
-  CategoryList: undefined;
+  WordLists: { categoryId: string };
   ListDetails: { listId: string };
 };
 
-type HomeScreenNavigationProp = StackNavigationProp<HomeStackParamList>;
+export type HomeScreenNavigationProp = StackNavigationProp<HomeStackParamList>;
 
 type ViewMode = "browse" | "search";
 
@@ -205,7 +205,11 @@ const StoreTab = () => {
                 <View style={styles.categoriesGrid}>
                   {categories.map((item) => (
                     <CategoryItem
-                      onPress={() => navigation.navigate("CategoryList")}
+                      onPress={() =>
+                        navigation.navigate("WordLists", {
+                          categoryId: item.id,
+                        })
+                      }
                       key={item.id}
                       item={item}
                     />

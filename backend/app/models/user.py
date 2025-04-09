@@ -43,6 +43,10 @@ class LoginRequest(CamelModel):
     password: str
 
 
+class RefreshTokenRequest(CamelModel):
+    refresh_token: str
+
+
 # User Lists
 
 

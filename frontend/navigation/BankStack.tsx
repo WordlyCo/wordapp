@@ -1,6 +1,6 @@
 import { createStackNavigator } from "@react-navigation/stack";
 import BankTab from "@/screens/BankTab";
-import CategoryList from "@/screens/CategoryList";
+import CategoryList from "@/screens/WordLists";
 import ListDetails from "@/screens/ListDetails";
 
 const Stack = createStackNavigator();

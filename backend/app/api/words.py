@@ -23,7 +23,7 @@ async def get_all_words(
     try:
         words = await word_service.get_all_words()
         return Response(
-            success=True, message="Words retrieved successfully", data=words
+            success=True, message="Words retrieved successfully", payload=words
         )
     except Exception as e:
         return Response(success=False, message=str(e), error_code=SERVER_ERROR)
@@ -35,7 +35,9 @@ async def insert_word(
 ) -> Response[Word]:
     try:
         new_word = await word_service.insert_word(word)
-        return Response(success=True, message="Word added successfully", data=new_word)
+        return Response(
+            success=True, message="Word added successfully", payload=new_word
+        )
     except WordAlreadyExistsError as e:
         return Response(success=False, message=str(e), error_code=DUPLICATE_INSERTION)
     except Exception as e:
@@ -48,7 +50,9 @@ async def get_word_by_id(
 ) -> Response[Word]:
     try:
         word = await word_service.get_word_by_id(word_id)
-        return Response(success=True, message="Word retrieved successfully", data=word)
+        return Response(
+            success=True, message="Word retrieved successfully", payload=word
+        )
     except WordNotFoundError as e:
         return Response(success=False, message=str(e), error_code=NOT_FOUND)
     except Exception as e:
@@ -64,7 +68,7 @@ async def update_word(
     try:
         updated_word = await word_service.update_word(word_id, word_update)
         return Response(
-            success=True, message="Word updated successfully", data=updated_word
+            success=True, message="Word updated successfully", payload=updated_word
         )
     except WordNotFoundError as e:
         return Response(success=False, message=str(e), error_code=NOT_FOUND)

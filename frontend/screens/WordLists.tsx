@@ -1,28 +1,17 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
+import { Image, StyleSheet, View, TouchableOpacity } from "react-native";
+
+import { useNavigation, useRoute } from "@react-navigation/native";
 import { Text, Card, Button, Searchbar } from "react-native-paper";
-import StickyHeader from "@/components/StickyHeader";
 import { FlashList } from "@shopify/flash-list";
-import {
-  Image,
-  StyleSheet,
-  View,
-  Pressable,
-  TouchableOpacity,
-} from "react-native";
-import useTheme, { ColorType } from "@/hooks/useTheme";
-import { wordLists } from "@/stores/mockData";
-import { WordList } from "@/stores/types";
 import MaterialCommunityIcons from "@expo/vector-icons/MaterialCommunityIcons";
-import { DIFFICULTY_LEVELS } from "@/stores/enums";
-import { useNavigation } from "@react-navigation/native";
-import { StackNavigationProp } from "@react-navigation/stack";
 
-type CategoryStackParamList = {
-  CategoryList: undefined;
-  ListDetails: { listId: string };
-};
-
-type CategoryListNavigationProp = StackNavigationProp<CategoryStackParamList>;
+import StickyHeader from "@/components/StickyHeader";
+import useTheme, { ColorType } from "@/hooks/useTheme";
+import { WordListCategory } from "@/types/lists";
+import { DIFFICULTY_LEVELS } from "@/types/enums";
+import { useStore } from "@/stores/store";
+import { HomeStackParamList, HomeScreenNavigationProp } from "./StoreTab";
 
 const Header = ({ colors }: { colors: ColorType }) => {
   return (
@@ -94,36 +83,43 @@ const MetadataItem = ({
   </View>
 );
 
-const CategoryList = () => {
+const WordLists = () => {
   const { colors } = useTheme();
   const [searchQuery, setSearchQuery] = useState("");
-  const navigation = useNavigation<CategoryListNavigationProp>();
+  const navigation = useNavigation<HomeScreenNavigationProp>();
+  const {
+    selectedListsByCategory,
+    isFetchingListsByCategory,
+    fetchListsByCategory,
+  } = useStore();
+  const route = useRoute();
+  const { categoryId } = route.params as { categoryId: string };
 
-  // Filter word lists based on search query
-  const filteredLists = wordLists.filter(
-    (list) =>
-      list.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      list.description.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      list.category.toLowerCase().includes(searchQuery.toLowerCase())
-  );
+  console.log("categoryId", categoryId);
+
+  useEffect(() => {
+    fetchListsByCategory(categoryId || "");
+  }, []);
 
   const handleSearch = (text: string) => {
     setSearchQuery(text);
   };
 
-  const renderItem = ({ item }: { item: WordList }) => {
-    const difficultyColor = getDifficultyColor(item.difficulty, colors);
-    const categoryIcon = getCategoryIcon(item.category);
+  const renderItem = ({ item }: { item: WordListCategory }) => {
+    const difficultyColor = getDifficultyColor(item.difficultyLevel, colors);
+    const categoryIcon = getCategoryIcon(item.iconUrl || "");
 
     const handleCardPress = () => {
-      navigation.navigate("ListDetails", { listId: item.id });
+      navigation.navigate("ListDetails", {
+        listId: item.id as string,
+      });
     };
 
     return (
       <Card style={styles.card} mode="elevated" onPress={handleCardPress}>
         <Card.Title
           titleStyle={[styles.cardTitle, { color: colors.onSurface }]}
-          title={item.title}
+          title={item.name}
           left={(props) => (
             <MaterialCommunityIcons
               name={categoryIcon}
@@ -137,7 +133,7 @@ const CategoryList = () => {
             <View
               style={[
                 styles.textContainer,
-                !item.imageUrl && styles.fullWidthTextContainer,
+                !item.iconUrl && styles.fullWidthTextContainer,
               ]}
             >
               <Text
@@ -157,21 +153,21 @@ const CategoryList = () => {
                   },
                 ]}
               >
-                <MetadataItem
+                {/* <MetadataItem
                   icon="stairs"
                   color={difficultyColor}
-                  text={item.difficulty.toLowerCase()}
+                  text={item.difficultyLevel.toLowerCase()}
                 />
                 <MetadataItem
                   icon="book-open-page-variant"
                   color={colors.secondary}
-                  text={`${item.wordCount} words`}
+                    text={`${item.words.length} words`}
                 />
                 <MetadataItem
                   icon="tag"
                   color={colors.primary}
-                  text={item.category}
-                />
+                  text={item.name}
+                /> */}
               </View>
 
               <View style={styles.buttonContainer}>
@@ -195,13 +191,13 @@ const CategoryList = () => {
                 </Button>
               </View>
             </View>
-            {item.imageUrl && (
+            {item.iconUrl && (
               <View style={styles.imageContainer}>
                 <Image
                   style={styles.image}
                   resizeMode="cover"
                   source={{
-                    uri: item.imageUrl,
+                    uri: item.iconUrl,
                   }}
                 />
               </View>
@@ -256,7 +252,7 @@ const CategoryList = () => {
           </>
         }
         renderItem={renderItem}
-        data={filteredLists}
+        data={selectedListsByCategory as WordListCategory[]}
         estimatedItemSize={200}
         contentContainerStyle={styles.listContainer}
       />
@@ -264,7 +260,7 @@ const CategoryList = () => {
   );
 };
 
-export default CategoryList;
+export default WordLists;
 
 const styles = StyleSheet.create({
   container: {

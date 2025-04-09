@@ -68,4 +68,4 @@ async def auth_error_handler(request: Request, exc: AuthError):
 
 
 # Include API routes
-app.include_router(api_router, prefix="/api")
+app.include_router(api_router, prefix="/api/v1")

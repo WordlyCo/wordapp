@@ -1,13 +1,20 @@
 import { StateCreator } from "zustand";
-import { User, UserPreferences, UserStats } from "../types";
-
+import { User, UserPreferences, UserStats } from "@/types/user";
+import {
+  API_URL,
+  setToken,
+  setRefreshToken,
+  removeRefreshToken,
+  removeToken,
+} from "@/lib/api";
 export interface AuthSlice {
   user: User | null;
   isAuthenticated: boolean;
   preferences: UserPreferences | null;
   stats: UserStats | null;
-
+  authError: string | null;
   // Methods
+  setAuthError: (error: string) => void;
   login: (email: string, password: string) => Promise<void>;
   register: (
     email: string,
@@ -21,95 +28,86 @@ export interface AuthSlice {
 
 export const createAuthSlice: StateCreator<AuthSlice> = (set, get) => ({
   user: null,
+  authError: null,
   isAuthenticated: false,
   preferences: null,
   stats: null,
 
-  login: async (email: string, password: string) => {
-    // TODO: Implement actual login logic with backend
-    const mockUser: User = {
-      id: "1",
-      email,
-      username: email.split("@")[0],
-      passwordHash: "", // Not stored in frontend
-      createdAt: new Date(),
-      updatedAt: new Date(),
-      preferences: {
-        id: "1",
-        userId: "1",
-        dailyWordGoal: 5,
-        difficultyLevel: "beginner",
-        notificationEnabled: true,
-        notificationType: "daily",
-        theme: "system",
-        profileBackgroundColorIndex: 0,
-        createdAt: new Date(),
-        updatedAt: new Date(),
-      },
-      stats: {
-        id: "1",
-        userId: "1",
-        totalWordsLearned: 0,
-        currentStreak: 0,
-        longestStreak: 0,
-        totalPracticeTime: 0,
-        averageAccuracy: 0,
-        createdAt: new Date(),
-        updatedAt: new Date(),
-      },
-    };
+  setAuthError: (error: string) => {
+    set({ authError: error });
+  },
 
-    set({
-      user: mockUser,
-      isAuthenticated: true,
-      preferences: mockUser.preferences,
-      stats: mockUser.stats,
-    });
+  login: async (email: string, password: string) => {
+    set({ authError: null });
+    try {
+      const response = await fetch(`${API_URL}/users/login`, {
+        method: "POST",
+        body: JSON.stringify({ email, password }),
+        headers: {
+          "Content-Type": "application/json",
+        },
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+
+        const errorCode = data.errorCode;
+        const message = data.message;
+        const payload = data.payload;
+
+        console.log("Login successful:", payload);
+
+        if (errorCode === "INVALID_CREDENTIALS") {
+          set({ authError: "Your email or password is incorrect" });
+          return;
+        }
+
+        if (!payload) {
+          set({ authError: "No payload returned from server" });
+          return;
+        }
+
+        await setToken(payload.token);
+        await setRefreshToken(payload.refreshToken);
+        set({ user: payload.user, isAuthenticated: true });
+      } else {
+        throw new Error("Failed to login");
+      }
+    } catch (error) {
+      console.error("Login failed:", error);
+    }
   },
 
   register: async (email: string, password: string, username: string) => {
-    // TODO: Implement actual registration logic with backend
-    const mockUser: User = {
-      id: Math.random().toString(),
-      email,
-      username,
-      passwordHash: "",
-      createdAt: new Date(),
-      updatedAt: new Date(),
-      preferences: {
-        id: Math.random().toString(),
-        userId: "1",
-        dailyWordGoal: 5,
-        difficultyLevel: "beginner",
-        notificationEnabled: true,
-        notificationType: "daily",
-        theme: "system",
-        profileBackgroundColorIndex: 0,
-        createdAt: new Date(),
-        updatedAt: new Date(),
-      },
-      stats: {
-        id: Math.random().toString(),
-        userId: "1",
-        totalWordsLearned: 0,
-        currentStreak: 0,
-        longestStreak: 0,
-        totalPracticeTime: 0,
-        averageAccuracy: 0,
-        createdAt: new Date(),
-        updatedAt: new Date(),
-      },
-    };
+    try {
+      const response = await fetch(`${API_URL}/users/register`, {
+        method: "POST",
+        body: JSON.stringify({ email, password, username }),
+        headers: {
+          "Content-Type": "application/json",
+        },
+      });
 
-    set({
-      user: mockUser,
-      isAuthenticated: true,
-      preferences: mockUser.preferences,
-      stats: mockUser.stats,
-    });
+      const data = await response.json();
+      const payload = data.payload;
+
+      if (response.ok) {
+        console.log("Registration successful:", payload);
+        const { token, refreshToken, user } = payload;
+        await setToken(token);
+        await setRefreshToken(refreshToken);
+        set({ user, isAuthenticated: true });
+      } else {
+        throw new Error(payload.message);
+      }
+    } catch (error) {
+      console.error("Registration failed:", error);
+    }
   },
 
   logout: () => {
+    removeToken();
+    removeRefreshToken();
     set({
       user: null,
       isAuthenticated: false,

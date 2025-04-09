@@ -1,8 +1,15 @@
 from fastapi import APIRouter, Depends
+
 from app.config.jwt import jwt
 from app.dependencies.auth import get_current_user_id
 
-from app.models.user import UserRegister, UserLogin, User, UserLoginResponse
+from app.models.user import (
+    UserRegister,
+    UserLogin,
+    User,
+    UserLoginResponse,
+    RefreshTokenRequest,
+)
 from app.models.base import Response
 from app.services.users import (
     get_user_service,
@@ -28,7 +35,9 @@ async def get_current_user(
 ) -> Response[User]:
     try:
         user = await user_service.get_user_by_id(current_user_id)
-        return Response(success=True, message="User retrieved successfully", data=user)
+        return Response(
+            success=True, message="User retrieved successfully", payload=user
+        )
     except UserNotFoundError:
         return Response(
             success=False, message="User not found", error_code=USER_NOT_FOUND
@@ -61,7 +70,7 @@ async def register_user(
         return Response(
             success=True,
             message="Registered successfully",
-            data=UserLoginResponse(
+            payload=UserLoginResponse(
                 token=token, refresh_token=refresh_token, user=new_user
             ),
         )
@@ -110,10 +119,11 @@ async def login_user(
             return Response(
                 success=True,
                 message="Login successful",
-                data=UserLoginResponse(
+                payload=UserLoginResponse(
                     token=token, refresh_token=refresh_token, user=user
                 ),
             )
+
         except Exception as e:
             print(f"Error during token generation: {e}")
             return Response(
@@ -121,8 +131,7 @@ async def login_user(
                 message="Could not process login due to an internal error",
                 error_code=SERVER_ERROR,
             )
-
-    except UserNotFoundError:
+    except UserNotFoundError as e:
         return Response(
             success=False,
             message="Invalid credentials",
@@ -139,16 +148,17 @@ async def login_user(
 
 @router.post("/refresh-token")
 async def refresh_token(
-    refresh_token: str, user_service: UserService = Depends(get_user_service)
+    refresh_token_request: RefreshTokenRequest,
+    user_service: UserService = Depends(get_user_service),
 ) -> Response[UserLoginResponse]:
     try:
-        if not jwt.validate_token_type(refresh_token, "refresh"):
+        if not jwt.validate_token_type(refresh_token_request.refresh_token, "refresh"):
             return Response(
                 success=False,
                 message="Invalid refresh token",
                 error_code=INVALID_CREDENTIALS,
             )
-        payload = jwt.decode_token(refresh_token)
+        payload = jwt.decode_token(refresh_token_request.refresh_token)
         user_id = payload.get("sub")
         if not user_id:
             return Response(
@@ -172,8 +182,13 @@ async def refresh_token(
         return Response(
             success=True,
             message="Token refreshed successfully",
-            data=UserLoginResponse(token=token, refresh_token=refresh_token, user=user),
+            payload=UserLoginResponse(
+                token=token,
+                refresh_token=refresh_token_request.refresh_token,
+                user=user,
+            ),
         )
+
     except Exception as e:
         print(f"Error during token refresh: {e}")
         return Response(

@@ -1,14 +1,17 @@
 import asyncpg
-from app.models.user import (
-    UserRegister,
-    UserUpdate,
-    UserNotFoundError,
-    UserAlreadyExistsError,
-)
+from app.models.user import UserRegister, UserUpdate
 from app.config.jwt import jwt
 from app.config.db import get_pool
 from fastapi import Depends
 from app.models.user import User
+
+
+class UserNotFoundError(Exception):
+    pass
+
+
+class UserAlreadyExistsError(Exception):
+    pass
 
 
 class UserService:

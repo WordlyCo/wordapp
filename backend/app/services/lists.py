@@ -1,5 +1,5 @@
 from app.config.db import get_pool
-from app.models.base import PaginatedData, PageInfo
+from app.models.base import PaginatedPayload, PageInfo
 from app.models.list import (
     WordList,
     WordListCategory,
@@ -161,7 +161,7 @@ class ListService:
 
     async def get_lists_by_category(
         self, category_id: int, page: int = 1, per_page: int = 10
-    ) -> PaginatedData[WordListBrief]:
+    ) -> PaginatedPayload[WordListBrief]:
         offset = (page - 1) * per_page
 
         items_query = """
@@ -196,7 +196,7 @@ class ListService:
                     total_pages=total_pages,
                 )
 
-                return PaginatedData[WordListBrief](items=items, page_info=page_info)
+                return PaginatedPayload[WordListBrief](items=items, page_info=page_info)
 
         except Exception as e:
             print(
@@ -250,7 +250,7 @@ class ListService:
 
     async def get_all_categories(
         self, page: int = 1, per_page: int = 10
-    ) -> PaginatedData[WordListCategory]:
+    ) -> PaginatedPayload[WordListCategory]:
         offset = (page - 1) * per_page
 
         items_query = """
@@ -283,7 +283,9 @@ class ListService:
                     total_pages=total_pages,
                 )
 
-                return PaginatedData[WordListCategory](items=items, page_info=page_info)
+                return PaginatedPayload[WordListCategory](
+                    items=items, page_info=page_info
+                )
 
         except Exception as e:
             print(f"Database error getting all categories (page {page}): {e}")

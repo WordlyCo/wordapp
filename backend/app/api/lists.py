@@ -1,5 +1,4 @@
 from fastapi import APIRouter, Depends, Query
-
 from app.models.list import (
     WordListCategory,
     WordListCategoryCreate,
@@ -8,7 +7,7 @@ from app.models.list import (
     WordListCreate,
 )
 from app.services.words import WordNotFoundError
-from app.models.base import Response, PaginatedData
+from app.models.base import Response, PaginatedPayload
 from app.api.errors import DUPLICATE_INSERTION, SERVER_ERROR, NOT_FOUND
 from typing import List
 from app.services.lists import (
@@ -25,12 +24,12 @@ from app.dependencies.auth import get_current_user_id
 router = APIRouter(prefix="/lists", tags=["Lists"])
 
 
-@router.get("/categories", response_model=Response[PaginatedData[WordListCategory]])
+@router.get("/categories", response_model=Response[PaginatedPayload[WordListCategory]])
 async def get_all_categories(
     list_service: ListService = Depends(get_list_service),
     page: int = Query(1, ge=1, description="Page number to retrieve"),
     per_page: int = Query(10, ge=1, le=100, description="Number of items per page"),
-) -> Response[PaginatedData[WordListCategory]]:
+) -> Response[PaginatedPayload[WordListCategory]]:
     """Retrieve a paginated list of all available word list categories."""
     try:
         paginated_categories = await list_service.get_all_categories(
@@ -39,7 +38,7 @@ async def get_all_categories(
         return Response(
             success=True,
             message="Categories retrieved successfully",
-            data=paginated_categories,
+            payload=paginated_categories,
         )
     except Exception as e:
         print(f"API error getting categories (page {page}): {e}")
@@ -59,7 +58,9 @@ async def create_category(
     try:
         new_category = await list_service.create_category(category)
         return Response(
-            success=True, message="Category created successfully", data=new_category
+            success=True,
+            message="Category created successfully",
+            payload=new_category,
         )
     except CategoryAlreadyExistsError as e:
         return Response(success=False, message=str(e), error_code=DUPLICATE_INSERTION)
@@ -80,7 +81,9 @@ async def get_category_by_id(
     try:
         category = await list_service.get_category_by_id(category_id)
         return Response(
-            success=True, message="Category retrieved successfully", data=category
+            success=True,
+            message="Category retrieved successfully",
+            payload=category,
         )
     except CategoryNotFoundError:
         return Response(
@@ -96,14 +99,15 @@ async def get_category_by_id(
 
 
 @router.get(
-    "/by-category/{category_id}", response_model=Response[PaginatedData[WordListBrief]]
+    "/by-category/{category_id}",
+    response_model=Response[PaginatedPayload[WordListBrief]],
 )
 async def get_lists_in_category(
     category_id: int,
     list_service: ListService = Depends(get_list_service),
     page: int = Query(1, ge=1, description="Page number to retrieve"),
     per_page: int = Query(10, ge=1, le=100, description="Number of items per page"),
-) -> Response[PaginatedData[WordListBrief]]:
+) -> Response[PaginatedPayload[WordListBrief]]:
     """Retrieve a paginated list of word lists belonging to a specific category."""
     try:
         await list_service.get_category_by_id(category_id)
@@ -111,7 +115,9 @@ async def get_lists_in_category(
             category_id=category_id, page=page, per_page=per_page
         )
         return Response(
-            success=True, message="Lists retrieved successfully", data=paginated_lists
+            success=True,
+            message="Lists retrieved successfully",
+            payload=paginated_lists,
         )
     except CategoryNotFoundError:
         return Response(
@@ -134,7 +140,7 @@ async def insert_list(
     try:
         new_list = await list_service.insert_list(list_data)
         return Response(
-            success=True, message="List created successfully", data=new_list
+            success=True, message="List created successfully", payload=new_list
         )
     except ListAlreadyExistsError as e:
         return Response(success=False, message=str(e), error_code=DUPLICATE_INSERTION)
@@ -155,7 +161,7 @@ async def get_list_by_id(
     try:
         word_list = await list_service.get_full_list(list_id)
         return Response(
-            success=True, message="List retrieved successfully", data=word_list
+            success=True, message="List retrieved successfully", payload=word_list
         )
     except ListNotFoundError:
         return Response(success=False, message="List not found", error_code=NOT_FOUND)
