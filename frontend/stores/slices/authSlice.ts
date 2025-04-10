@@ -6,6 +6,7 @@ import {
   setRefreshToken,
   removeRefreshToken,
   removeToken,
+  authFetch,
 } from "@/lib/api";
 export interface AuthSlice {
   user: User | null;
@@ -24,6 +25,7 @@ export interface AuthSlice {
   logout: () => void;
   updatePreferences: (preferences: Partial<UserPreferences>) => void;
   updateStats: (stats: Partial<UserStats>) => void;
+  getMe: () => Promise<void>;
 }
 
 export const createAuthSlice: StateCreator<AuthSlice> = (set, get) => ({
@@ -35,6 +37,28 @@ export const createAuthSlice: StateCreator<AuthSlice> = (set, get) => ({
 
   setAuthError: (error: string) => {
     set({ authError: error });
+  },
+
+  getMe: async () => {
+    try {
+      const response = await authFetch(`/users/me`, {}, false);
+
+      const data = await response.json();
+      const payload = data.payload;
+
+      if (!payload) {
+        set({ authError: "No payload returned from server" });
+        return;
+      }
+
+      set({ user: payload.user, isAuthenticated: true });
+    } catch (error) {
+      set({
+        authError: "Failed to get user",
+        user: null,
+        isAuthenticated: false,
+      });
+    }
   },
 
   login: async (email: string, password: string) => {
@@ -74,6 +98,8 @@ export const createAuthSlice: StateCreator<AuthSlice> = (set, get) => ({
         throw new Error("Failed to login");
       }
     } catch (error) {
+      await removeToken();
+      await removeRefreshToken();
       console.error("Login failed:", error);
     }
   },
@@ -101,6 +127,8 @@ export const createAuthSlice: StateCreator<AuthSlice> = (set, get) => ({
         throw new Error(payload.message);
       }
     } catch (error) {
+      await removeToken();
+      await removeRefreshToken();
       console.error("Registration failed:", error);
     }
   },

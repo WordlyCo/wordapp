@@ -32,9 +32,15 @@ export const removeRefreshToken = async () => {
 
 export const authFetch = async (
   url: string,
-  options?: RequestInit
+  options?: RequestInit,
+  isFirstTime: boolean = true
 ): Promise<Response> => {
   try {
+    if (!isFirstTime) {
+      removeToken();
+      removeRefreshToken();
+    }
+
     const token = await getToken();
     const refreshToken = await getRefreshToken();
 
@@ -61,7 +67,7 @@ export const authFetch = async (
     const errorCode = copiedResponseJson.errorCode;
     const message = copiedResponseJson.message;
 
-    if (!success && refreshToken) {
+    if (response.status === 401 && refreshToken) {
       const newTokenResponse = await fetch(`${API_URL}/users/refresh-token`, {
         method: "POST",
         headers: {
@@ -75,10 +81,14 @@ export const authFetch = async (
       const newToken = data.token;
       if (newToken) {
         await setToken(newToken);
-        return authFetch(url, {
-          ...options,
-          headers: { ...headers, Authorization: `Bearer ${newToken}` },
-        });
+        return authFetch(
+          url,
+          {
+            ...options,
+            headers: { ...headers, Authorization: `Bearer ${newToken}` },
+          },
+          false
+        );
       }
       throw new Error("Failed to refresh token");
     }

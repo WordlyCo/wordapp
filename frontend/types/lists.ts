@@ -7,9 +7,11 @@ export type WordList = BaseEntity & {
   name: string;
   description: string;
   imageUrl: string;
-  categoryId: string;
+  iconName: string;
+  categories: string[];
   difficultyLevel: DifficultyLevel;
   words: Word[];
+  wordCount: number;
 };
 
 export type WordListCategory = BaseEntity & {

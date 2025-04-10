@@ -134,7 +134,8 @@ async def get_lists_in_category(
 
 @router.post("/", response_model=Response[WordList])
 async def insert_list(
-    list_data: WordListCreate, list_service: ListService = Depends(get_list_service)
+    list_data: WordListCreate,
+    list_service: ListService = Depends(get_list_service),
 ) -> Response[WordList]:
     """Create a new word list."""
     try:
@@ -195,5 +196,28 @@ async def insert_list_word(
         return Response(
             success=False,
             message="An unexpected error occurred",
+            error_code=SERVER_ERROR,
+        )
+
+
+@router.get("/", response_model=Response[PaginatedPayload[WordList]])
+async def get_all_lists(
+    list_service: ListService = Depends(get_list_service),
+    page: int = Query(1, ge=1, description="Page number to retrieve"),
+    per_page: int = Query(10, ge=1, le=100, description="Number of items per page"),
+) -> Response[PaginatedPayload[WordList]]:
+    """Retrieve a paginated list of all available word lists."""
+    try:
+        paginated_lists = await list_service.get_all_lists(page=page, per_page=per_page)
+        return Response(
+            success=True,
+            message="Lists retrieved successfully",
+            payload=paginated_lists,
+        )
+    except Exception as e:
+        print(f"API error getting lists (page {page}): {e}")
+        return Response(
+            success=False,
+            message="An unexpected error occurred retrieving lists",
             error_code=SERVER_ERROR,
         )

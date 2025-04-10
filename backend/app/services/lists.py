@@ -33,15 +33,62 @@ class ListService:
                 async with conn.transaction():
                     list_data = await conn.fetchrow(
                         """
-                        INSERT INTO lists (name, description, category_id, difficulty_level) 
+                        INSERT INTO lists (name, description, difficulty_level, icon_name) 
                         VALUES ($1, $2, $3, $4)
                         RETURNING *
                         """,
                         list.name,
                         list.description,
-                        list.category_id,
                         list.difficulty_level,
+                        list.icon_name,
                     )
+
+            # Collect existing categories and identify new ones to create
+            existing_categories_names: List[str] = []
+            new_categories_names: List[str] = []
+
+            async with self.pool.acquire() as conn:
+                async with conn.transaction():
+                    for category in list.categories:
+                        try:
+                            db_category = await conn.fetchrow(
+                                "SELECT * FROM categories WHERE name = $1", category
+                            )
+                            if db_category is None:
+                                new_categories_names.append(category)
+                            else:
+                                existing_categories_names.append(db_category["name"])
+                        except Exception as e:
+                            new_categories_names.append(category)
+
+            for category_name in new_categories_names:
+                try:
+                    new_category = await self.create_category(
+                        WordListCategoryCreate(name=category_name)
+                    )
+                    existing_categories_names.append(new_category.name)
+                except Exception as e:
+                    continue
+
+            if existing_categories_names:
+                async with self.pool.acquire() as conn:
+                    async with conn.transaction():
+                        for category_name in existing_categories_names:
+                            try:
+                                category_record = await conn.fetchrow(
+                                    "SELECT id FROM categories WHERE name = $1",
+                                    category_name,
+                                )
+
+                                if category_record:
+                                    await conn.execute(
+                                        "INSERT INTO list_categories (list_id, category_id) VALUES ($1, $2)",
+                                        list_data["id"],
+                                        category_record["id"],
+                                    )
+                            except Exception as e:
+                                continue
+
             existing_word_ids: List[int] = []
             new_words: List[Word] = []
 
@@ -55,11 +102,17 @@ class ListService:
             for word_id in set(existing_word_ids):
                 await self.insert_list_word(list_data["id"], word_id)
 
-            for word in set(new_words):
-                new_word = await self.word_service.insert_word(word)
-                await self.insert_list_word(list_data["id"], new_word.id)
+            for word in new_words:
+                try:
+                    new_word = await self.word_service.insert_word(word)
+                    await self.insert_list_word(list_data["id"], new_word.id)
+                except Exception as e:
+                    print(f"Error inserting word {word.word}: {str(e)}")
+                    continue
 
-            return WordList(**list_data)
+            final_list = await self.get_full_list(list_data["id"])
+
+            return final_list
         except asyncpg.UniqueViolationError:
             raise ListAlreadyExistsError("List already exists")
         except Exception as e:
@@ -84,6 +137,7 @@ class ListService:
     async def get_full_list(self, list_id: int) -> WordList:
         try:
             async with self.pool.acquire() as conn:
+                # First, get the list data and words
                 list_data = await conn.fetchrow(
                     """
                     SELECT 
@@ -118,6 +172,20 @@ class ListService:
                 if list_data is None:
                     raise ListNotFoundError(f"Word list with ID {list_id} not found")
 
+                # Separately get the categories to avoid duplication
+                categories_data = await conn.fetch(
+                    """
+                    SELECT DISTINCT categories.name
+                    FROM list_categories
+                    JOIN categories ON list_categories.category_id = categories.id
+                    WHERE list_categories.list_id = $1
+                    """,
+                    list_id,
+                )
+
+                # Convert to a simple list of category names
+                categories_list = [category["name"] for category in categories_data]
+
                 words_list = []
                 words_json_string = list_data["words"]
                 if words_json_string:
@@ -128,12 +196,12 @@ class ListService:
                     id=list_data["id"],
                     name=list_data["name"],
                     description=list_data["description"],
-                    category_id=list_data.get("category_id"),
                     difficulty_level=list_data.get("difficulty_level"),
-                    owner_id=list_data.get("owner_id"),
                     created_at=list_data["created_at"],
                     updated_at=list_data["updated_at"],
+                    icon_name=list_data.get("icon_name"),
                     words=words_list,
+                    categories=categories_list,
                 )
         except ListNotFoundError as e:
             raise e
@@ -165,24 +233,21 @@ class ListService:
         offset = (page - 1) * per_page
 
         items_query = """
-            SELECT id, name, description, category_id, difficulty_level, created_at, updated_at 
+            SELECT id, name, description, difficulty_level, icon_name, created_at, updated_at 
             FROM lists 
-            WHERE category_id = $1
             ORDER BY name ASC
             LIMIT $2 OFFSET $3
         """
 
-        count_query = "SELECT COUNT(*) FROM lists WHERE category_id = $1"
+        count_query = "SELECT COUNT(*) FROM lists"
 
         try:
             async with self.pool.acquire() as conn:
-                total_items_record = await conn.fetchrow(count_query, category_id)
+                total_items_record = await conn.fetchrow(count_query)
                 total_items = total_items_record["count"] if total_items_record else 0
 
                 if total_items > 0:
-                    list_records = await conn.fetch(
-                        items_query, category_id, per_page, offset
-                    )
+                    list_records = await conn.fetch(items_query, per_page, offset)
                     items = [WordListBrief(**record) for record in list_records]
                 else:
                     items = []
@@ -206,7 +271,6 @@ class ListService:
                 f"Error retrieving lists for category {category_id}: {str(e)}"
             )
 
-    # Category functions
     async def create_category(
         self, category: WordListCategoryCreate
     ) -> WordListCategory:
@@ -215,14 +279,15 @@ class ListService:
                 async with conn.transaction():
                     category_data = await conn.fetchrow(
                         """
-                        INSERT INTO categories (name, description, difficulty_level, icon_url, accent_color) 
-                        VALUES ($1, $2, $3, $4, $5)
+                        INSERT INTO categories (name, description, difficulty_level, icon_url, icon_name, accent_color) 
+                        VALUES ($1, $2, $3, $4, $5, $6)
                         RETURNING *
                         """,
                         category.name,
                         category.description,
                         category.difficulty_level,
                         category.icon_url,
+                        category.icon_name,
                         category.accent_color,
                     )
                     return WordListCategory(**category_data)
@@ -290,6 +355,79 @@ class ListService:
         except Exception as e:
             print(f"Database error getting all categories (page {page}): {e}")
             raise Exception(f"Error getting all categories: {str(e)}")
+
+    async def get_all_lists(
+        self, page: int = 1, per_page: int = 10
+    ) -> PaginatedPayload[WordList]:
+        offset = (page - 1) * per_page
+
+        items_query = """
+            SELECT 
+                lists.*,
+                COUNT(list_words.word_id) as word_count
+            FROM lists
+            LEFT JOIN list_words ON lists.id = list_words.list_id
+            GROUP BY lists.id
+            ORDER BY name ASC
+            LIMIT $1 OFFSET $2
+        """
+
+        count_query = "SELECT COUNT(*) FROM lists"
+
+        try:
+            async with self.pool.acquire() as conn:
+                total_items_record = await conn.fetchrow(count_query)
+                total_items = total_items_record["count"] if total_items_record else 0
+
+                if total_items > 0:
+                    lists_data = await conn.fetch(items_query, per_page, offset)
+                    items = []
+
+                    for list_data in lists_data:
+                        # For each list, get its categories separately to avoid duplication
+                        categories_data = await conn.fetch(
+                            """
+                            SELECT DISTINCT categories.name
+                            FROM list_categories
+                            JOIN categories ON list_categories.category_id = categories.id
+                            WHERE list_categories.list_id = $1
+                            """,
+                            list_data["id"],
+                        )
+
+                        # Convert to a simple list of category names
+                        categories_list = [
+                            category["name"] for category in categories_data
+                        ]
+
+                        items.append(
+                            WordList(
+                                id=list_data["id"],
+                                name=list_data["name"],
+                                description=list_data["description"],
+                                difficulty_level=list_data["difficulty_level"],
+                                icon_name=list_data["icon_name"],
+                                word_count=list_data["word_count"],
+                                categories=categories_list,
+                            )
+                        )
+                else:
+                    items = []
+
+                total_pages = math.ceil(total_items / per_page) if per_page > 0 else 0
+
+                page_info = PageInfo(
+                    page=page,
+                    per_page=per_page,
+                    total_items=total_items,
+                    total_pages=total_pages,
+                )
+
+                return PaginatedPayload[WordList](items=items, page_info=page_info)
+
+        except Exception as e:
+            print(f"Database error getting all lists (page {page}): {e}")
+            raise Exception(f"Error getting all lists: {str(e)}")
 
 
 async def get_list_service(

@@ -12,29 +12,74 @@ export interface GameSlice {
   isLoading: boolean;
   isFetchingCategories: boolean;
   categories: WordListCategory[];
+  wordLists: WordList[];
+  isFetchingWordLists: boolean;
   selectedList: WordList | null;
   selectedCategory: WordListCategory | null;
   selectedListsByCategory: WordList[];
   isFetchingList: boolean;
   isFetchingListsByCategory: boolean;
   currentSession: PracticeSession | null;
+  wordListPageInfo: {
+    page: number;
+    perPage: number;
+    totalItems: number;
+    totalPages: number;
+  };
   fetchCategories: () => Promise<void>;
   fetchCategory: (id: string) => Promise<void>;
   fetchList: (id: string) => Promise<void>;
   fetchListsByCategory: (id: string) => Promise<void>;
+  fetchWordLists: (page: number, perPage: number) => Promise<void>;
   startSession: (sessionType: SessionType) => Promise<void>;
 }
 
 export const createGameSlice: StateCreator<GameSlice> = (set, get) => ({
   isLoading: false,
   categories: [],
+  wordLists: [],
+  wordListPageInfo: {
+    page: 1,
+    perPage: 5,
+    totalItems: 0,
+    totalPages: 0,
+  },
   isFetchingCategories: false,
+  isFetchingWordLists: false,
   selectedCategory: null,
   currentSession: null,
   selectedList: null,
   isFetchingList: false,
   selectedListsByCategory: [],
   isFetchingListsByCategory: false,
+
+  fetchWordLists: async (page: number = 1, perPage: number = 10) => {
+    set({ isFetchingWordLists: true });
+    try {
+      const response = await authFetch(
+        `/lists?page=${page}&per_page=${perPage}`
+      );
+      const data = await response.json();
+      const success = data.success;
+      const message = data.message;
+      const payload = data.payload;
+      const pageInfo = payload.pageInfo;
+      const items = payload.items;
+
+      if (response.ok) {
+        if (success) {
+          set({ wordLists: items, wordListPageInfo: pageInfo });
+        }
+      } else {
+        throw new Error(message);
+      }
+    } catch (error) {
+      console.error(error);
+    } finally {
+      set({ isFetchingWordLists: false });
+    }
+  },
+
   fetchList: async (id: string) => {
     set({ isFetchingList: true });
     try {
@@ -47,7 +92,6 @@ export const createGameSlice: StateCreator<GameSlice> = (set, get) => ({
 
       if (response.ok) {
         if (success) {
-          console.log("List fetched successfully", list);
           set({ selectedList: list });
         }
       } else {
@@ -72,7 +116,6 @@ export const createGameSlice: StateCreator<GameSlice> = (set, get) => ({
 
       if (response.ok) {
         if (success) {
-          console.log("Lists fetched successfully", items);
           set({ selectedListsByCategory: items });
         }
       } else {
@@ -99,7 +142,6 @@ export const createGameSlice: StateCreator<GameSlice> = (set, get) => ({
 
       if (response.ok) {
         if (success) {
-          console.log("Categories fetched successfully", items);
           set({ categories: items });
           return;
         }

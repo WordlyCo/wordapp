@@ -24,6 +24,7 @@ def upgrade() -> None:
         sa.Column("description", sa.Text(), nullable=True),
         sa.Column("difficulty_level", sa.String(length=20), nullable=False),
         sa.Column("icon_url", sa.Text(), nullable=True),
+        sa.Column("icon_name", sa.String(length=100), nullable=True),
         sa.Column("accent_color", sa.String(length=20), nullable=True),
         sa.Column(
             "created_at", sa.DateTime(), nullable=False, server_default=sa.func.now()
@@ -87,8 +88,8 @@ def upgrade() -> None:
         sa.Column("id", sa.Integer(), nullable=False),
         sa.Column("name", sa.String(length=100), nullable=False),
         sa.Column("description", sa.Text(), nullable=True),
-        sa.Column("category_id", sa.Integer(), nullable=True),
         sa.Column("difficulty_level", sa.String(length=20), nullable=False),
+        sa.Column("icon_name", sa.String(length=100), nullable=True),
         sa.Column(
             "created_at", sa.DateTime(), nullable=False, server_default=sa.func.now()
         ),
@@ -100,14 +101,6 @@ def upgrade() -> None:
             onupdate=sa.func.now(),
         ),
         sa.PrimaryKeyConstraint("id"),
-        sa.ForeignKeyConstraint(["category_id"], ["categories.id"], ondelete="CASCADE"),
-    )
-
-    op.create_index(
-        "idx_lists_category_id",
-        "lists",
-        ["category_id"],
-        unique=False,
     )
 
     op.create_table(
