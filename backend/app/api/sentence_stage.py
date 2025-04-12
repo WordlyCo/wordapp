@@ -1,12 +1,13 @@
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
 from openai import OpenAI
+from app.config.env import env
 import os
 from typing import Optional
 import json
 
 router = APIRouter(prefix="/sentence-stage", tags=["sentence-stage"])
-client = OpenAI(api_key=os.getenv("EXPO_PUBLIC_OPENAPI_KEY"))
+client = OpenAI(api_key=env.openai_api_key)
 
 
 class SentenceCheckRequest(BaseModel):

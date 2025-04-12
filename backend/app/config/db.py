@@ -20,13 +20,7 @@ def init_db(app: FastAPI):
 async def create_pool():
     global pool
     if pool is None:
-        pool = await asyncpg.create_pool(
-            user=env.DB_USER,
-            password=env.DB_PASSWORD,
-            host=env.DB_HOST,
-            port=env.DB_PORT,
-            database=env.DB_NAME,
-        )
+        pool = await asyncpg.create_pool(env.database_url)
     return pool
 
 

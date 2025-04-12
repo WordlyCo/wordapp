@@ -1,13 +1,12 @@
-// Predefined background colors for profile backgrounds
 export const PROFILE_BACKGROUND_COLORS = [
-  '#6460CD', // Purple (app theme)
-  '#F94144', // Red
-  '#F3722C', // Orange
-  '#F8961E', // Light Orange
-  '#F9C74F', // Yellow
-  '#90BE6D', // Light Green
-  '#43AA8B', // Teal
-  '#577590', // Blue
-  '#495057', // Gray
-  '#212529', // Dark Gray/Black
+  "#6460CD",
+  "#F94144",
+  "#F3722C",
+  "#F8961E",
+  "#F9C74F",
+  "#90BE6D",
+  "#43AA8B",
+  "#577590",
+  "#495057",
+  "#212529",
 ];
