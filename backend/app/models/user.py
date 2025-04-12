@@ -1,4 +1,4 @@
-from pydantic import EmailStr
+from pydantic import EmailStr, BaseModel, Field
 from typing import Optional, List
 from datetime import datetime
 from .base import BaseEntity, CamelModel
@@ -6,16 +6,25 @@ from .base import BaseEntity, CamelModel
 
 class User(BaseEntity):
     id: int
+    clerk_id: str
     username: str
     email: EmailStr
     first_name: Optional[str]
     last_name: Optional[str]
 
 
+class UserCreate(BaseModel):
+    email: EmailStr
+    username: str
+    clerk_id: str
+    first_name: Optional[str] = None
+    last_name: Optional[str] = None
+
+
 class UserRegister(CamelModel):
     username: str
     email: EmailStr
-    password: str
+    clerk_id: str
     first_name: Optional[str] = None
     last_name: Optional[str] = None
 
@@ -52,14 +61,11 @@ class RefreshTokenRequest(CamelModel):
 
 class UserList(BaseEntity):
     user_id: int
-    name: str
-    description: Optional[str] = None
-    words: Optional[List[int]] = None
+    list_id: int
 
 
-class UserListUpdate(CamelModel):
-    name: Optional[str] = None
-    description: Optional[str] = None
+class UserListCreate(CamelModel):
+    list_id: int
 
 
 # User Stats

@@ -3,7 +3,7 @@ import { Avatar } from "react-native-paper";
 import { TouchableOpacity, StyleSheet } from "react-native";
 import { Card } from "react-native-paper";
 import { Text } from "react-native-paper";
-import { SessionType } from "@/stores/enums";
+import { SessionType } from "@/src/stores/enums";
 
 export type Game = {
   id: string;

@@ -1,12 +1,22 @@
-import React from "react";
+import React, { useState } from "react";
 import { View, StyleSheet, ScrollView } from "react-native";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
-import { Text, Card, Divider, ProgressBar } from "react-native-paper";
+import {
+  Text,
+  Card,
+  Divider,
+  ProgressBar,
+  SegmentedButtons,
+  IconButton,
+} from "react-native-paper";
 import useTheme from "@/src/hooks/useTheme";
 import StickyHeader from "@/src/components/StickyHeader";
+import LeaderboardEntry from "@/src/components/LeaderboardEntry";
+import { globalLeaderboard, friendsLeaderboard } from "@/src/stores/mockData";
 
 export default function ProgressScreen() {
   const { colors } = useTheme();
+  const [activeTab, setActiveTab] = useState("global");
 
   const userStats = {
     wordsLearned: 124,
@@ -61,9 +71,7 @@ export default function ProgressScreen() {
 
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>
-      <StickyHeader />
       <ScrollView contentContainerStyle={styles.scrollContent}>
-        {/* Stats Overview Card */}
         <Card style={[styles.card, { backgroundColor: colors.surface }]}>
           <Card.Content style={styles.statsCardContent}>
             <Text style={[styles.cardTitle, { color: colors.onSurface }]}>
@@ -263,6 +271,47 @@ export default function ProgressScreen() {
             ))}
           </Card.Content>
         </Card>
+
+        {/* Leaderboard Card */}
+        <Card style={[styles.card, { backgroundColor: colors.surface }]}>
+          <Card.Content>
+            <View style={styles.leaderboardHeader}>
+              <Text style={[styles.cardTitle, { color: colors.onSurface }]}>
+                Leaderboard
+              </Text>
+              <IconButton
+                icon="trophy"
+                mode="contained"
+                containerColor={colors.primaryContainer}
+                iconColor={colors.primary}
+                size={20}
+              />
+            </View>
+
+            <SegmentedButtons
+              value={activeTab}
+              onValueChange={setActiveTab}
+              buttons={[
+                { value: "global", label: "Global" },
+                { value: "friends", label: "Friends" },
+              ]}
+              style={styles.segmentedButtons}
+            />
+
+            <View style={styles.leaderboardList}>
+              {(activeTab === "global"
+                ? globalLeaderboard
+                : friendsLeaderboard
+              ).map((entry, index) => (
+                <LeaderboardEntry
+                  key={entry.id}
+                  entry={entry}
+                  rank={index + 1}
+                />
+              ))}
+            </View>
+          </Card.Content>
+        </Card>
       </ScrollView>
     </View>
   );
@@ -366,5 +415,17 @@ const styles = StyleSheet.create({
   },
   activityDivider: {
     marginVertical: 4,
+  },
+  leaderboardHeader: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    marginBottom: 16,
+  },
+  segmentedButtons: {
+    marginBottom: 16,
+  },
+  leaderboardList: {
+    gap: 8,
   },
 });

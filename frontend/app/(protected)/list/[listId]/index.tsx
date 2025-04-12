@@ -19,11 +19,11 @@ import {
 import { Stack, useLocalSearchParams } from "expo-router";
 import StickyHeader from "@/src/components/StickyHeader";
 import useTheme from "@/src/hooks/useTheme";
-import { Word } from "@/types/words";
+import { Word } from "@/src/types/words";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
-import { DIFFICULTY_LEVELS } from "@/types/enums";
+import { DIFFICULTY_LEVELS } from "@/src/types/enums";
 import * as Speech from "expo-speech";
-import { useStore } from "@/stores/store";
+import { useStore } from "@/src/stores/store";
 
 const getDifficultyColor = (difficulty: string, colors: any) => {
   switch (difficulty) {
@@ -76,7 +76,8 @@ export default function ListDetailsScreen() {
   const { listId } = useLocalSearchParams<{ listId: string }>();
   const { colors } = useTheme();
   const [searchQuery, setSearchQuery] = useState("");
-  const { selectedList, fetchList, isFetchingList } = useStore();
+  const { selectedList, fetchList, isFetchingList, addListToUserLists } =
+    useStore();
 
   const handleSearch = (text: string) => {
     setSearchQuery(text);
@@ -213,7 +214,7 @@ export default function ListDetailsScreen() {
                     { backgroundColor: colors.primary },
                   ]}
                   icon="plus"
-                  onPress={() => console.log("Add to my lists")}
+                  onPress={() => addListToUserLists(selectedList?.id || "")}
                 >
                   Add to My Lists
                 </Button>
@@ -225,7 +226,7 @@ export default function ListDetailsScreen() {
                     { borderColor: colors.primary, marginTop: 10 },
                   ]}
                   icon="play"
-                  onPress={() => console.log("Start learning")}
+                  onPress={() => {}}
                 >
                   Start Learning
                 </Button>
@@ -291,94 +292,99 @@ export default function ListDetailsScreen() {
                     ]}
                     elevation={2}
                   >
-                    <Card.Content style={styles.wordCardContent}>
-                      <View style={styles.wordHeader}>
-                        <View style={styles.wordTitleContainer}>
+                    <View style={styles.wordCardWrapper}>
+                      <Card.Content style={styles.wordCardContent}>
+                        <View style={styles.wordHeader}>
+                          <View style={styles.wordTitleContainer}>
+                            <Text
+                              style={[
+                                styles.wordTerm,
+                                { color: colors.primary },
+                              ]}
+                            >
+                              {word.word}
+                            </Text>
+                            <View
+                              style={[
+                                styles.wordTypeBadge,
+                                { backgroundColor: colors.primary },
+                              ]}
+                            >
+                              <Text
+                                style={[
+                                  styles.wordType,
+                                  { color: colors.background },
+                                ]}
+                              >
+                                {word.partOfSpeech}
+                              </Text>
+                            </View>
+                          </View>
+                          <IconButton
+                            icon="volume-high"
+                            size={22}
+                            iconColor={colors.primary}
+                            onPress={() => pronounceWord(word.word)}
+                            style={[
+                              styles.pronounceButton,
+                              { backgroundColor: colors.surfaceVariant + "40" },
+                            ]}
+                          />
+                        </View>
+
+                        <View
+                          style={[
+                            styles.definitionContainer,
+                            { backgroundColor: colors.surfaceVariant + "15" },
+                          ]}
+                        >
                           <Text
-                            style={[styles.wordTerm, { color: colors.primary }]}
+                            style={[
+                              styles.wordDefinition,
+                              { color: colors.onSurface },
+                            ]}
                           >
-                            {word.word}
+                            {word.definition}
                           </Text>
+                        </View>
+
+                        {word.examples.length > 0 && (
                           <View
                             style={[
-                              styles.wordTypeBadge,
-                              { backgroundColor: colors.primary },
+                              styles.examplesContainer,
+                              { backgroundColor: colors.surfaceVariant + "20" },
                             ]}
                           >
                             <Text
                               style={[
-                                styles.wordType,
-                                { color: colors.background },
+                                styles.examplesTitle,
+                                { color: colors.onSurfaceVariant },
                               ]}
                             >
-                              {word.partOfSpeech}
+                              Examples:
                             </Text>
+                            {word.examples.map((example, index) => (
+                              <View key={index} style={styles.exampleItem}>
+                                <MaterialCommunityIcons
+                                  name="minus"
+                                  size={14}
+                                  color={colors.primary}
+                                  style={styles.exampleBullet}
+                                />
+                                <Text
+                                  style={[
+                                    styles.exampleText,
+                                    { color: colors.onSurfaceVariant },
+                                  ]}
+                                >
+                                  {example}
+                                </Text>
+                              </View>
+                            ))}
                           </View>
-                        </View>
-                        <IconButton
-                          icon="volume-high"
-                          size={22}
-                          iconColor={colors.primary}
-                          onPress={() => pronounceWord(word.word)}
-                          style={[
-                            styles.pronounceButton,
-                            { backgroundColor: colors.surfaceVariant + "40" },
-                          ]}
-                        />
-                      </View>
-
-                      <View
-                        style={[
-                          styles.definitionContainer,
-                          { backgroundColor: colors.surfaceVariant + "15" },
-                        ]}
-                      >
-                        <Text
-                          style={[
-                            styles.wordDefinition,
-                            { color: colors.onSurface },
-                          ]}
-                        >
-                          {word.definition}
-                        </Text>
-                      </View>
-
-                      {word.examples.length > 0 && (
-                        <View
-                          style={[
-                            styles.examplesContainer,
-                            { backgroundColor: colors.surfaceVariant + "20" },
-                          ]}
-                        >
-                          <Text
-                            style={[
-                              styles.examplesTitle,
-                              { color: colors.onSurfaceVariant },
-                            ]}
-                          >
-                            Examples:
-                          </Text>
-                          {word.examples.map((example, index) => (
-                            <View key={index} style={styles.exampleItem}>
-                              <MaterialCommunityIcons
-                                name="minus"
-                                size={14}
-                                color={colors.primary}
-                                style={styles.exampleBullet}
-                              />
-                              <Text
-                                style={[
-                                  styles.exampleText,
-                                  { color: colors.onSurfaceVariant },
-                                ]}
-                              >
-                                {example}
-                              </Text>
-                            </View>
-                          ))}
-                        </View>
-                      )}
-                    </Card.Content>
+                        )}
+                      </Card.Content>
+                    </View>
                   </Card>
                 ))}
             </View>
@@ -481,8 +487,11 @@ const styles = StyleSheet.create({
   wordCard: {
     marginBottom: 16,
     borderRadius: 12,
-    overflow: "hidden",
     borderLeftWidth: 4,
+  },
+  wordCardWrapper: {
+    overflow: "hidden",
+    borderRadius: 12,
   },
   wordCardContent: {
     paddingHorizontal: 18,

@@ -1,7 +1,7 @@
 import React from "react";
 import { Animated, StyleSheet, View } from "react-native";
 import { Card, Text, Avatar } from "react-native-paper";
-import { CARD_HEIGHT, SCROLL_DISTANCE_PER_CARD } from "@/stores/enums";
+import { CARD_HEIGHT, SCROLL_DISTANCE_PER_CARD } from "@/src/stores/enums";
 import useTheme from "@/src/hooks/useTheme";
 
 interface CardData {

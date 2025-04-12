@@ -2,7 +2,7 @@ import { StyleSheet, View } from "react-native";
 
 import { Button, Avatar, Text } from "react-native-paper";
 import useTheme from "@/src/hooks/useTheme";
-import { WordListCategory } from "@/types/lists";
+import { WordListCategory } from "@/src/types/lists";
 import { IconSource } from "react-native-paper/lib/typescript/components/Icon";
 
 const CategoryItem = ({

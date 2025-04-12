@@ -1,9 +1,9 @@
 import { View, StyleSheet, Image } from "react-native";
 import { Text, Card, IconButton, Chip } from "react-native-paper";
 import useTheme from "@/src/hooks/useTheme";
-import { WordList } from "@/types/lists";
+import { WordList } from "@/src/types/lists";
 import MaterialCommunityIcons from "@expo/vector-icons/MaterialCommunityIcons";
-import { DIFFICULTY_LEVELS } from "@/stores/enums";
+import { DIFFICULTY_LEVELS } from "@/src/stores/enums";
 
 // Helper function to get appropriate icon for category
 const getCategoryIcon = (
@@ -118,7 +118,7 @@ export const WordListCard = ({
                   color={colors.primary}
                 />
                 <Text style={[styles.metadataText, { color: colors.primary }]}>
-                  {list.categories.join(", ")}
+                  {list.categories?.join(", ")}
                 </Text>
               </View>
             </View>
@@ -139,7 +139,7 @@ export const WordListCard = ({
         <IconButton
           icon="dots-vertical"
           iconColor={colors.onSurfaceVariant}
-          onPress={() => console.log("More options")}
+          onPress={() => {}}
           size={20}
         />
       </Card.Actions>

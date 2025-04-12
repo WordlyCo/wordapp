@@ -2,12 +2,16 @@ import React, { useEffect } from "react";
 import { Slot, SplashScreen } from "expo-router";
 import { PaperProvider } from "react-native-paper";
 import { SafeAreaProvider } from "react-native-safe-area-context";
-import useTheme from "../src/hooks/useTheme";
+import { ClerkProvider } from "@clerk/clerk-expo";
+import { tokenCache } from "@clerk/clerk-expo/token-cache";
+import useTheme from "@/src/hooks/useTheme";
+import { AuthProvider } from "@/src/contexts/AuthContext";
 
 SplashScreen.preventAutoHideAsync().catch(() => {});
 
 export default function RootLayout() {
   const { theme } = useTheme();
+
   const [isReady, setIsReady] = React.useState(false);
 
   useEffect(() => {
@@ -15,7 +19,7 @@ export default function RootLayout() {
       try {
         await new Promise((resolve) => setTimeout(resolve, 100));
       } catch (e) {
-        console.warn(e);
+        // Silent error - no need to log
       } finally {
         setIsReady(true);
       }
@@ -35,10 +39,17 @@ export default function RootLayout() {
   }
 
   return (
-    <PaperProvider theme={theme}>
-      <SafeAreaProvider>
-        <Slot />
-      </SafeAreaProvider>
-    </PaperProvider>
+    <ClerkProvider
+      publishableKey={process.env.EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY}
+      tokenCache={tokenCache}
+    >
+      <PaperProvider theme={theme}>
+        <SafeAreaProvider>
+          <AuthProvider>
+            <Slot />
+          </AuthProvider>
+        </SafeAreaProvider>
+      </PaperProvider>
+    </ClerkProvider>
   );
 }

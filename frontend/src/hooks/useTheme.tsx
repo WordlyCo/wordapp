@@ -3,13 +3,11 @@ import { MD3DarkTheme, MD3LightTheme } from "react-native-paper";
 import { useColorScheme } from "react-native";
 
 const palette = {
-  // Primary brand color
   purple: {
     main: "rgb(100, 96, 205)",
     light: "rgb(177, 175, 237)",
     dark: "rgb(63, 60, 148)",
   },
-  // Accent colors
   teal: {
     main: "rgb(64, 186, 164)",
     light: "rgb(184, 240, 230)",

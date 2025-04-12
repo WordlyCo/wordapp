@@ -1,14 +1,19 @@
 import React from "react";
 import { Stack } from "expo-router";
-import { useStore } from "../../stores/store";
 import { Redirect } from "expo-router";
+import { useAuth } from "@clerk/clerk-expo";
 
 export default function AuthLayout() {
-  const isAuthenticated = useStore((state) => state.isAuthenticated);
+  const { isSignedIn } = useAuth();
 
-  if (isAuthenticated) {
-    return <Redirect href="/(protected)/(tabs)/home" />;
+  if (isSignedIn) {
+    return <Redirect href={"/(protected)/(tabs)/home"} />;
   }
 
-  return <Stack screenOptions={{ headerShown: false }} />;
+  return (
+    <Stack screenOptions={{ headerShown: false }}>
+      <Stack.Screen name="index" />
+      <Stack.Screen name="sign-up" />
+    </Stack>
+  );
 }

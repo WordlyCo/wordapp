@@ -1,32 +1,76 @@
-import React, { useRef, useEffect, useState } from "react";
+import React, { useEffect, useState } from "react";
 import {
   View,
   StyleSheet,
-  Animated,
-  ActivityIndicator,
   TouchableOpacity,
+  StatusBar,
+  Dimensions,
 } from "react-native";
-import { Avatar, Text, Divider, Searchbar, Button } from "react-native-paper";
+import {
+  Text,
+  Searchbar,
+  Surface,
+  ActivityIndicator,
+} from "react-native-paper";
 import { useRouter } from "expo-router";
-import StickyHeader from "@/src/components/StickyHeader";
 import useTheme from "@/src/hooks/useTheme";
-
-import { useStore } from "@/stores/store";
+import { useStore } from "@/src/stores/store";
 import { WordListCard } from "@/src/components/WordListCard";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
+import Animated, {
+  FadeInDown,
+  useAnimatedScrollHandler,
+  useSharedValue,
+  useAnimatedStyle,
+  withTiming,
+  FadeInUp,
+  interpolate,
+  Extrapolate,
+} from "react-native-reanimated";
 
 type ViewMode = "browse" | "search";
 
 export default function StoreScreen() {
   const router = useRouter();
-  const scrollY = useRef(new Animated.Value(0)).current;
+  const scrollY = useSharedValue(0);
   const { colors } = useTheme();
   const { wordLists, wordListPageInfo, fetchWordLists, isFetchingWordLists } =
     useStore();
   const [searchQuery, setSearchQuery] = useState("");
   const [viewMode, setViewMode] = useState<ViewMode>("browse");
-  const fadeAnim = useRef(new Animated.Value(1)).current;
-  const searchFadeAnim = useRef(new Animated.Value(0)).current;
+  const headerHeight = 85;
+
+  const scrollHandler = useAnimatedScrollHandler({
+    onScroll: (event) => {
+      scrollY.value = event.contentOffset.y;
+    },
+  });
+
+  const headerAnimatedStyle = useAnimatedStyle(() => {
+    const opacity = interpolate(
+      scrollY.value,
+      [0, headerHeight / 2],
+      [1, 0],
+      Extrapolate.CLAMP
+    );
+
+    const translateY = interpolate(
+      scrollY.value,
+      [0, headerHeight],
+      [0, -headerHeight / 3],
+      Extrapolate.CLAMP
+    );
+
+    return {
+      opacity,
+      transform: [{ translateY }],
+      zIndex: 100,
+      position: "absolute",
+      top: 0,
+      left: 0,
+      right: 0,
+    };
+  });
 
   useEffect(() => {
     fetchWordLists(wordListPageInfo.page, wordListPageInfo.perPage);
@@ -35,44 +79,10 @@ export default function StoreScreen() {
   const handleSearch = (text: string) => {
     setSearchQuery(text);
     if (text.length > 0 && viewMode !== "search") {
-      switchToSearchMode();
+      setViewMode("search");
     } else if (text.length === 0 && viewMode === "search") {
-      switchToBrowseMode();
+      setViewMode("browse");
     }
-  };
-
-  const switchToSearchMode = () => {
-    setViewMode("search");
-
-    Animated.parallel([
-      Animated.timing(fadeAnim, {
-        toValue: 0,
-        duration: 200,
-        useNativeDriver: true,
-      }),
-      Animated.timing(searchFadeAnim, {
-        toValue: 1,
-        duration: 200,
-        useNativeDriver: true,
-      }),
-    ]).start();
-  };
-
-  const switchToBrowseMode = () => {
-    setViewMode("browse");
-
-    Animated.parallel([
-      Animated.timing(fadeAnim, {
-        toValue: 1,
-        duration: 200,
-        useNativeDriver: true,
-      }),
-      Animated.timing(searchFadeAnim, {
-        toValue: 0,
-        duration: 200,
-        useNativeDriver: true,
-      }),
-    ]).start();
   };
 
   const handlePageChange = (page: number) => {
@@ -95,7 +105,6 @@ export default function StoreScreen() {
       startPage = Math.max(1, endPage - maxVisiblePages + 1);
     }
 
-    // Previous button
     pageNumbers.push(
       <TouchableOpacity
         key="prev"
@@ -114,7 +123,6 @@ export default function StoreScreen() {
       </TouchableOpacity>
     );
 
-    // Page numbers
     for (let i = startPage; i <= endPage; i++) {
       pageNumbers.push(
         <TouchableOpacity
@@ -127,7 +135,7 @@ export default function StoreScreen() {
         >
           <Text
             style={{
-              color: colors.onPrimary,
+              color: currentPage === i ? colors.onPrimary : colors.onSurface,
               fontWeight: currentPage === i ? "bold" : "normal",
             }}
           >
@@ -137,7 +145,6 @@ export default function StoreScreen() {
       );
     }
 
-    // Next button
     pageNumbers.push(
       <TouchableOpacity
         key="next"
@@ -165,159 +172,153 @@ export default function StoreScreen() {
 
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>
-      <StickyHeader />
+      <StatusBar barStyle="dark-content" />
 
       <View style={styles.container}>
         {isFetchingWordLists ? (
           <View style={styles.loadingContainer}>
-            <ActivityIndicator />
+            <ActivityIndicator size="large" color={colors.primary} />
           </View>
         ) : (
-          <Animated.ScrollView
-            contentContainerStyle={[
-              styles.scrollViewContainer,
-              { paddingBottom: 20 },
-            ]}
-            scrollEventThrottle={16}
-            bounces={true}
-            showsVerticalScrollIndicator={false}
-            decelerationRate="normal"
-            onScroll={Animated.event(
-              [{ nativeEvent: { contentOffset: { y: scrollY } } }],
-              { useNativeDriver: true }
-            )}
-            keyboardShouldPersistTaps="handled"
-            scrollEnabled={true}
-          >
-            <View style={styles.searchBarContainer}>
-              <Searchbar
-                placeholder="Search word lists..."
-                onChangeText={handleSearch}
-                value={searchQuery}
+          <>
+            <Animated.View
+              entering={FadeInDown.duration(700).springify()}
+              style={[styles.searchBarContainer, headerAnimatedStyle]}
+            >
+              <Surface
                 style={[
-                  styles.searchBar,
-                  {
-                    backgroundColor: colors.surface,
-                    borderColor: colors.outline,
-                  },
+                  styles.searchSurface,
+                  { backgroundColor: colors.surfaceVariant },
                 ]}
-                elevation={0}
-                icon={() => (
-                  <MaterialCommunityIcons
-                    name="magnify"
-                    size={24}
-                    color={colors.onSurfaceVariant}
-                  />
-                )}
-                clearIcon={() =>
-                  searchQuery ? (
-                    <TouchableOpacity onPress={() => handleSearch("")}>
+              >
+                <View style={styles.searchWrapper}>
+                  <Searchbar
+                    placeholder="Search word lists..."
+                    onChangeText={handleSearch}
+                    value={searchQuery}
+                    style={[
+                      styles.searchBar,
+                      {
+                        backgroundColor: colors.surfaceVariant,
+                        borderColor: colors.outline,
+                      },
+                    ]}
+                    elevation={0}
+                    inputStyle={{ color: colors.onSurface }}
+                    placeholderTextColor={colors.onSurfaceVariant}
+                    icon={() => (
                       <MaterialCommunityIcons
-                        name="close"
+                        name="magnify"
                         size={24}
-                        color={colors.primary}
+                        color={colors.onSurfaceVariant}
                       />
-                    </TouchableOpacity>
-                  ) : null
-                }
-              />
-            </View>
+                    )}
+                    clearIcon={() =>
+                      searchQuery ? (
+                        <TouchableOpacity onPress={() => handleSearch("")}>
+                          <MaterialCommunityIcons
+                            name="close"
+                            size={24}
+                            color={colors.primary}
+                          />
+                        </TouchableOpacity>
+                      ) : null
+                    }
+                  />
+                </View>
+              </Surface>
+            </Animated.View>
 
-            <View style={styles.recommendedHeader}>
-              <Avatar.Icon
-                size={36}
-                icon="star"
-                style={[styles.headerIcon, { backgroundColor: colors.primary }]}
-                color={colors.onSurface}
-              />
-              <Text style={styles.heading}>Word Lists</Text>
-            </View>
-            {/* <Divider
-              style={[
-                styles.recommendedDivider,
-                { backgroundColor: colors.primary },
+            <Animated.ScrollView
+              contentContainerStyle={[
+                styles.scrollViewContainer,
+                { paddingTop: headerHeight + 16 },
               ]}
-            /> */}
+              scrollEventThrottle={16}
+              bounces={true}
+              showsVerticalScrollIndicator={false}
+              decelerationRate="normal"
+              onScroll={scrollHandler}
+              keyboardShouldPersistTaps="handled"
+            >
+              <View style={styles.contentContainer}>
+                {viewMode === "browse" ? (
+                  <Animated.View
+                    entering={FadeInDown.duration(800).springify()}
+                    style={styles.browseContainer}
+                  >
+                    <View style={styles.recommendedContainer}>
+                      <View style={styles.recommendedLists}>
+                        {wordLists.map((list, index) => (
+                          <Animated.View
+                            key={list.id}
+                            entering={FadeInUp.delay(200 + index * 100)
+                              .duration(600)
+                              .springify()}
+                          >
+                            <WordListCard
+                              list={list}
+                              onPress={() =>
+                                router.push(`/(protected)/list/${list.id}`)
+                              }
+                            />
+                          </Animated.View>
+                        ))}
+                      </View>
+                    </View>
+                  </Animated.View>
+                ) : (
+                  <Animated.View
+                    entering={FadeInDown.duration(800).springify()}
+                    style={styles.searchResultsContainer}
+                  >
+                    <Text
+                      style={[
+                        styles.searchResultsText,
+                        { color: colors.onSurfaceVariant },
+                      ]}
+                    >
+                      {wordLists.length === 0
+                        ? "No results found"
+                        : `${wordLists.length} results found`}
+                    </Text>
+                    <View style={styles.searchResults}>
+                      {wordLists.map((list, index) => (
+                        <Animated.View
+                          key={list.id}
+                          entering={FadeInUp.delay(200 + index * 100)
+                            .duration(600)
+                            .springify()}
+                        >
+                          <WordListCard
+                            list={list}
+                            onPress={() =>
+                              router.push(`/(protected)/list/${list.id}`)
+                            }
+                          />
+                        </Animated.View>
+                      ))}
+                    </View>
+                  </Animated.View>
+                )}
 
-            <View style={styles.contentContainer}>
-              <Animated.View
-                style={[
-                  styles.browseContainer,
-                  {
-                    opacity: fadeAnim,
-                    position: viewMode === "search" ? "absolute" : "relative",
-                    top: 0,
-                    left: 0,
-                    right: 0,
-                    zIndex: viewMode === "browse" ? 1 : 0,
-                  },
-                ]}
-                pointerEvents={viewMode === "browse" ? "auto" : "none"}
-              >
-                <View style={styles.recommendedContainer}>
-                  <View style={styles.recommendedLists}>
-                    {wordLists.map((list) => (
-                      <WordListCard
-                        key={list.id}
-                        list={list}
-                        onPress={() =>
-                          router.push(`/(protected)/list/${list.id}`)
-                        }
-                      />
-                    ))}
-                  </View>
-
-                  {/* Pagination Controls */}
-                  <View style={styles.paginationContainer}>
-                    {renderPaginationControls()}
-                  </View>
-                </View>
-              </Animated.View>
-
-              {/* Search Results */}
-              <Animated.View
-                style={[
-                  styles.searchResultsContainer,
-                  {
-                    opacity: searchFadeAnim,
-                    position: viewMode === "browse" ? "absolute" : "relative",
-                    top: 0,
-                    left: 0,
-                    right: 0,
-                    zIndex: viewMode === "search" ? 1 : 0,
-                  },
-                ]}
-                pointerEvents={viewMode === "search" ? "auto" : "none"}
-              >
-                <Text style={styles.searchResultsText}>
-                  {wordLists.length === 0
-                    ? "No results found"
-                    : `${wordLists.length} results found`}
-                </Text>
-                <View style={styles.searchResults}>
-                  {wordLists.map((list) => (
-                    <WordListCard
-                      key={list.id}
-                      list={list}
-                      onPress={() =>
-                        router.push(`/(protected)/list/${list.id}`)
-                      }
-                    />
-                  ))}
-                </View>
-
-                {/* Pagination Controls for Search Results */}
-                <View style={styles.paginationContainer}>
+                {/* Pagination Controls */}
+                <Animated.View
+                  entering={FadeInDown.duration(900).springify()}
+                  style={styles.paginationContainer}
+                >
                   {renderPaginationControls()}
-                </View>
-              </Animated.View>
-            </View>
-          </Animated.ScrollView>
+                </Animated.View>
+              </View>
+            </Animated.ScrollView>
+          </>
         )}
       </View>
     </View>
   );
 }
+
+const { width } = Dimensions.get("window");
 
 const styles = StyleSheet.create({
   container: {
@@ -328,113 +329,60 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     alignItems: "center",
   },
-  headerContainer: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 10,
-  },
-  headerText: {
-    fontSize: 20,
-    fontWeight: "bold",
-  },
-  scrollViewContainer: {
-    paddingVertical: 15,
-    paddingHorizontal: 15,
-  },
   searchBarContainer: {
-    marginBottom: 15,
+    marginTop: 16,
+    marginBottom: 16,
+    paddingHorizontal: 16,
+  },
+  searchSurface: {
+    borderRadius: 12,
+  },
+  searchWrapper: {
+    borderRadius: 12,
+    overflow: "hidden",
   },
   searchBar: {
-    borderWidth: 1,
-    borderRadius: 10,
+    borderWidth: 0,
+    borderRadius: 12,
+    elevation: 0,
+  },
+  scrollViewContainer: {
+    paddingHorizontal: 16,
+    paddingBottom: 20,
   },
   contentContainer: {
     flex: 1,
-    position: "relative",
   },
   browseContainer: {
     flex: 1,
     gap: 20,
   },
-  categoryContainer: {
-    borderRadius: 15,
-    elevation: 2,
-    padding: 15,
-  },
-  categoryHeader: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "center",
-    marginBottom: 5,
-  },
-  headerIcon: {
-    marginRight: 10,
-    marginBottom: 20,
-  },
-  heading: {
-    fontSize: 24,
-    fontWeight: "bold",
-    textAlign: "center",
-    marginVertical: 10,
-    marginBottom: 25,
-  },
-  categoryDivider: {
-    height: 2,
-    marginBottom: 15,
-  },
-  categoriesGrid: {
-    flexDirection: "row",
-    flexWrap: "wrap",
-    justifyContent: "space-around",
-    gap: 15,
-  },
   recommendedContainer: {
     borderRadius: 15,
-    elevation: 2,
-  },
-  recommendedHeader: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "center",
-    marginBottom: 5,
-  },
-  recommendedDivider: {
-    height: 2,
-    marginBottom: 15,
   },
   recommendedLists: {
-    gap: 10,
-  },
-  allListsButton: {
-    flexDirection: "row",
-    justifyContent: "center",
-    alignItems: "center",
-    padding: 15,
-    borderRadius: 10,
-    gap: 10,
-  },
-  allListsText: {
-    fontSize: 16,
-    fontWeight: "bold",
+    gap: 12,
   },
   searchResultsContainer: {
     flex: 1,
     gap: 10,
   },
   searchResultsText: {
-    fontSize: 16,
+    fontSize: 14,
     fontStyle: "italic",
     textAlign: "center",
     marginBottom: 10,
+    fontWeight: "500",
   },
   searchResults: {
-    gap: 10,
+    gap: 12,
   },
   paginationContainer: {
     flexDirection: "row",
     justifyContent: "center",
     alignItems: "center",
     marginTop: 20,
+    marginBottom: 20,
     gap: 8,
   },
   paginationButton: {
@@ -443,10 +391,7 @@ const styles = StyleSheet.create({
     borderRadius: 16,
     justifyContent: "center",
     alignItems: "center",
-    backgroundColor: "transparent",
-  },
-  paginationButtonActive: {
-    backgroundColor: "#007AFF",
+    backgroundColor: "rgba(0, 0, 0, 0.03)",
   },
   paginationButtonDisabled: {
     opacity: 0.5,

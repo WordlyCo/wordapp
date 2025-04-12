@@ -1,14 +1,13 @@
 from fastapi import FastAPI, Request, status
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
-from jwt.exceptions import JWTException, JWTDecodeError
+from jose import JWTError
 from app.api.routes import api_router
 from app.config.db import lifespan
-from app.dependencies.auth import AuthError, InvalidTokenError, ExpiredTokenError
+from app.middleware.auth import AuthError, ExpiredTokenError
 
 app = FastAPI(title="WordApp", lifespan=lifespan)
 
-# Configure CORS
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],  # In production, specify actual origins
@@ -18,9 +17,8 @@ app.add_middleware(
 )
 
 
-# Exception handlers
-@app.exception_handler(JWTDecodeError)
-async def jwt_decode_error_handler(request: Request, exc: JWTDecodeError):
+@app.exception_handler(JWTError)
+async def jwt_decode_error_handler(request: Request, exc: JWTError):
     return JSONResponse(
         status_code=status.HTTP_401_UNAUTHORIZED,
         content={
@@ -32,8 +30,8 @@ async def jwt_decode_error_handler(request: Request, exc: JWTDecodeError):
     )
 
 
-@app.exception_handler(JWTException)
-async def jwt_exception_handler(request: Request, exc: JWTException):
+@app.exception_handler(JWTError)
+async def jwt_exception_handler(request: Request, exc: JWTError):
     return JSONResponse(
         status_code=status.HTTP_401_UNAUTHORIZED,
         content={
@@ -67,5 +65,4 @@ async def auth_error_handler(request: Request, exc: AuthError):
     )
 
 
-# Include API routes
 app.include_router(api_router, prefix="/api/v1")

@@ -8,21 +8,33 @@ import {
   IconButton,
 } from "react-native-paper";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { useStore } from "../../stores/store";
 import useTheme from "../../src/hooks/useTheme";
+import { useSignIn, useSignUp } from "@clerk/clerk-expo";
+import { useRouter } from "expo-router";
 
 type AuthMode = "login" | "register";
 
 export default function AuthScreen() {
-  const login = useStore((state) => state.login);
-  const register = useStore((state) => state.register);
-  const setAuthError = useStore((state) => state.setAuthError);
-  const authError = useStore((state) => state.authError);
+  const router = useRouter();
+  const {
+    signIn,
+    setActive: setSignInActive,
+    isLoaded: isSignInLoaded,
+  } = useSignIn();
+  const {
+    signUp,
+    setActive: setSignUpActive,
+    isLoaded: isSignUpLoaded,
+  } = useSignUp();
+
   const [mode, setMode] = useState<AuthMode>("login");
   const [email, setEmail] = useState<string>("");
   const [password, setPassword] = useState<string>("");
   const [confirmPassword, setConfirmPassword] = useState<string>("");
   const [username, setUsername] = useState<string>("");
+  const [pendingVerification, setPendingVerification] = useState(false);
+  const [verificationCode, setVerificationCode] = useState("");
+  const [authError, setAuthError] = useState<string | null>(null);
   const { colors } = useTheme();
 
   const validateEmail = (email: string) => {
@@ -35,8 +47,43 @@ export default function AuthScreen() {
     return passwordRegex.test(password);
   };
 
-  const handleSubmit = async () => {
+  const handleLogin = async () => {
+    if (!isSignInLoaded) return;
+
     if (!email || !password) {
+      setAuthError("Please fill in all required fields.");
+      return;
+    }
+
+    if (!validateEmail(email)) {
+      setAuthError("Please enter a valid email address.");
+      return;
+    }
+
+    try {
+      const signInAttempt = await signIn.create({
+        identifier: email,
+        password,
+      });
+
+      if (signInAttempt.status === "complete") {
+        await setSignInActive({ session: signInAttempt.createdSessionId });
+        router.replace("/");
+      } else {
+        setAuthError("Sign-in failed. Please try again.");
+      }
+    } catch (error) {
+      setAuthError(
+        "Login Failed: " +
+          (error instanceof Error ? error.message : String(error))
+      );
+    }
+  };
+
+  const handleRegister = async () => {
+    if (!isSignUpLoaded) return;
+
+    if (!email || !password || !username) {
       setAuthError("Please fill in all required fields.");
       return;
     }
@@ -52,32 +99,57 @@ export default function AuthScreen() {
       );
       return;
     }
+
+    if (password !== confirmPassword) {
+      setAuthError("Passwords do not match.");
+      return;
+    }
+
     try {
-      if (mode === "login") {
-        await login(email, password);
+      await signUp.create({
+        emailAddress: email,
+        password,
+        username,
+      });
+
+      await signUp.prepareEmailAddressVerification({ strategy: "email_code" });
+
+      setPendingVerification(true);
+    } catch (error) {
+      setAuthError(
+        "Registration Failed: " +
+          (error instanceof Error ? error.message : String(error))
+      );
+    }
+  };
+
+  const handleVerification = async () => {
+    if (!isSignUpLoaded) return;
+
+    try {
+      const signUpAttempt = await signUp.attemptEmailAddressVerification({
+        code: verificationCode,
+      });
+
+      if (signUpAttempt.status === "complete") {
+        await setSignUpActive({ session: signUpAttempt.createdSessionId });
+        router.replace("/");
       } else {
-        if (!confirmPassword) {
-          setAuthError("Please confirm your password.");
-          return;
-        }
-
-        if (password !== confirmPassword) {
-          setAuthError("Passwords do not match.");
-          return;
-        }
-
-        if (!username) {
-          setAuthError("Please enter a username.");
-          return;
-        }
-        await register(email, password, username);
+        setAuthError("Verification failed. Please try again.");
       }
     } catch (error) {
       setAuthError(
-        mode === "login"
-          ? "Login Failed: " + error
-          : "Registration Failed: " + error
+        "Verification Failed: " +
+          (error instanceof Error ? error.message : String(error))
       );
+    }
+  };
+
+  const handleSubmit = async () => {
+    if (mode === "login") {
+      await handleLogin();
+    } else {
+      await handleRegister();
     }
   };
 
@@ -86,7 +158,81 @@ export default function AuthScreen() {
     setPassword("");
     setConfirmPassword("");
     setUsername("");
+    setVerificationCode("");
+    setPendingVerification(false);
+    setAuthError(null);
   };
+
+  if (pendingVerification) {
+    return (
+      <SafeAreaView
+        style={[styles.container, { backgroundColor: colors.background }]}
+        edges={["top"]}
+      >
+        <ScrollView contentContainerStyle={styles.scrollViewContainer}>
+          <View style={styles.headerContainer}>
+            <Text variant="headlineLarge" style={styles.title}>
+              Verify Your Email
+            </Text>
+            <Text
+              variant="bodyMedium"
+              style={{ textAlign: "center", marginTop: 10 }}
+            >
+              Please enter the verification code sent to your email
+            </Text>
+
+            <Image
+              style={styles.image}
+              source={require("../../assets/images/CandyCueDarkishBlue.png")}
+              resizeMode="contain"
+            />
+          </View>
+
+          {authError && (
+            <View style={styles.errorContainer}>
+              <Text variant="bodyMedium" style={styles.errorText}>
+                {authError}
+              </Text>
+              <IconButton
+                icon="close"
+                size={20}
+                onPress={() => setAuthError(null)}
+              />
+            </View>
+          )}
+
+          <View style={styles.formContainer}>
+            <TextInput
+              mode="outlined"
+              label="Verification Code"
+              value={verificationCode}
+              onChangeText={setVerificationCode}
+              keyboardType="number-pad"
+              style={styles.input}
+            />
+
+            <Button
+              icon="check"
+              mode="contained"
+              onPress={handleVerification}
+              style={styles.submitButton}
+              contentStyle={styles.buttonContent}
+            >
+              Verify Email
+            </Button>
+
+            <Button
+              mode="text"
+              onPress={() => setPendingVerification(false)}
+              style={{ marginTop: 10 }}
+            >
+              Back to Sign Up
+            </Button>
+          </View>
+        </ScrollView>
+      </SafeAreaView>
+    );
+  }
 
   return (
     <SafeAreaView
@@ -127,7 +273,7 @@ export default function AuthScreen() {
             <IconButton
               icon="close"
               size={20}
-              onPress={() => setAuthError("")}
+              onPress={() => setAuthError(null)}
             />
           </View>
         )}

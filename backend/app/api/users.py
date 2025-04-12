@@ -1,14 +1,15 @@
 from fastapi import APIRouter, Depends
-
-from app.config.jwt import jwt
-from app.dependencies.auth import get_current_user_id
-
+from typing import List, Optional
+from app.middleware.auth import get_current_user
+from app.models.list import WordList
 from app.models.user import (
     UserRegister,
     UserLogin,
     User,
     UserLoginResponse,
     RefreshTokenRequest,
+    UserListCreate,
+    UserList,
 )
 from app.models.base import Response
 from app.services.users import (
@@ -25,16 +26,17 @@ from app.api.errors import (
     SERVER_ERROR,
 )
 
-router = APIRouter(prefix="/users", tags=["Users"])
+
+router = APIRouter()
 
 
 @router.get("/me")
-async def get_current_user(
-    current_user_id: int = Depends(get_current_user_id),
+async def get_signed_in_user(
+    current_user: User = Depends(get_current_user),
     user_service: UserService = Depends(get_user_service),
 ) -> Response[User]:
     try:
-        user = await user_service.get_user_by_id(current_user_id)
+        user = await user_service.get_user_by_id(current_user.id)
         return Response(
             success=True, message="User retrieved successfully", payload=user
         )
@@ -51,148 +53,66 @@ async def get_current_user(
         )
 
 
-@router.post("/register")
-async def register_user(
-    user_data: UserRegister, user_service: UserService = Depends(get_user_service)
-) -> Response[UserLoginResponse]:
+@router.post("/lists")
+async def create_user_list(
+    user_list_data: UserListCreate,
+    user_service: UserService = Depends(get_user_service),
+    current_user: Optional[User] = Depends(get_current_user),
+) -> Response[UserList]:
     try:
-        password_hash = jwt.generate_password_hash(user_data.password)
-        new_user = await user_service.create_user(user_data, password_hash)
-        jwt_payload = {
-            "email": new_user.email,
-            "created_at": (
-                new_user.created_at.isoformat() if new_user.created_at else None
-            ),
-            "type": "access",
-        }
-        token = jwt.create_user_access_token(new_user.id, jwt_payload)
-        refresh_token = jwt.create_user_refresh_token(new_user.id, jwt_payload)
-        return Response(
-            success=True,
-            message="Registered successfully",
-            payload=UserLoginResponse(
-                token=token, refresh_token=refresh_token, user=new_user
-            ),
-        )
-    except UserAlreadyExistsError as e:
-        error_message = str(e)
-        error_code = SERVER_ERROR
-        if "email" in error_message:
-            error_code = EMAIL_TAKEN
-        elif "username" in error_message:
-            error_code = USERNAME_TAKEN
-        return Response(success=False, message=error_message, error_code=error_code)
-    except Exception as e:
-        print(f"Error during user registration: {e}")
-        return Response(
-            success=False,
-            message="Could not register user due to an internal error",
-            error_code=SERVER_ERROR,
-        )
-
-
-@router.post("/login")
-async def login_user(
-    user_data: UserLogin, user_service: UserService = Depends(get_user_service)
-) -> Response[UserLoginResponse]:
-    try:
-        user, password_hash = await user_service.get_user_by_email(user_data.email)
-
-        password_verified = jwt.verify_password_hash(user_data.password, password_hash)
-        if not password_verified:
+        if current_user is None:
             return Response(
                 success=False,
-                message="Invalid credentials",
-                error_code=INVALID_CREDENTIALS,
-            )
-
-        try:
-            user_id = user.id
-            jwt_payload = {
-                "email": user.email,
-                "created_at": user.created_at.isoformat() if user.created_at else None,
-                "type": "access",
-            }
-            token = jwt.create_user_access_token(user_id, jwt_payload)
-            refresh_token = jwt.create_user_refresh_token(user_id, jwt_payload)
-
-            return Response(
-                success=True,
-                message="Login successful",
-                payload=UserLoginResponse(
-                    token=token, refresh_token=refresh_token, user=user
-                ),
-            )
-
-        except Exception as e:
-            print(f"Error during token generation: {e}")
-            return Response(
-                success=False,
-                message="Could not process login due to an internal error",
+                message="Authentication required",
                 error_code=SERVER_ERROR,
             )
-    except UserNotFoundError as e:
+
+        user_list = await user_service.create_user_list(
+            current_user.id, user_list_data.list_id
+        )
         return Response(
-            success=False,
-            message="Invalid credentials",
-            error_code=INVALID_CREDENTIALS,
+            success=True,
+            message="User list created successfully",
+            payload=user_list,
         )
     except Exception as e:
-        print(f"Error during login process: {e}")
+        print(f"Error during user list creation: {e}")
+        import traceback
+
+        print(traceback.format_exc())
         return Response(
             success=False,
-            message="An unexpected error occurred during login",
+            message="Could not create user list due to an internal error",
             error_code=SERVER_ERROR,
         )
 
 
-@router.post("/refresh-token")
-async def refresh_token(
-    refresh_token_request: RefreshTokenRequest,
+@router.get("/lists")
+async def get_user_lists(
     user_service: UserService = Depends(get_user_service),
-) -> Response[UserLoginResponse]:
+    current_user: Optional[User] = Depends(get_current_user),
+) -> Response[List[WordList]]:
     try:
-        if not jwt.validate_token_type(refresh_token_request.refresh_token, "refresh"):
+        if current_user is None:
             return Response(
                 success=False,
-                message="Invalid refresh token",
-                error_code=INVALID_CREDENTIALS,
+                message="Authentication required",
+                error_code=SERVER_ERROR,
             )
-        payload = jwt.decode_token(refresh_token_request.refresh_token)
-        user_id = payload.get("sub")
-        if not user_id:
-            return Response(
-                success=False,
-                message="Invalid refresh token",
-                error_code=INVALID_CREDENTIALS,
-            )
-        user = await user_service.get_user_by_id(int(user_id))
-        if not user:
-            return Response(
-                success=False,
-                message="User not found",
-                error_code=USER_NOT_FOUND,
-            )
-        jwt_payload = {
-            "email": user.email,
-            "created_at": user.created_at.isoformat() if user.created_at else None,
-            "type": "access",
-        }
-        token = jwt.create_user_access_token(user_id, jwt_payload)
+
+        user_lists = await user_service.get_user_lists(current_user.id)
         return Response(
             success=True,
-            message="Token refreshed successfully",
-            payload=UserLoginResponse(
-                token=token,
-                refresh_token=refresh_token_request.refresh_token,
-                user=user,
-            ),
+            message="User lists retrieved successfully",
+            payload=user_lists,
         )
-
     except Exception as e:
-        print(f"Error during token refresh: {e}")
+        print(f"Error during user list retrieval: {e}")
+        import traceback
+
+        print(traceback.format_exc())
         return Response(
             success=False,
-            message="Could not refresh token due to an internal error",
+            message="Could not retrieve user lists due to an internal error",
             error_code=SERVER_ERROR,
         )

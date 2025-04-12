@@ -26,6 +26,24 @@ class ListService:
         self.pool = pool
         self.word_service = word_service
 
+    async def get_list_by_id(self, list_id: int) -> WordList:
+        try:
+            async with self.pool.acquire() as conn:
+                list_data = await conn.fetchrow(
+                    "SELECT * FROM lists WHERE id = $1", list_id
+                )
+                return WordList(
+                    id=list_data["id"],
+                    name=list_data["name"],
+                    description=list_data["description"],
+                    difficulty_level=list_data["difficulty_level"],
+                    icon_name=list_data["icon_name"],
+                    created_at=list_data["created_at"],
+                    updated_at=list_data["updated_at"],
+                )
+        except Exception as e:
+            raise Exception(f"Error getting list by ID: {str(e)}")
+
     async def insert_list(self, list: WordListCreate) -> WordList:
         try:
             list_data = None
@@ -137,7 +155,6 @@ class ListService:
     async def get_full_list(self, list_id: int) -> WordList:
         try:
             async with self.pool.acquire() as conn:
-                # First, get the list data and words
                 list_data = await conn.fetchrow(
                     """
                     SELECT 
@@ -172,7 +189,6 @@ class ListService:
                 if list_data is None:
                     raise ListNotFoundError(f"Word list with ID {list_id} not found")
 
-                # Separately get the categories to avoid duplication
                 categories_data = await conn.fetch(
                     """
                     SELECT DISTINCT categories.name
@@ -183,7 +199,6 @@ class ListService:
                     list_id,
                 )
 
-                # Convert to a simple list of category names
                 categories_list = [category["name"] for category in categories_data]
 
                 words_list = []
@@ -384,7 +399,6 @@ class ListService:
                     items = []
 
                     for list_data in lists_data:
-                        # For each list, get its categories separately to avoid duplication
                         categories_data = await conn.fetch(
                             """
                             SELECT DISTINCT categories.name
@@ -395,7 +409,6 @@ class ListService:
                             list_data["id"],
                         )
 
-                        # Convert to a simple list of category names
                         categories_list = [
                             category["name"] for category in categories_data
                         ]

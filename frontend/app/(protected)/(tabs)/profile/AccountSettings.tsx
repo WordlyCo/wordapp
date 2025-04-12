@@ -10,7 +10,7 @@ import {
 } from "react-native";
 import { Text, Divider, TextInput, Button } from "react-native-paper";
 import FontAwesome from "@expo/vector-icons/FontAwesome";
-import { useStore } from "@/stores/store";
+import { useStore } from "@/src/stores/store";
 import { PROFILE_BACKGROUND_COLORS } from "@/constants/profileColors";
 
 // Import local headshot image
@@ -54,8 +54,6 @@ const AccountSettingsScreen = () => {
     updatePreferences({
       profileBackgroundColorIndex: selectedColorIndex,
     });
-
-    console.log("Saving user information...");
   };
 
   const renderColorItem = ({

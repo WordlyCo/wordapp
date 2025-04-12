@@ -1,51 +1,89 @@
 import AsyncStorage from "@react-native-async-storage/async-storage";
 
 export const API_URL = process.env.EXPO_PUBLIC_API_URL;
-export const USER_TOKEN_KEY = "user_token";
-export const REFRESH_TOKEN_KEY = "refresh_token";
 
-export const getToken = async () => {
-  const token = await AsyncStorage.getItem(USER_TOKEN_KEY);
-  return token;
+let cachedToken: string | null = null;
+let tokenExpiryTime: number = 0;
+let tokenRefreshPromise: Promise<string | null> | null = null;
+
+let getClerkToken: (() => Promise<string | null>) | null = null;
+
+export const setClerkTokenGetter = (fn: () => Promise<string | null>) => {
+  getClerkToken = fn;
 };
 
-export const setToken = async (token: string) => {
-  await AsyncStorage.setItem(USER_TOKEN_KEY, token);
+export const updateCachedToken = (token: string | null): void => {
+  if (token) {
+    cachedToken = token;
+    try {
+      const payload = JSON.parse(atob(token.split(".")[1]));
+      if (payload.exp) {
+        tokenExpiryTime = payload.exp * 1000 - 1 * 60 * 1000;
+      } else {
+        tokenExpiryTime = Date.now() + 5 * 60 * 1000;
+      }
+    } catch (e) {
+      tokenExpiryTime = Date.now() + 5 * 60 * 1000;
+    }
+  } else {
+    clearCachedToken();
+  }
 };
 
-export const removeToken = async () => {
-  await AsyncStorage.removeItem(USER_TOKEN_KEY);
+export const clearCachedToken = (): void => {
+  cachedToken = null;
+  tokenExpiryTime = 0;
+  tokenRefreshPromise = null;
 };
 
-export const getRefreshToken = async () => {
-  const refreshToken = await AsyncStorage.getItem(REFRESH_TOKEN_KEY);
-  return refreshToken;
+export const getCachedToken = async (): Promise<string | null> => {
+  if (cachedToken && Date.now() < tokenExpiryTime) {
+    return cachedToken;
+  }
+
+  if (tokenRefreshPromise) {
+    return tokenRefreshPromise;
+  }
+
+  if (getClerkToken) {
+    tokenRefreshPromise = getClerkToken()
+      .then((newToken) => {
+        if (newToken) {
+          updateCachedToken(newToken);
+          return newToken;
+        }
+        return null;
+      })
+      .catch((error) => {
+        console.error("Failed to refresh token:", error);
+        clearCachedToken();
+        return null;
+      })
+      .finally(() => {
+        tokenRefreshPromise = null;
+      });
+
+    return tokenRefreshPromise;
+  }
+
+  return null;
 };
 
-export const setRefreshToken = async (refreshToken: string) => {
-  await AsyncStorage.setItem(REFRESH_TOKEN_KEY, refreshToken);
-};
-
-export const removeRefreshToken = async () => {
-  await AsyncStorage.removeItem(REFRESH_TOKEN_KEY);
+export const getToken = async (): Promise<string | null> => {
+  return getCachedToken();
 };
 
 export const authFetch = async (
   url: string,
   options?: RequestInit,
-  isFirstTime: boolean = true
+  retryCount: number = 3,
+  initialDelay: number = 1000
 ): Promise<Response> => {
   try {
-    if (!isFirstTime) {
-      removeToken();
-      removeRefreshToken();
-    }
-
     const token = await getToken();
-    const refreshToken = await getRefreshToken();
 
     if (!token) {
-      throw new Error("No token found");
+      throw new Error("No token found. Please sign in again.");
     }
 
     const headers = {
@@ -61,41 +99,43 @@ export const authFetch = async (
       },
     });
 
-    const copiedResponse = response.clone();
-    const copiedResponseJson = await copiedResponse.json();
-    const success = copiedResponseJson.success;
-    const errorCode = copiedResponseJson.errorCode;
-    const message = copiedResponseJson.message;
+    if (response.status === 401) {
+      clearCachedToken();
 
-    if (response.status === 401 && refreshToken) {
-      const newTokenResponse = await fetch(`${API_URL}/users/refresh-token`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          refresh_token: refreshToken,
-        }),
-      });
-      const data = await newTokenResponse.json();
-      const newToken = data.token;
-      if (newToken) {
-        await setToken(newToken);
-        return authFetch(
-          url,
-          {
+      if (getClerkToken) {
+        const newToken = await getClerkToken();
+        if (newToken) {
+          updateCachedToken(newToken);
+
+          const retryResponse = await fetch(`${API_URL}${url}`, {
             ...options,
-            headers: { ...headers, Authorization: `Bearer ${newToken}` },
-          },
-          false
-        );
+            headers: {
+              ...headers,
+              Authorization: `Bearer ${newToken}`,
+              "Content-Type": "application/json",
+            },
+          });
+
+          if (retryResponse.status === 401 && retryCount > 0) {
+            await new Promise((resolve) => setTimeout(resolve, initialDelay));
+
+            return authFetch(url, options, retryCount - 1, initialDelay * 2);
+          } else if (retryResponse.status === 401) {
+            throw new Error(
+              "Authentication failed even after token refresh and retries."
+            );
+          }
+
+          return retryResponse;
+        }
       }
-      throw new Error("Failed to refresh token");
+
+      throw new Error("Authentication token expired. Please sign in again.");
     }
 
     return response;
   } catch (error) {
-    console.error(error);
+    console.error("API request failed:", error);
     throw error;
   }
 };

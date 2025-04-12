@@ -9,7 +9,6 @@ from app.models.list import (
 from app.services.words import WordNotFoundError
 from app.models.base import Response, PaginatedPayload
 from app.api.errors import DUPLICATE_INSERTION, SERVER_ERROR, NOT_FOUND
-from typing import List
 from app.services.lists import (
     ListService,
     get_list_service,
@@ -19,9 +18,8 @@ from app.services.lists import (
     ListWordAlreadyExistsError,
     ListNotFoundError,
 )
-from app.dependencies.auth import get_current_user_id
 
-router = APIRouter(prefix="/lists", tags=["Lists"])
+router = APIRouter()
 
 
 @router.get("/categories", response_model=Response[PaginatedPayload[WordListCategory]])

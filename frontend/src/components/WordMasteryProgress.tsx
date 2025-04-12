@@ -2,7 +2,7 @@ import React from "react";
 import { View, StyleSheet } from "react-native";
 import { Text, ProgressBar, IconButton } from "react-native-paper";
 import useTheme from "@/src/hooks/useTheme";
-import { useStore } from "@/stores/store";
+import { useStore } from "@/src/stores/store";
 
 type WordMasteryProgressProps = {
   word: string;

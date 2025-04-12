@@ -169,26 +169,6 @@ def upgrade() -> None:
         unique=False,
     )
 
-    op.create_table(
-        "user_lists",
-        sa.Column("id", sa.Integer(), nullable=False),
-        sa.Column("user_id", sa.Integer(), nullable=False),
-        sa.Column("list_id", sa.Integer(), nullable=False),
-        sa.Column(
-            "created_at", sa.DateTime(), nullable=False, server_default=sa.func.now()
-        ),
-        sa.Column(
-            "updated_at",
-            sa.DateTime(),
-            nullable=False,
-            server_default=sa.func.now(),
-            onupdate=sa.func.now(),
-        ),
-        sa.PrimaryKeyConstraint("id"),
-        sa.ForeignKeyConstraint(["user_id"], ["users.id"], ondelete="CASCADE"),
-        sa.ForeignKeyConstraint(["list_id"], ["lists.id"], ondelete="CASCADE"),
-    )
-
 
 def downgrade() -> None:
     op.drop_index("idx_list_categories_category_id")
@@ -201,5 +181,4 @@ def downgrade() -> None:
     op.drop_table("list_words")
     op.drop_table("lists")
     op.drop_table("words")
-    op.drop_table("user_lists")
     op.drop_table("categories")

@@ -13,7 +13,7 @@ from app.models.base import Response
 from app.api.errors import DUPLICATE_INSERTION, SERVER_ERROR, NOT_FOUND
 from typing import List
 
-router = APIRouter(prefix="/words", tags=["Words"])
+router = APIRouter()
 
 
 @router.get("/", response_model=Response[List[Word]])

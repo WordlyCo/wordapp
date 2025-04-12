@@ -5,12 +5,13 @@ import { useRouter } from "expo-router";
 
 import useTheme from "@/src/hooks/useTheme";
 import MaterialCommunityIcons from "@expo/vector-icons/MaterialCommunityIcons";
-import { useStore } from "@/stores/store";
+import { useStore } from "@/src/stores/store";
+import { useAuth } from "@/src/contexts/AuthContext";
 
 const SettingsScreen = () => {
   const router = useRouter();
   const { colors } = useTheme();
-  const { logout } = useStore();
+  const { logout } = useAuth();
 
   const renderSettingItem = (
     icon: keyof typeof MaterialCommunityIcons.glyphMap,
@@ -27,6 +28,15 @@ const SettingsScreen = () => {
       </Text>
     </TouchableOpacity>
   );
+
+  const handleLogout = async () => {
+    try {
+      await logout();
+      // Navigation is handled in the logout function
+    } catch (error) {
+      console.error("Logout failed:", error);
+    }
+  };
 
   const renderSectionTitle = (title: string) => (
     <View style={styles.sectionTitleContainer}>
@@ -122,12 +132,7 @@ const SettingsScreen = () => {
             "Add account",
             () => {} // Add functionality to add account
           )}
-          {renderSettingItem(
-            "logout",
-            "Log out",
-            () => logout(), // Add functionality to log out
-            colors.error
-          )}
+          {renderSettingItem("logout", "Log out", handleLogout, colors.error)}
         </View>
 
         {/* Add some space at the bottom for better UX */}

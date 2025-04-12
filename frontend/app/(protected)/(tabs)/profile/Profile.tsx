@@ -5,14 +5,16 @@ import {
   ScrollView,
   Image,
   TouchableOpacity,
+  RefreshControl,
 } from "react-native";
 import { Text, Button, IconButton } from "react-native-paper";
 import { useNavigation } from "@react-navigation/native";
 import useTheme from "@/src/hooks/useTheme";
 import StickyHeader from "@/src/components/StickyHeader";
-import { useStore } from "@/stores/store";
+import { useStore } from "@/src/stores/store";
 import { PROFILE_BACKGROUND_COLORS } from "@/constants/profileColors";
 import { useRouter } from "expo-router";
+import { useAuth } from "@/src/contexts/AuthContext";
 
 // Import local headshot image
 const headshotImage = require("@/assets/images/headshot.png");
@@ -29,19 +31,50 @@ const ProfileScreen = () => {
   const router = useRouter();
   const { colors } = useTheme();
   const [activeTab, setActiveTab] = useState("Stats");
+  const { logout } = useAuth();
+  const [refreshing, setRefreshing] = useState(false);
 
   useEffect(() => {
-    getMe();
+    fetchUserData();
   }, []);
 
-  // Get profile background color from user preferences
+  const fetchUserData = async () => {
+    try {
+      await getMe();
+    } catch (error) {
+      console.error("Error fetching user data:", error);
+    }
+  };
+
+  const onRefresh = async () => {
+    setRefreshing(true);
+    try {
+      await fetchUserData();
+    } finally {
+      setRefreshing(false);
+    }
+  };
+
+  const handleLogout = async () => {
+    try {
+      await logout();
+    } catch (error) {
+      console.error("Logout failed:", error);
+    }
+  };
+
   const profileBackgroundColorIndex = useStore(
     (state) => state.preferences?.profileBackgroundColorIndex ?? 0
   );
 
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>
-      <ScrollView>
+      <ScrollView
+        style={{ backgroundColor: colors.background }}
+        refreshControl={
+          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
+        }
+      >
         {/* Profile Background */}
         <View
           style={[
@@ -52,7 +85,6 @@ const ProfileScreen = () => {
             },
           ]}
         >
-          {/* Settings Icon on top of background */}
           <View style={styles.profileHeader}>
             <View style={{ flex: 1 }} />
             <IconButton
@@ -67,32 +99,29 @@ const ProfileScreen = () => {
           </View>
         </View>
 
-        {/* Profile Card - positioned to overlap the background */}
         <View style={styles.profileCard}>
-          {/* Profile Image */}
           <View
             style={[
               styles.avatarContainer,
               {
                 backgroundColor: colors.primaryContainer,
-                marginTop: -60, // Lift avatar up to overlap with background
+                marginTop: -60,
               },
             ]}
           >
             <Image source={headshotImage} style={styles.avatar} />
           </View>
 
-          {/* User Info */}
           <Text style={[styles.userName, { color: colors.onSurface }]}>
-            {user?.username}
+            {user?.firstName} {user?.lastName}
           </Text>
           <Text style={[styles.userTitle, { color: colors.onSurfaceVariant }]}>
-            {user?.email}
+            @{user?.username}
           </Text>
           <Text
             style={[styles.userLocation, { color: colors.onSurfaceVariant }]}
           >
-            Los Angeles, CA
+            {user?.email}
           </Text>
 
           {/* User Stats */}
@@ -256,6 +285,11 @@ const styles = StyleSheet.create({
   actionButtonLabel: {
     color: "white",
     fontSize: 14,
+  },
+  logoutButton: {
+    marginTop: 10,
+    marginHorizontal: 10,
+    borderRadius: 8,
   },
   tabContainer: {
     flexDirection: "row",

@@ -11,6 +11,12 @@ class Env(BaseSettings):
     database_url: Optional[str] = Field(default=None, env="DATABASE_URL")
     env: str = Field(default="development", env="ENV")
     openai_api_key: str = Field(default="", env="OPENAI_API_KEY")
+    clerk_webhook_secret: Optional[str] = Field(
+        default=None, env="CLERK_WEBHOOK_SECRET"
+    )
+    clerk_jwks_url: Optional[str] = Field(default=None, env="CLERK_JWKS_URL")
+    clerk_issuer: Optional[str] = Field(default=None, env="CLERK_ISSUER")
+    debug_webhooks: bool = Field(default=False, env="DEBUG_WEBHOOKS")
 
     class Config:
         env_file = ".env"

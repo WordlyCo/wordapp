@@ -1,54 +1,74 @@
-import React, { useRef, useEffect } from "react";
-import { View, StyleSheet, Animated, ActivityIndicator } from "react-native";
-import { Avatar, Text, Divider, Button } from "react-native-paper";
-import { Stack, useRouter } from "expo-router";
-import StickyHeader from "@/src/components/StickyHeader";
+import React, { useEffect } from "react";
+import { View, StyleSheet, ActivityIndicator, Dimensions } from "react-native";
+import { Text, Button, Surface, ProgressBar } from "react-native-paper";
+import { useRouter } from "expo-router";
 import useTheme from "@/src/hooks/useTheme";
-import CategoryItem from "@/src/components/CategoryItem";
-import AnimatedCard from "@/src/features/home/components/AnimatedCard";
-import { SCROLL_DISTANCE_PER_CARD } from "@/stores/enums";
-import { useStore } from "@/stores/store";
+import { useStore } from "@/src/stores/store";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
+import Animated, {
+  FadeInDown,
+  FadeInUp,
+  useAnimatedScrollHandler,
+  useSharedValue,
+} from "react-native-reanimated";
 
-interface CardData {
+const { width } = Dimensions.get("window");
+
+interface QuickAction {
   id: string;
   title: string;
-  content: string;
   icon: string;
+  route: string;
+  color: string;
 }
 
-const CARDS: CardData[] = [
+const QUICK_ACTIONS: QuickAction[] = [
   {
-    id: "1",
-    title: "Today's Learning Goals",
-    content: "Master 5 new words and complete the flashcard challenge!",
-    icon: "calendar",
+    id: "practice",
+    title: "Practice",
+    icon: "brain",
+    route: "/(protected)/practice/mcq",
+    color: "primary",
   },
   {
-    id: "2",
-    title: "Motivation for You",
-    content: '"The more you learn, the more places you\'ll go." - Dr. Seuss',
-    icon: "rocket",
+    id: "new-words",
+    title: "New Words",
+    icon: "plus-circle",
+    route: "/(protected)/new-words",
+    color: "secondary",
+  },
+  {
+    id: "review",
+    title: "Review",
+    icon: "refresh",
+    route: "/(protected)/review",
+    color: "tertiary",
+  },
+  {
+    id: "stats",
+    title: "Stats",
+    icon: "chart-line",
+    route: "/(protected)/stats",
+    color: "primaryContainer",
   },
 ];
 
 export default function HomeScreen() {
   const router = useRouter();
-  const scrollY = useRef(new Animated.Value(0)).current;
   const { colors } = useTheme();
   const { categories, fetchCategories, isLoading } = useStore();
-
-  const statColors = {
-    goal: colors.goal,
-    streak: colors.streak,
-    time: colors.timer,
-  };
+  const scrollY = useSharedValue(0);
 
   useEffect(() => {
     fetchCategories();
   }, []);
 
-  // Helper function for navigation with proper route types
+  const scrollHandler = useAnimatedScrollHandler({
+    onScroll: (event) => {
+      scrollY.value = event.contentOffset.y;
+    },
+  });
+
   const navigateTo = (path: string) => {
     try {
       router.push(path as any);
@@ -57,172 +77,212 @@ export default function HomeScreen() {
     }
   };
 
+  if (isLoading) {
+    return (
+      <View
+        style={[
+          styles.loadingContainer,
+          { backgroundColor: colors.background },
+        ]}
+      >
+        <ActivityIndicator size="large" color={colors.primary} />
+      </View>
+    );
+  }
+
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>
-      <StickyHeader />
-      <View style={styles.container}>
-        {isLoading ? (
-          <View style={styles.loadingContainer}>
-            <ActivityIndicator />
+      <Animated.ScrollView
+        contentContainerStyle={styles.scrollViewContainer}
+        onScroll={scrollHandler}
+        scrollEventThrottle={16}
+        showsVerticalScrollIndicator={false}
+      >
+        {/* Daily Progress Section */}
+        <Animated.View
+          entering={FadeInDown.duration(600).springify()}
+          style={[
+            styles.progressCard,
+            { backgroundColor: colors.surfaceVariant },
+          ]}
+        >
+          <View style={styles.progressHeader}>
+            <MaterialCommunityIcons
+              name="calendar-check"
+              size={24}
+              color={colors.primary}
+            />
+            <Text style={[styles.progressTitle, { color: colors.onSurface }]}>
+              Today's Progress
+            </Text>
           </View>
-        ) : (
-          <Animated.ScrollView
-            contentContainerStyle={[
-              styles.scrollViewContainer,
-              { paddingBottom: 20 },
-            ]}
-            scrollEventThrottle={16}
-            bounces={true}
-            showsVerticalScrollIndicator={false}
-            decelerationRate="normal"
-            onScroll={Animated.event(
-              [{ nativeEvent: { contentOffset: { y: scrollY } } }],
-              { useNativeDriver: true }
-            )}
-          >
-            <View
-              style={[
-                styles.cardsContainer,
-                { minHeight: SCROLL_DISTANCE_PER_CARD * CARDS.length },
-              ]}
-            >
-              {CARDS.map((card, index) => (
-                <AnimatedCard
-                  key={card.id}
-                  card={card}
-                  scrollY={scrollY}
-                  index={index}
-                />
-              ))}
-            </View>
 
-            <View
-              style={[
-                styles.practiceCardContainer,
-                { backgroundColor: colors.background },
-              ]}
-            >
-              <View style={styles.practiceHeader}>
-                <Avatar.Icon
-                  size={36}
-                  icon="brain"
-                  style={[
-                    styles.headerIcon,
-                    { backgroundColor: statColors.time },
-                  ]}
-                  color={colors.onSurface}
-                />
-                <Text style={styles.heading}>Daily Practice</Text>
-              </View>
-              <Divider
-                style={[styles.divider, { backgroundColor: statColors.time }]}
-              />
-
-              <View style={styles.practiceStats}>
-                <View style={styles.statItem}>
-                  <MaterialCommunityIcons
-                    name="target"
-                    size={24}
-                    color={statColors.goal}
-                  />
-                  <Text style={[styles.statValue, { color: statColors.goal }]}>
-                    5/10
-                  </Text>
-                  <Text
-                    style={[
-                      styles.statLabel,
-                      { color: colors.onSurfaceVariant },
-                    ]}
-                  >
-                    Daily Goal
-                  </Text>
-                </View>
-                <View style={styles.statItem}>
-                  <MaterialCommunityIcons
-                    name="fire"
-                    size={24}
-                    color={statColors.streak}
-                  />
-                  <Text
-                    style={[styles.statValue, { color: statColors.streak }]}
-                  >
-                    3
-                  </Text>
-                  <Text
-                    style={[
-                      styles.statLabel,
-                      { color: colors.onSurfaceVariant },
-                    ]}
-                  >
-                    Day Streak
-                  </Text>
-                </View>
-                <View style={styles.statItem}>
-                  <MaterialCommunityIcons
-                    name="clock-outline"
-                    size={24}
-                    color={statColors.time}
-                  />
-                  <Text style={[styles.statValue, { color: statColors.time }]}>
-                    15
-                  </Text>
-                  <Text
-                    style={[
-                      styles.statLabel,
-                      { color: colors.onSurfaceVariant },
-                    ]}
-                  >
-                    Minutes Today
-                  </Text>
-                </View>
-              </View>
-
-              <Button
-                mode="contained"
-                onPress={() => navigateTo("/(app)/games/multiple-choice")}
+          <View style={styles.progressContent}>
+            <View style={styles.progressItem}>
+              <Text
                 style={[
-                  styles.practiceButton,
-                  { backgroundColor: statColors.time },
+                  styles.progressLabel,
+                  { color: colors.onSurfaceVariant },
                 ]}
-                icon="play"
               >
-                Start Practice
-              </Button>
-            </View>
-
-            <View style={styles.categoryContainer}>
-              <View style={styles.categoryHeader}>
-                <Avatar.Icon
-                  size={36}
-                  icon="shape"
-                  style={[
-                    styles.headerIcon,
-                    { backgroundColor: colors.primary },
-                  ]}
-                  color={colors.onSurface}
-                />
-                <Text style={styles.heading}>Word Categories</Text>
-              </View>
-              <Divider
-                style={[
-                  styles.categoryDivider,
-                  { backgroundColor: colors.primary },
-                ]}
+                Words Learned
+              </Text>
+              <Text style={[styles.progressValue, { color: colors.onSurface }]}>
+                5/10
+              </Text>
+              <ProgressBar
+                progress={0.5}
+                color={colors.primary}
+                style={styles.progressBar}
               />
-
-              <View style={styles.categoriesGrid}>
-                {categories.map((item) => (
-                  <CategoryItem
-                    onPress={() => navigateTo("/(app)/home/categories")}
-                    key={item.id}
-                    item={item}
-                  />
-                ))}
-              </View>
             </View>
-          </Animated.ScrollView>
-        )}
-      </View>
+
+            <View style={styles.progressItem}>
+              <Text
+                style={[
+                  styles.progressLabel,
+                  { color: colors.onSurfaceVariant },
+                ]}
+              >
+                Practice Time
+              </Text>
+              <Text style={[styles.progressValue, { color: colors.onSurface }]}>
+                15/30 min
+              </Text>
+              <ProgressBar
+                progress={0.5}
+                color={colors.secondary}
+                style={styles.progressBar}
+              />
+            </View>
+          </View>
+        </Animated.View>
+
+        {/* Quick Actions */}
+        <Animated.View
+          entering={FadeInDown.delay(200).duration(600).springify()}
+          style={styles.quickActionsContainer}
+        >
+          <Text style={[styles.sectionTitle, { color: colors.onSurface }]}>
+            Quick Actions
+          </Text>
+          <View style={styles.quickActionsGrid}>
+            {QUICK_ACTIONS.map((action, index) => (
+              <Animated.View
+                key={action.id}
+                entering={FadeInUp.delay(300 + index * 100)
+                  .duration(600)
+                  .springify()}
+              >
+                <Surface
+                  style={[
+                    styles.quickActionCard,
+                    {
+                      backgroundColor:
+                        action.color === "primary"
+                          ? colors.primary
+                          : action.color === "secondary"
+                          ? colors.secondary
+                          : action.color === "tertiary"
+                          ? colors.tertiary
+                          : colors.primaryContainer,
+                    },
+                  ]}
+                  elevation={1}
+                >
+                  <View style={styles.quickActionWrapper}>
+                    <Button
+                      mode="contained-tonal"
+                      onPress={() => navigateTo(action.route)}
+                      style={[
+                        styles.quickActionButton,
+                        {
+                          backgroundColor:
+                            action.color === "primary"
+                              ? colors.primary
+                              : action.color === "secondary"
+                              ? colors.secondary
+                              : action.color === "tertiary"
+                              ? colors.tertiary
+                              : colors.primaryContainer,
+                        },
+                      ]}
+                      icon={action.icon}
+                      contentStyle={styles.quickActionContent}
+                    >
+                      {action.title}
+                    </Button>
+                  </View>
+                </Surface>
+              </Animated.View>
+            ))}
+          </View>
+        </Animated.View>
+
+        {/* Learning Insights */}
+        <Animated.View
+          entering={FadeInDown.delay(400).duration(600).springify()}
+          style={[
+            styles.insightsCard,
+            { backgroundColor: colors.surfaceVariant },
+          ]}
+        >
+          <View style={styles.insightsHeader}>
+            <MaterialCommunityIcons
+              name="lightbulb-on"
+              size={24}
+              color={colors.tertiary}
+            />
+            <Text style={[styles.sectionTitle, { color: colors.onSurface }]}>
+              Learning Insights
+            </Text>
+          </View>
+
+          <View style={styles.insightsContent}>
+            <View style={styles.insightItem}>
+              <Text
+                style={[
+                  styles.insightLabel,
+                  { color: colors.onSurfaceVariant },
+                ]}
+              >
+                Current Streak
+              </Text>
+              <Text style={[styles.insightValue, { color: colors.onSurface }]}>
+                3 days
+              </Text>
+            </View>
+
+            <View style={styles.insightItem}>
+              <Text
+                style={[
+                  styles.insightLabel,
+                  { color: colors.onSurfaceVariant },
+                ]}
+              >
+                Words Mastered
+              </Text>
+              <Text style={[styles.insightValue, { color: colors.onSurface }]}>
+                42
+              </Text>
+            </View>
+
+            <View style={styles.insightItem}>
+              <Text
+                style={[
+                  styles.insightLabel,
+                  { color: colors.onSurfaceVariant },
+                ]}
+              >
+                Accuracy
+              </Text>
+              <Text style={[styles.insightValue, { color: colors.onSurface }]}>
+                85%
+              </Text>
+            </View>
+          </View>
+        </Animated.View>
+      </Animated.ScrollView>
     </View>
   );
 }
@@ -236,87 +296,90 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     alignItems: "center",
   },
-  headerContainer: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 10,
-  },
-  headerText: {
-    fontSize: 20,
-    fontWeight: "bold",
-  },
   scrollViewContainer: {
-    paddingVertical: 15,
-    marginHorizontal: 15,
+    padding: 16,
+    gap: 16,
   },
-  cardsContainer: {
-    gap: 15,
+  progressCard: {
+    borderRadius: 16,
+    padding: 16,
   },
-  categoryContainer: {
-    borderRadius: 15,
-    elevation: 2,
-    minHeight: 400,
-    marginTop: 15,
-    padding: 15,
-  },
-  categoryHeader: {
+  progressHeader: {
     flexDirection: "row",
     alignItems: "center",
-    justifyContent: "center",
-    marginBottom: 5,
+    gap: 8,
+    marginBottom: 16,
   },
-  headerIcon: {
-    marginRight: 10,
+  progressTitle: {
+    fontSize: 18,
+    fontWeight: "600",
   },
-  heading: {
-    fontSize: 24,
-    fontWeight: "bold",
-    textAlign: "center",
-    marginVertical: 10,
+  progressContent: {
+    gap: 16,
   },
-  categoryDivider: {
-    height: 2,
-    marginBottom: 15,
+  progressItem: {
+    gap: 8,
   },
-  categoriesGrid: {
+  progressLabel: {
+    fontSize: 14,
+  },
+  progressValue: {
+    fontSize: 16,
+    fontWeight: "600",
+  },
+  progressBar: {
+    height: 8,
+    borderRadius: 4,
+  },
+  quickActionsContainer: {
+    gap: 12,
+  },
+  sectionTitle: {
+    fontSize: 18,
+    fontWeight: "600",
+  },
+  quickActionsGrid: {
     flexDirection: "row",
     flexWrap: "wrap",
-    justifyContent: "space-around",
-    gap: 15,
+    gap: 12,
   },
-  practiceCardContainer: {
-    borderRadius: 15,
-    elevation: 2,
-    padding: 15,
-    marginTop: 15,
+  quickActionCard: {
+    width: (width - 44) / 2,
+    borderRadius: 16,
   },
-  practiceHeader: {
+  quickActionWrapper: {
+    overflow: "hidden",
+    borderRadius: 16,
+  },
+  quickActionButton: {
+    borderRadius: 16,
+  },
+  quickActionContent: {
+    height: 100,
+  },
+  insightsCard: {
+    borderRadius: 16,
+    padding: 16,
+  },
+  insightsHeader: {
     flexDirection: "row",
     alignItems: "center",
-    justifyContent: "center",
+    gap: 8,
+    marginBottom: 16,
   },
-  divider: {
-    height: 2,
-    marginVertical: 10,
-  },
-  practiceStats: {
+  insightsContent: {
     flexDirection: "row",
-    justifyContent: "space-around",
-    marginTop: 10,
+    justifyContent: "space-between",
   },
-  statItem: {
+  insightItem: {
     alignItems: "center",
+    gap: 4,
   },
-  statValue: {
-    fontSize: 20,
-    fontWeight: "bold",
-    marginTop: 5,
+  insightLabel: {
+    fontSize: 14,
   },
-  statLabel: {
-    fontSize: 12,
-  },
-  practiceButton: {
-    marginTop: 20,
-    paddingVertical: 6,
+  insightValue: {
+    fontSize: 18,
+    fontWeight: "600",
   },
 });

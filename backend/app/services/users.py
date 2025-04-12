@@ -1,9 +1,11 @@
 import asyncpg
-from app.models.user import UserRegister, UserUpdate
-from app.config.jwt import jwt
+from app.models.user import UserCreate, UserUpdate
 from app.config.db import get_pool
 from fastapi import Depends
-from app.models.user import User
+from app.models.user import User, UserList
+from app.services.lists import ListService, get_list_service
+from app.models.list import WordList
+from typing import List
 
 
 class UserNotFoundError(Exception):
@@ -15,8 +17,9 @@ class UserAlreadyExistsError(Exception):
 
 
 class UserService:
-    def __init__(self, pool: asyncpg.Pool):
+    def __init__(self, pool: asyncpg.Pool, list_service: ListService):
         self.pool = pool
+        self.list_service = list_service
 
     async def get_user_by_username(self, username: str) -> User:
         query = "SELECT * FROM users WHERE username = $1"
@@ -63,20 +66,30 @@ class UserService:
                 raise e
             raise Exception(f"Error fetching user by ID: {str(e)}")
 
-    async def create_user(self, user: UserRegister, password_hash: str) -> User:
+    async def get_user_by_clerk_id(self, clerk_id: str) -> User:
+        query = "SELECT * FROM users WHERE clerk_id = $1"
+        try:
+            user_record = await self.pool.fetchrow(query, clerk_id)
+            if user_record is None:
+                raise UserNotFoundError(f"User with Clerk ID {clerk_id} not found")
+            return User(**user_record)
+        except Exception as e:
+            if isinstance(e, UserNotFoundError):
+                raise e
+            raise Exception(f"Error fetching user by Clerk ID: {str(e)}")
+
+    async def create_user(self, user: UserCreate) -> User:
         query = """
-            INSERT INTO users (email, username, password_hash, first_name, last_name) 
-            VALUES ($1, $2, $3, $4, $5) 
-            RETURNING id, email, username, first_name, last_name, created_at, updated_at
+            INSERT INTO users (email, username, clerk_id) 
+            VALUES ($1, $2, $3) 
+            RETURNING id, email, username, clerk_id, created_at, updated_at
         """
         try:
             user_record = await self.pool.fetchrow(
                 query,
                 user.email,
                 user.username,
-                password_hash,
-                user.first_name,
-                user.last_name,
+                user.clerk_id,
             )
             if user_record is None:
                 raise Exception("Failed to create user record.")
@@ -100,9 +113,7 @@ class UserService:
     async def update_user(self, user_id: int, user_update_data: UserUpdate) -> User:
         update_fields = user_update_data.model_dump(exclude_unset=True)
 
-        new_password = update_fields.pop("password", None)
-
-        if not update_fields and new_password is None:
+        if not update_fields:
             return await self.get_user_by_id(user_id)
 
         params = []
@@ -119,12 +130,6 @@ class UserService:
                 set_clauses.append(f"{field} = ${param_index}")
                 params.append(value)
                 param_index += 1
-
-        if new_password is not None:
-            hashed_password = jwt.get_password_hash(new_password)
-            set_clauses.append(f"password_hash = ${param_index}")
-            params.append(hashed_password)
-            param_index += 1
 
         params.append(user_id)
 
@@ -171,7 +176,41 @@ class UserService:
                 raise e
             raise Exception(f"Error deleting user with ID {user_id}: {str(e)}")
 
+    async def create_user_list(self, user_id: int, list_id: int) -> UserList:
+        query = """
+            INSERT INTO user_lists (user_id, list_id)
+            VALUES ($1, $2)
+            RETURNING user_id, list_id, created_at, updated_at
+        """
+        try:
+            user_list_record = await self.pool.fetchrow(query, user_id, list_id)
+            if user_list_record is None:
+                raise Exception("Failed to create user list record.")
+            return UserList(**user_list_record)
+        except Exception as e:
+            raise Exception(f"Error creating user list: {str(e)}")
 
-async def get_user_service(pool: asyncpg.Pool = Depends(get_pool)) -> UserService:
-    service = UserService(pool=pool)
+    async def get_user_lists(self, user_id: int) -> List[WordList]:
+        query = """
+            SELECT list_id
+            FROM user_lists
+            WHERE user_id = $1
+        """
+        try:
+            user_list_ids = await self.pool.fetch(query, user_id)
+
+            user_lists = []
+            for record in user_list_ids:
+                user_list = await self.list_service.get_list_by_id(record["list_id"])
+                user_lists.append(user_list)
+            return user_lists
+        except Exception as e:
+            raise Exception(f"Error fetching user lists: {str(e)}")
+
+
+async def get_user_service(
+    pool: asyncpg.Pool = Depends(get_pool),
+    list_service: ListService = Depends(get_list_service),
+) -> UserService:
+    service = UserService(pool=pool, list_service=list_service)
     return service
