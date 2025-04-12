@@ -77,7 +77,7 @@ async def clerk_webhook(
                     "user_id": created_user.id,
                 }
             except UserAlreadyExistsError as e:
-                logger.warn(f"User already exists error: {str(e)}")
+                logger.warning(f"User already exists error: {str(e)}")
                 return {"status": "success", "message": "User already exists"}
             except Exception as e:
                 logger.error(f"Database error creating user: {str(e)}")
