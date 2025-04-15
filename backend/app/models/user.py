@@ -116,9 +116,8 @@ class UserPreferencesUpdate(CamelModel):
 class WordProgress(BaseEntity):
     user_id: int
     word_id: int
-    recognition_level: int = 0
-    usage_level: int = 0
-    mastery_score: int = 0
+    recognition_mastery_score: int = 0
+    usage_mastery_score: int = 0
     practice_count: int = 0
     success_count: int = 0
     last_practiced: datetime
@@ -126,9 +125,8 @@ class WordProgress(BaseEntity):
 
 
 class WordProgressUpdate(CamelModel):
-    recognition_level: Optional[int] = None
-    usage_level: Optional[int] = None
-    mastery_score: Optional[int] = None
+    recognition_mastery_score: Optional[int] = None
+    usage_mastery_score: Optional[int] = None
     practice_count: Optional[int] = None
     success_count: Optional[int] = None
     last_practiced: Optional[datetime] = None

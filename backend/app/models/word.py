@@ -1,6 +1,8 @@
 from datetime import datetime
 from typing import Optional, List
 from .base import BaseEntity
+from .quiz import QuizCreate
+from .quiz import Quiz
 
 
 class Word(BaseEntity):
@@ -16,6 +18,7 @@ class Word(BaseEntity):
     synonyms: Optional[List[str]] = None
     antonyms: Optional[List[str]] = None
     tags: Optional[List[str]] = None
+    quiz: Optional[Quiz] = None
 
 
 class WordUpdate(BaseEntity):
@@ -35,7 +38,7 @@ class WordUpdate(BaseEntity):
 
 
 class WordCreate(Word):
-    pass
+    quizzes: Optional[List[QuizCreate]] = None
 
 
 # Word Errors

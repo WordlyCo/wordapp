@@ -182,8 +182,22 @@ class UserService:
             VALUES ($1, $2)
             RETURNING user_id, list_id, created_at, updated_at
         """
+        word_ids_query = """
+            SELECT word_id FROM list_words WHERE list_id = $1
+        """
+        word_progress_query = """
+            INSERT INTO word_progress (user_id, word_id, recognition_mastery_score, usage_mastery_score, practice_count, number_of_times_to_practice, success_count)
+            VALUES ($1, $2, $3, $4, $5, $6, $7)
+        """
         try:
             user_list_record = await self.pool.fetchrow(query, user_id, list_id)
+            word_ids = await self.pool.fetch(word_ids_query, list_id)
+            for record in word_ids:
+                word_id = record["word_id"]
+                await self.pool.execute(
+                    word_progress_query, user_id, word_id, 0, 0, 0, 5, 0
+                )
+
             if user_list_record is None:
                 raise Exception("Failed to create user list record.")
             return UserList(**user_list_record)

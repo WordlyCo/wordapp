@@ -1,5 +1,6 @@
 import { DifficultyLevel } from "./enums";
 import { BaseEntity } from "./base";
+import { Quiz } from "./quiz";
 
 export type Word = BaseEntity & {
   word: string;
@@ -15,6 +16,7 @@ export type Word = BaseEntity & {
   audioUrl?: string;
   imageUrl?: string;
   wordProgress?: WordProgress;
+  quiz?: Quiz;
 };
 
 export type WordProgress = BaseEntity & {

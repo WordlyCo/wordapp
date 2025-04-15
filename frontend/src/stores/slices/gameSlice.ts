@@ -3,6 +3,7 @@ import { categories } from "../mockData";
 import { authFetch } from "@/lib/api";
 import { WordListCategory, WordList } from "@/src/types/lists";
 import { Quiz } from "@/src/types/quiz";
+import { Word } from "@/src/types/words";
 export interface GameSlice {
   isLoading: boolean;
   isFetchingCategories: boolean;
@@ -21,7 +22,7 @@ export interface GameSlice {
     totalPages: number;
   };
   userLists: WordList[];
-  currentQuiz: Quiz | null;
+  quizWords: Word[];
   fetchCategories: () => Promise<void>;
   fetchCategory: (id: string) => Promise<void>;
   fetchList: (id: string) => Promise<void>;
@@ -29,7 +30,7 @@ export interface GameSlice {
   fetchWordLists: (page: number, perPage: number) => Promise<void>;
   addListToUserLists: (listId: string) => Promise<void>;
   fetchUserLists: () => Promise<void>;
-  initializeQuiz: () => void;
+  fetchDailyQuiz: () => Promise<void>;
 }
 
 export const createGameSlice: StateCreator<GameSlice> = (set, get) => ({
@@ -50,63 +51,9 @@ export const createGameSlice: StateCreator<GameSlice> = (set, get) => ({
   selectedListsByCategory: [],
   isFetchingListsByCategory: false,
   userLists: [],
-  currentQuiz: null,
+  quizWords: [],
 
-  initializeQuiz: () => {
-    const mockQuiz: Quiz = {
-      id: 1,
-      createdAt: "2021-01-01",
-      updatedAt: "2021-01-01",
-      questions: [
-        {
-          id: 1,
-          word: {
-            id: "1",
-            createdAt: new Date("2021-01-01"),
-            updatedAt: new Date("2021-01-01"),
-            word: "hello",
-            definition: "a greeting",
-            difficultyLevel: "beginner",
-            partOfSpeech: "noun",
-            synonyms: ["hi", "hey", "greeting"],
-            antonyms: ["bye", "goodbye", "farewell"],
-            examples: ["Hello, how are you?", "Hello, my name is John."],
-            usageNotes: "Hello is a common greeting used in English.",
-            tags: ["word", "greeting"],
-            audioUrl: "https://example.com/hello.mp3",
-            imageUrl: "https://example.com/hello.jpg",
-            wordProgress: {
-              id: "1",
-              createdAt: new Date("2021-01-01"),
-              updatedAt: new Date("2021-01-01"),
-              userId: "1",
-              wordId: "1",
-              recognitionLevel: 0,
-              usageLevel: 0,
-              masteryScore: 0,
-              practiceCount: 0,
-              successCount: 0,
-            },
-          },
-          type: "mcq",
-          question: "What is the definition of hello?",
-          options: [
-            {
-              id: 1,
-              createdAt: "2021-01-01",
-              updatedAt: "2021-01-01",
-              option: "a greeting",
-              questionId: 1,
-            },
-          ],
-          correctAnswerIds: [1],
-          createdAt: "2021-01-01",
-          updatedAt: "2021-01-01",
-        },
-      ],
-    };
-    set({ currentQuiz: mockQuiz });
-  },
+ 
 
   fetchUserLists: async () => {
     try {
@@ -271,6 +218,25 @@ export const createGameSlice: StateCreator<GameSlice> = (set, get) => ({
       });
     } finally {
       set({ isLoading: false });
+    }
+  },
+
+  fetchDailyQuiz: async () => {
+    try {
+      const response = await authFetch("/quizzes/daily-quiz");
+      const data = await response.json();
+      const success = data.success;
+      const message = data.message;
+      const payload = data.payload;
+
+      if (!success) {
+        console.error("Failed to fetch daily quiz:", message);
+        return;
+      }
+
+      set({ quizWords: payload });
+    } catch (error) {
+      console.error("Error fetching daily quiz:", error);
     }
   },
 });

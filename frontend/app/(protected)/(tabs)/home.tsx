@@ -11,6 +11,7 @@ import Animated, {
   useAnimatedScrollHandler,
   useSharedValue,
 } from "react-native-reanimated";
+import { authFetch } from "@/lib/api";
 
 const { width } = Dimensions.get("window");
 
@@ -27,7 +28,7 @@ const QUICK_ACTIONS: QuickAction[] = [
     id: "practice",
     title: "Practice",
     icon: "brain",
-    route: "/(protected)/practice/mcq",
+    route: "/(protected)/practice/quiz",
     color: "primary",
   },
   {

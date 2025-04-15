@@ -1,7 +1,7 @@
 from .base import BaseEntity, CamelModel
 from typing import Optional, List
 from datetime import datetime
-from app.models.word import Word
+from app.models.word import Word, WordCreate
 
 
 class WordList(BaseEntity):
@@ -25,7 +25,7 @@ class WordListUpdate(CamelModel):
 
 
 class WordListCreate(WordList):
-    pass
+    words: Optional[List[WordCreate]] = None
 
 
 class WordListWord(CamelModel):

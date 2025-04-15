@@ -1,7 +1,6 @@
 import { Button, Text } from "react-native-paper";
 import { Animated, StyleSheet, View } from "react-native";
 import { Card } from "react-native-paper";
-import { Quiz } from "@/src/types/quiz";
 
 type GameStats = {
   correctAnswers: number;
@@ -11,7 +10,7 @@ type GameStats = {
 
 export type FeedbackStateProps = {
   score: number;
-  currentQuiz: Quiz;
+  numberOfWords: number;
   colors: any;
   gameStats: GameStats;
   fadeAnim: Animated.Value;
@@ -20,9 +19,9 @@ export type FeedbackStateProps = {
   playAgain: () => void;
 };
 
-const FeedbackState = ({
+const SummaryState = ({
   score,
-  currentQuiz,
+  numberOfWords,
   colors,
   gameStats,
   fadeAnim,
@@ -46,7 +45,7 @@ const FeedbackState = ({
             <View style={styles.statItem}>
               <Text variant="titleMedium">Score</Text>
               <Text variant="headlineSmall" style={{ color: colors.primary }}>
-                {score}/{currentQuiz?.questions?.length || 0}
+                {score}/{numberOfWords}
               </Text>
             </View>
             <View style={styles.statItem}>
@@ -75,7 +74,7 @@ const FeedbackState = ({
   );
 };
 
-export default FeedbackState;
+export default SummaryState;
 const styles = StyleSheet.create({
   container: {
     flex: 1,

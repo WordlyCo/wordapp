@@ -1,10 +1,11 @@
 import React, { useState, useEffect, useRef, useMemo } from "react";
-import { View, ScrollView, StyleSheet, Animated } from "react-native";
+import { View, ScrollView, StyleSheet, Animated} from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
 import { Text, Card, Button, IconButton } from "react-native-paper";
 import useTheme from "@/src/hooks/useTheme";
 import QuestionCard from "@/src/components/QuestionCard";
 import { useStore } from "@/src/stores/store";
-import { Question } from "@/src/types/quiz";
+import { Word } from "@/src/types/words";
 import SummaryState from "@/src/features/practice/components/SummaryState";
 import FeedbackState from "@/src/features/practice/components/FeedbackState";
 import useQuizTransition from "@/src/features/practice/hooks/useQuizTransition";
@@ -17,17 +18,17 @@ type GameStats = {
   masteryGained: number;
 };
 
-const MultipleChoice = () => {
+const Quiz = () => {
   const { colors } = useTheme();
   const { slideAnim, animateOut, animateIn, resetAnimations } =
     useQuizTransition();
 
-  const currentQuiz = useStore((state) => state.currentQuiz);
-  const initializeQuiz = useStore((state) => state.initializeQuiz);
+  const quizWords: Word[] = useStore((state) => state.quizWords);
+  const fetchDailyQuiz = useStore((state) => state.fetchDailyQuiz);
   const [currentIndex, setCurrentIndex] = useState(0);
-  const [currentQuestion, setCurrentQuestion] = useState<Question | null>(null);
+  const [currentWord, setCurrentWord] = useState<Word | null>(null);
   const [cardState, setCardState] = useState<CardState>("question");
-  const [selectedAnswerId, setSelectedAnswerId] = useState<number>(0);
+  const [selectedAnswer, setSelectedAnswer] = useState<string>("");
 
   const [score, setScore] = useState(0);
   const [startTime, setStartTime] = useState<number>(Date.now());
@@ -47,18 +48,20 @@ const MultipleChoice = () => {
 
   const progress = 5;
 
-  useEffect(() => {
-    initializeQuiz();
-  }, [initializeQuiz]);
+  console.log("quizWords", JSON.stringify(quizWords, null, 2));
 
   useEffect(() => {
-    setCurrentQuestion(currentQuiz?.questions?.[currentIndex] || null);
-  }, [currentIndex, currentQuiz]);
+    fetchDailyQuiz();
+  }, [fetchDailyQuiz]);
 
-  if (!currentQuiz || !currentQuestion) return null;
+  useEffect(() => {
+    setCurrentWord(quizWords?.[currentIndex] || null);
+  }, [currentIndex, quizWords]);
+
+  if (!quizWords || !currentWord) return null;
 
   const handleNext = () => {
-    const isLastQuestion = currentIndex === currentQuiz.questions.length - 1;
+    const isLastQuestion = currentIndex === quizWords.length - 1;
 
     animateOut(() => {
       resetAnimations();
@@ -72,7 +75,7 @@ const MultipleChoice = () => {
         setCardState("summary");
       } else {
         setCurrentIndex(currentIndex + 1);
-        setSelectedAnswerId(0);
+        setSelectedAnswer("");
         setCardState("question");
       }
 
@@ -83,11 +86,11 @@ const MultipleChoice = () => {
     });
   };
 
-  const handleAnswer = (answerId: number) => {
-    if (currentQuestion.correctAnswerIds.includes(answerId)) {
+  const handleAnswer = (answer: string) => {
+    if (currentWord?.quiz?.correctOptions.includes(answer)) {
       setScore(score + 1);
     }
-    setSelectedAnswerId(answerId);
+    setSelectedAnswer(answer);
 
     animateOut(() => {
       resetAnimations();
@@ -124,47 +127,59 @@ const MultipleChoice = () => {
 
   const commonProps = {
     colors,
-    currentQuestion,
-    currentQuiz,
+    currentWord,
+    quizWords,
   };
+
+  if (!quizWords || quizWords.length === 0) {
+    return (
+      <View style={[styles.container, { backgroundColor: colors.background }]}>
+        <Text style={styles.headerText}>No quiz words available</Text>
+      </View>
+    );
+  }
 
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>
+         <SafeAreaView
+        style={[styles.safeAreaView, { backgroundColor: colors.background }]}
+        edges={["top"]}
+      />
       <ScrollView
         contentContainerStyle={[
           styles.scrollContent,
           { minHeight: "100%", justifyContent: "center" },
         ]}
       >
-        <Text style={styles.headerText}>Multiple Choice</Text>
         {cardState === "question" && (
           <QuestionCard
             currentIndex={currentIndex}
-            question={currentQuestion}
-            wordCount={currentQuiz.questions.length}
+            word={currentWord}
+            wordCount={quizWords.length}
             progress={progress}
             score={score}
             colors={colors}
             handleAnswer={handleAnswer}
-            selectedAnswerId={selectedAnswerId}
-            setSelectedAnswerId={setSelectedAnswerId}
+            selectedAnswer={selectedAnswer}
+            setSelectedAnswer={setSelectedAnswer}
           />
         )}
         {cardState === "feedback" && (
           <FeedbackState
             {...commonProps}
-            score={score}
             fadeAnim={staticAnimValues.fadeAnim}
             scaleAnim={staticAnimValues.scaleAnim}
             slideAnim={slideAnim}
-            selectedAnswerId={selectedAnswerId}
+            selectedAnswer={selectedAnswer}
             currentIndex={currentIndex}
+            numberOfWords={quizWords.length}
             handleNext={handleNext}
           />
         )}
         {cardState === "summary" && (
           <SummaryState
             {...commonProps}
+            numberOfWords={quizWords.length}
             score={score}
             gameStats={gameStats}
             fadeAnim={staticAnimValues.fadeAnim}
@@ -304,6 +319,9 @@ const styles = StyleSheet.create({
   restartButton: {
     marginTop: 16,
   },
+  safeAreaView: {
+    flex: 1,
+  },
 });
 
-export default MultipleChoice;
+export default Quiz;

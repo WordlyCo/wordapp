@@ -1,42 +1,40 @@
 import { Animated, View, Text, StyleSheet } from "react-native";
-import { Card, ProgressBar } from "react-native-paper";
+import { Card, ProgressBar, IconButton } from "react-native-paper";
 import React, { useEffect, useState } from "react";
-import { Question, QuestionOption } from "@/src/types/quiz";
+import { Word } from "@/src/types/words";
 import OptionButton from "./OptionButton";
 import { shuffleArray } from "@/lib/utils";
 
 type QuestionCardProps = {
-  question: Question;
+  word: Word;
   wordCount: number;
   currentIndex: number;
   progress: number;
   score: number;
   colors: any;
-  handleAnswer: (answerId: number) => void;
-  selectedAnswerId: number | null;
-  setSelectedAnswerId: (answerId: number) => void;
+  handleAnswer: (answer: string) => void;
+  selectedAnswer: string;
+  setSelectedAnswer: (answer: string) => void;
 };
 
 const QuestionCard = ({
-  question,
+  word,
   wordCount,
   currentIndex,
   progress,
   score,
   colors,
   handleAnswer,
-  selectedAnswerId,
-  setSelectedAnswerId,
+  selectedAnswer,
+  setSelectedAnswer,
 }: QuestionCardProps) => {
-  const [randomizedOptions, setRandomizedOptions] = useState<QuestionOption[]>(
-    []
-  );
+  const [randomizedOptions, setRandomizedOptions] = useState<string[]>([]);
 
   useEffect(() => {
-    if (question && question.options) {
-      setRandomizedOptions(shuffleArray(question.options));
+    if (word && word.quiz?.options) {
+      setRandomizedOptions(shuffleArray(word.quiz.options));
     }
-  }, [question, currentIndex]);
+  }, [word, currentIndex]);
 
   return (
     <>
@@ -55,30 +53,37 @@ const QuestionCard = ({
       </View>
 
       <Animated.View style={[styles.questionContainer]}>
-        <Card style={[styles.card, { backgroundColor: colors.surface }]}>
-          <Card.Content>
-            <Text style={[styles.wordText, { color: colors.primary }]}>
-              {question.word.word}
+        <Card style={[styles.card, { backgroundColor: colors.surface }]} elevation={4}>
+          <View style={styles.questionIconContainer}>
+            <IconButton 
+              icon="help-circle" 
+              iconColor={colors.primary} 
+              size={28} 
+            />
+          </View>
+          <Card.Content style={styles.questionContent}>
+            <Text style={[styles.questionLabel, { color: colors.primary }]}>
+              Question:
             </Text>
             <Text style={[styles.questionText, { color: colors.onSurface }]}>
-              {question.question}
+              {word.quiz?.question}
             </Text>
           </Card.Content>
         </Card>
       </Animated.View>
 
       <View style={styles.optionsContainer}>
-        {randomizedOptions.map((option: QuestionOption, index: number) => (
+        {randomizedOptions.map((option: string, index: number) => (
           <OptionButton
             key={index}
-            onPress={() => handleAnswer(option.id)}
+            onPress={() => handleAnswer(option)}
             disabled={false}
-            isCorrect={question.correctAnswerIds.includes(option.id)}
-            isSelected={selectedAnswerId === option.id}
+            isCorrect={word.quiz?.correctOptions.includes(option) || false}
+            isSelected={selectedAnswer === option}
             showAnswer={false}
             colors={colors}
           >
-            {option.option}
+            {option}
           </OptionButton>
         ))}
       </View>
@@ -115,6 +120,23 @@ const styles = StyleSheet.create({
   },
   card: {
     elevation: 4,
+    borderRadius: 12,
+    overflow: 'hidden',
+  },
+  questionIconContainer: {
+    position: 'absolute',
+    top: 5,
+    right: 5,
+    zIndex: 1,
+  },
+  questionContent: {
+    paddingVertical: 16,
+  },
+  questionLabel: {
+    fontSize: 14,
+    fontWeight: "600",
+    marginBottom: 8,
+    textAlign: "center",
   },
   wordText: {
     fontSize: 24,
@@ -123,8 +145,11 @@ const styles = StyleSheet.create({
     marginBottom: 10,
   },
   questionText: {
-    fontSize: 18,
+    fontSize: 20,
+    fontWeight: "600",
     textAlign: "center",
+    marginVertical: 10,
+    lineHeight: 28,
   },
   optionsContainer: {
     gap: 12,

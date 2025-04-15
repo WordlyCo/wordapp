@@ -14,6 +14,7 @@ from app.models.list import (
 )
 from app.models.word import WordNotFoundError, Word
 from app.services.words import WordService, get_word_service
+from app.services.quizzes import QuizService, get_quiz_service
 import asyncpg
 from typing import List
 from fastapi import Depends
@@ -22,9 +23,15 @@ import math
 
 
 class ListService:
-    def __init__(self, pool: asyncpg.Pool, word_service: WordService):
+    def __init__(
+        self,
+        pool: asyncpg.Pool,
+        word_service: WordService,
+        quiz_service: QuizService,
+    ):
         self.pool = pool
         self.word_service = word_service
+        self.quiz_service = quiz_service
 
     async def get_list_by_id(self, list_id: int) -> WordList:
         try:
@@ -124,6 +131,9 @@ class ListService:
                 try:
                     new_word = await self.word_service.insert_word(word)
                     await self.insert_list_word(list_data["id"], new_word.id)
+                    for quiz in word.quizzes:
+                        quiz.word_id = new_word.id
+                        await self.quiz_service.insert_quiz(quiz)
                 except Exception as e:
                     print(f"Error inserting word {word.word}: {str(e)}")
                     continue
@@ -446,6 +456,9 @@ class ListService:
 async def get_list_service(
     pool: asyncpg.Pool = Depends(get_pool),
     word_service: WordService = Depends(get_word_service),
+    quiz_service: QuizService = Depends(get_quiz_service),
 ) -> ListService:
-    service = ListService(pool=pool, word_service=word_service)
+    service = ListService(
+        pool=pool, word_service=word_service, quiz_service=quiz_service
+    )
     return service
