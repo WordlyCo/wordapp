@@ -20,17 +20,7 @@ export default function ProfileLayout() {
         headerTintColor: colors.primary,
       }}
     >
-      <Stack.Screen
-        name="Profile"
-        options={{
-          headerStyle: {
-            backgroundColor: colors.primary,
-          },
-          headerTitleStyle: {
-            color: colors.onPrimary,
-          },
-        }}
-      />
+      <Stack.Screen name="Profile" />
       <Stack.Screen name="Settings" />
       <Stack.Screen name="AccountSettings" />
       <Stack.Screen name="PrivacyPolicy" />

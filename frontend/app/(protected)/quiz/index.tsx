@@ -29,6 +29,7 @@ const QuestionScreen: React.FC = () => {
   const updateStreak = useStore((state) => state.updateStreak);
   const fetchUserStats = useStore((state) => state.fetchUserStats);
   const updateAccuracy = useStore((state) => state.updateAccuracy);
+  
   const [currentWord, setCurrentWord] = useState<Word | undefined>(undefined);
   const [, setQuizStartTime] = useState<number | null>(null);
 
@@ -103,7 +104,6 @@ const QuestionScreen: React.FC = () => {
     const updatedAnswerResults = { ...answerResults };
     updatedAnswerResults[currentIndex] = isCorrect;
 
-    // Update the quiz stats first
     setQuizStats({
       ...quizStats,
       selectedAnswer: answer,
@@ -114,12 +114,9 @@ const QuestionScreen: React.FC = () => {
       }),
     });
 
-    // Update accuracy stats
     updateAccuracy(isCorrect);
 
-    // If answer is correct, award diamonds based on difficulty level
     if (isCorrect) {
-      // Award diamonds based on difficulty level
       let diamondReward = 0;
       switch (currentWord.difficultyLevel) {
         case DIFFICULTY_LEVELS.BEGINNER:
@@ -135,14 +132,11 @@ const QuestionScreen: React.FC = () => {
           diamondReward = 5;
       }
       
-      // Update diamonds in store
       updateDiamonds(diamondReward);
       
-      // Update streak (will increment if last activity was yesterday, reset if older)
       updateStreak();
     }
 
-    // Create the word progress update based on whether the answer is correct
     const wordProgressUpdate = {
       wordId: currentWord.id,
       practiceCount: (currentWord.wordProgress?.practiceCount || 0) + 1,
@@ -159,10 +153,8 @@ const QuestionScreen: React.FC = () => {
       numberOfTimesToPractice: (currentWord.wordProgress?.numberOfTimesToPractice || 0) + 1,
     };
 
-    // Update the word progress in the backend and local state
     await updateWordProgress(wordProgressUpdate);
     
-    // Navigate to the feedback screen
     router.replace("/(protected)/quiz/feedback");
   };
 

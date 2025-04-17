@@ -9,6 +9,7 @@ from app.models.user import (
     FullUserStats,
     DailyProgress,
     LearningInsights,
+    UserListAlreadyExistsError,
 )
 from app.config.db import get_pool
 from fastapi import Depends
@@ -84,7 +85,18 @@ class UserService:
             user_record = await self.pool.fetchrow(query, clerk_id)
             if user_record is None:
                 raise UserNotFoundError(f"User with Clerk ID {clerk_id} not found")
-            return User(**user_record)
+            return User(
+                id=user_record["id"],
+                username=user_record["username"],
+                email=user_record["email"],
+                clerk_id=user_record["clerk_id"],
+                first_name=user_record["first_name"],
+                last_name=user_record["last_name"],
+                profile_picture_url=user_record["profile_picture_url"],
+                bio=user_record["bio"],
+                created_at=user_record["created_at"],
+                updated_at=user_record["updated_at"],
+            )
         except Exception as e:
             if isinstance(e, UserNotFoundError):
                 raise e
@@ -110,7 +122,6 @@ class UserService:
                     if user_record is None:
                         raise Exception("Failed to create user record.")
 
-                    # Create default user stats
                     user_id = user_record["id"]
                     stats_query = """
                         INSERT INTO user_stats 
@@ -120,11 +131,10 @@ class UserService:
                     """
                     await conn.execute(stats_query, user_id)
 
-                    # Create default user preferences if you have that table
-                    # preferences_query = """
-                    #    INSERT INTO user_preferences (user_id, ...) VALUES ($1, ...)
-                    # """
-                    # await conn.execute(preferences_query, user_id)
+                    preferences_query = """
+                       INSERT INTO user_preferences (user_id) VALUES ($1)
+                    """
+                    await conn.execute(preferences_query, user_id)
 
                     return User(**user_record)
         except asyncpg.UniqueViolationError as e:
@@ -143,11 +153,13 @@ class UserService:
         except Exception as e:
             raise Exception(f"Error creating user: {str(e)}")
 
-    async def update_user(self, user_id: int, user_update_data: UserUpdate) -> User:
+    async def update_user_by_clerk_id(
+        self, clerk_id: str, user_update_data: UserUpdate
+    ) -> User:
         update_fields = user_update_data.model_dump(exclude_unset=True)
 
         if not update_fields:
-            return await self.get_user_by_id(user_id)
+            return await self.get_user_by_clerk_id(clerk_id)
 
         params = []
         set_clauses = []
@@ -159,23 +171,27 @@ class UserService:
                 "username",
                 "first_name",
                 "last_name",
+                "profile_picture_url",
+                "bio",
             ]:
                 set_clauses.append(f"{field} = ${param_index}")
                 params.append(value)
                 param_index += 1
 
-        params.append(user_id)
+        params.append(clerk_id)
 
         query = f"""
             UPDATE users
             SET {', '.join(set_clauses)}, updated_at = CURRENT_TIMESTAMP
-            WHERE id = ${param_index}
-            RETURNING id, email, username, first_name, last_name, created_at, updated_at
+            WHERE clerk_id = ${param_index}
+            RETURNING id, clerk_id, email, username, first_name, last_name, profile_picture_url, bio, created_at, updated_at
         """
         try:
             user_record = await self.pool.fetchrow(query, *params)
             if user_record is None:
-                raise UserNotFoundError(f"User with ID {user_id} not found for update")
+                raise UserNotFoundError(
+                    f"User with Clerk ID {clerk_id} not found for update"
+                )
             return User(**user_record)
         except asyncpg.UniqueViolationError as e:
             if "users_email_key" in str(e):
@@ -193,7 +209,7 @@ class UserService:
         except Exception as e:
             if isinstance(e, UserNotFoundError):
                 raise e
-            raise Exception(f"Error updating user with ID {user_id}: {str(e)}")
+            raise Exception(f"Error updating user with Clerk ID {clerk_id}: {str(e)}")
 
     async def delete_user(self, user_id: int) -> bool:
         query = "DELETE FROM users WHERE id = $1"
@@ -208,6 +224,14 @@ class UserService:
             if isinstance(e, UserNotFoundError):
                 raise e
             raise Exception(f"Error deleting user with ID {user_id}: {str(e)}")
+
+    async def delete_user_by_clerk_id(self, clerk_id: str) -> bool:
+        query = "DELETE FROM users WHERE clerk_id = $1"
+        try:
+            result = await self.pool.execute(query, clerk_id)
+            return result == "DELETE 1"
+        except Exception as e:
+            raise Exception(f"Error deleting user with Clerk ID {clerk_id}: {str(e)}")
 
     async def create_user_list(self, user_id: int, list_id: int) -> UserList:
         query = """
@@ -250,8 +274,23 @@ class UserService:
                     if user_list_record is None:
                         raise Exception("Failed to create user list record.")
                     return UserList(**user_list_record)
+        except asyncpg.UniqueViolationError as e:
+            raise UserListAlreadyExistsError(
+                f"User list with user_id {user_id} and list_id {list_id} already exists"
+            )
         except Exception as e:
             raise Exception(f"Error creating user list: {str(e)}")
+
+    async def remove_list_from_user_lists(self, user_id: int, list_id: int) -> bool:
+        query = """
+            DELETE FROM user_lists
+            WHERE user_id = $1 AND list_id = $2
+        """
+        try:
+            await self.pool.execute(query, user_id, list_id)
+            return True
+        except Exception as e:
+            raise Exception(f"Error removing list from user lists: {str(e)}")
 
     async def get_user_lists(self, user_id: int) -> List[WordList]:
         query = """
@@ -264,7 +303,9 @@ class UserService:
 
             user_lists = []
             for record in user_list_ids:
-                user_list = await self.list_service.get_list_by_id(record["list_id"])
+                user_list = await self.list_service.get_list_by_id(
+                    record["list_id"], user_id
+                )
                 user_lists.append(user_list)
             return user_lists
         except Exception as e:

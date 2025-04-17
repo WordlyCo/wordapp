@@ -11,6 +11,7 @@ from app.models.user import (
     UserStatsUpdate,
     UserStats,
     FullUserStats,
+    UserListAlreadyExistsError,
 )
 from app.models.base import Response
 from app.services.users import (
@@ -21,6 +22,7 @@ from app.services.users import (
 from app.api.errors import (
     USER_NOT_FOUND,
     SERVER_ERROR,
+    DUPLICATE_INSERTION,
 )
 
 
@@ -72,6 +74,8 @@ async def create_user_list(
             message="User list created successfully",
             payload=user_list,
         )
+    except UserListAlreadyExistsError as e:
+        return Response(success=False, message=str(e), error_code=DUPLICATE_INSERTION)
     except Exception as e:
         print(f"Error during user list creation: {e}")
         import traceback
@@ -80,6 +84,34 @@ async def create_user_list(
         return Response(
             success=False,
             message="Could not create user list due to an internal error",
+            error_code=SERVER_ERROR,
+        )
+
+
+@router.delete("/lists/{list_id}")
+async def remove_list_from_user_lists(
+    list_id: int,
+    user_service: UserService = Depends(get_user_service),
+    current_user: Optional[User] = Depends(get_current_user),
+) -> Response[bool]:
+    try:
+        if current_user is None:
+            return Response(
+                success=False,
+                message="Authentication required",
+                error_code=SERVER_ERROR,
+            )
+
+        await user_service.remove_list_from_user_lists(current_user.id, list_id)
+        return Response(
+            success=True,
+            message="List removed from user lists successfully",
+        )
+    except Exception as e:
+        print(f"Error removing list from user lists: {e}")
+        return Response(
+            success=False,
+            message="Could not remove list from user lists due to an internal error",
             error_code=SERVER_ERROR,
         )
 

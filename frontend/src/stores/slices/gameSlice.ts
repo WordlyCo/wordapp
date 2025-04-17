@@ -11,7 +11,7 @@ type QuizStats = {
   correctAnswers: number;
   totalTime: number;
   answerResults: Record<number, boolean>;
-}
+};
 export interface GameSlice {
   isLoading: boolean;
   isFetchingCategories: boolean;
@@ -45,14 +45,15 @@ export interface GameSlice {
     learningInsights: {
       wordsMastered: number;
       accuracy: number; // percentage
-    }
+    };
   };
   fetchCategories: () => Promise<void>;
   fetchCategory: (id: string) => Promise<void>;
   fetchList: (id: string) => Promise<void>;
   fetchListsByCategory: (id: string) => Promise<void>;
   fetchWordLists: (page: number, perPage: number) => Promise<void>;
-  addListToUserLists: (listId: string) => Promise<void>;
+  addListToUserLists: (listId: string) => Promise<string | void>;
+  removeListFromUserLists: (listId: string) => Promise<string | void>;
   fetchUserLists: () => Promise<void>;
   fetchDailyQuiz: () => Promise<void>;
   setQuizStats: (newState: QuizStats) => Promise<void>;
@@ -106,7 +107,7 @@ export const createGameSlice: StateCreator<GameSlice> = (set, get) => ({
     learningInsights: {
       wordsMastered: 0,
       accuracy: 0,
-    }
+    },
   },
 
   setQuizWords: async (newState: Word[]) => {
@@ -119,25 +120,30 @@ export const createGameSlice: StateCreator<GameSlice> = (set, get) => ({
 
   updateWordProgress: async (wordProgress: WordProgressUpdate) => {
     try {
-      const response = await authFetch(`/users/progress/words/${wordProgress.wordId}`, {
-        method: "PUT",
-        body: JSON.stringify(wordProgress),
-      });
-      
+      const response = await authFetch(
+        `/users/progress/words/${wordProgress.wordId}`,
+        {
+          method: "PUT",
+          body: JSON.stringify(wordProgress),
+        }
+      );
+
       const data = await response.json();
       const success = data.success;
       const message = data.message;
-      
+
       if (!success) {
         console.error("Failed to update word progress:", message);
         return;
       }
-    
+
       const state = get();
       const updatedQuizWords = [...state.quizWords];
-      
-      const wordIndex = updatedQuizWords.findIndex(word => word.id === wordProgress.wordId);
-      
+
+      const wordIndex = updatedQuizWords.findIndex(
+        (word) => word.id === wordProgress.wordId
+      );
+
       if (wordIndex !== -1) {
         updatedQuizWords[wordIndex] = {
           ...updatedQuizWords[wordIndex],
@@ -146,32 +152,34 @@ export const createGameSlice: StateCreator<GameSlice> = (set, get) => ({
             ...wordProgress,
           },
         };
-        
+
         set({ quizWords: updatedQuizWords });
-        
+
         const { userStats } = get();
         set({
           userStats: {
             ...userStats,
             dailyProgress: {
               ...userStats.dailyProgress,
-              wordsPracticed: userStats.dailyProgress.wordsPracticed + 1
-            }
-          }
+              wordsPracticed: userStats.dailyProgress.wordsPracticed + 1,
+            },
+          },
         });
-        
+
         const recognitionScore = wordProgress.recognitionMasteryScore;
-        const previousScore = updatedQuizWords[wordIndex].wordProgress?.recognitionMasteryScore || 0;
-        
+        const previousScore =
+          updatedQuizWords[wordIndex].wordProgress?.recognitionMasteryScore ||
+          0;
+
         if (recognitionScore && recognitionScore >= 3 && previousScore < 3) {
           set({
             userStats: {
               ...userStats,
               learningInsights: {
                 ...userStats.learningInsights,
-                wordsMastered: userStats.learningInsights.wordsMastered + 1
-              }
-            }
+                wordsMastered: userStats.learningInsights.wordsMastered + 1,
+              },
+            },
           });
         }
       }
@@ -208,14 +216,33 @@ export const createGameSlice: StateCreator<GameSlice> = (set, get) => ({
 
       const data = await response.json();
       const success = data.success;
-      const message = data.message;
+      const errorCode = data.errorCode;
 
       if (!success) {
-        console.error("Failed to add list to user lists:", message);
-        return;
+        return errorCode;
       }
     } catch (error) {
       console.error("Error adding list to user lists:", error);
+    }
+  },
+
+  removeListFromUserLists: async (listId: string) => {
+    try {
+      const response = await authFetch(`/users/lists/${listId}`, {
+        method: "DELETE",
+      });
+
+      const data = await response.json();
+      const success = data.success;
+      const message = data.message;
+      const errorCode = data.errorCode;
+
+      if (!success) {
+        console.error("Failed to remove list from user lists:", message);
+        return errorCode;
+      }
+    } catch (error) {
+      console.error("Error removing list from user lists:", error);
     }
   },
 
@@ -223,7 +250,7 @@ export const createGameSlice: StateCreator<GameSlice> = (set, get) => ({
     set({ isFetchingWordLists: true });
     try {
       const response = await authFetch(
-        `/lists?page=${page}&per_page=${perPage}`
+        `/lists/?page=${page}&per_page=${perPage}`
       );
       const data = await response.json();
       const success = data.success;
@@ -324,7 +351,7 @@ export const createGameSlice: StateCreator<GameSlice> = (set, get) => ({
       const success = data.success;
       const message = data.message;
       const payload = data.payload;
-      
+
       if (!success) {
         console.error("Failed to fetch category:", message);
         return;
@@ -361,19 +388,19 @@ export const createGameSlice: StateCreator<GameSlice> = (set, get) => ({
 
   updateDiamonds: async (amount: number) => {
     const { userStats } = get();
-    
+
     // Update local state first for instant feedback
-    set({ 
-      userStats: { 
-        ...userStats, 
-        diamonds: userStats.diamonds + amount 
-      } 
+    set({
+      userStats: {
+        ...userStats,
+        diamonds: userStats.diamonds + amount,
+      },
     });
-    
+
     // Then update backend
     try {
       await authFetch(`/users/stats/diamonds/${amount}`, {
-        method: 'PUT'
+        method: "PUT",
       });
     } catch (error) {
       console.error("Error updating diamonds:", error);
@@ -383,10 +410,10 @@ export const createGameSlice: StateCreator<GameSlice> = (set, get) => ({
   updateStreak: async () => {
     try {
       // Call backend endpoint to update streak
-      const response = await authFetch('/users/stats/streak/update', {
-        method: 'PUT'
+      const response = await authFetch("/users/stats/streak/update", {
+        method: "PUT",
       });
-      
+
       const data = await response.json();
       if (data.success) {
         // Get user stats to refresh with updated streak
@@ -399,18 +426,18 @@ export const createGameSlice: StateCreator<GameSlice> = (set, get) => ({
 
   fetchUserStats: async () => {
     try {
-      const response = await authFetch('/users/stats');
+      const response = await authFetch("/users/stats");
       const data = await response.json();
       const success = data.success;
       const message = data.message;
       const payload = data.payload;
-      
+
       console.log("User stats:", payload);
       if (!success) {
         console.error("Failed to fetch user stats:", message);
         return;
       }
-      
+
       // Backend response now matches our store format exactly
       set({ userStats: payload });
     } catch (error) {
@@ -418,7 +445,7 @@ export const createGameSlice: StateCreator<GameSlice> = (set, get) => ({
       // Initialize with default values if fetch fails
       const { userStats } = get();
       if (!userStats.lastActive) {
-        set({ 
+        set({
           userStats: {
             ...userStats,
             lastActive: new Date(),
@@ -431,8 +458,8 @@ export const createGameSlice: StateCreator<GameSlice> = (set, get) => ({
             learningInsights: {
               wordsMastered: 0,
               accuracy: 0,
-            }
-          } 
+            },
+          },
         });
       }
     }
@@ -440,56 +467,61 @@ export const createGameSlice: StateCreator<GameSlice> = (set, get) => ({
 
   updatePracticeTime: async (minutes: number) => {
     const { userStats } = get();
-    
+
     // Update local state first
     set({
       userStats: {
         ...userStats,
         dailyProgress: {
           ...userStats.dailyProgress,
-          practiceTime: userStats.dailyProgress.practiceTime + minutes
-        }
-      }
+          practiceTime: userStats.dailyProgress.practiceTime + minutes,
+        },
+      },
     });
-    
+
     // Then update backend
     try {
-      await authFetch('/users/practice-session', {
-        method: 'POST',
-        body: JSON.stringify({ 
+      await authFetch("/users/practice-session", {
+        method: "POST",
+        body: JSON.stringify({
           practice_time: minutes,
-          session_type: 'quiz'
-        })
+          session_type: "quiz",
+        }),
       });
     } catch (error) {
       console.error("Error recording practice time:", error);
     }
   },
-  
+
   updateAccuracy: async (correct: boolean) => {
     const { userStats } = get();
     const totalAttempts = Object.keys(get().quizStats.answerResults).length;
-    const correctAnswers = Object.values(get().quizStats.answerResults).filter(result => result === true).length;
-    const newAccuracy = totalAttempts > 0 ? Math.round((correctAnswers / totalAttempts) * 100) : 0;
-    
+    const correctAnswers = Object.values(get().quizStats.answerResults).filter(
+      (result) => result === true
+    ).length;
+    const newAccuracy =
+      totalAttempts > 0
+        ? Math.round((correctAnswers / totalAttempts) * 100)
+        : 0;
+
     // Update local state
     set({
       userStats: {
         ...userStats,
         learningInsights: {
           ...userStats.learningInsights,
-          accuracy: newAccuracy
-        }
-      }
+          accuracy: newAccuracy,
+        },
+      },
     });
-    
+
     // Update backend
     try {
-      await authFetch('/users/stats', {
-        method: 'PUT',
-        body: JSON.stringify({ 
-          average_accuracy: newAccuracy
-        })
+      await authFetch("/users/stats", {
+        method: "PUT",
+        body: JSON.stringify({
+          average_accuracy: newAccuracy,
+        }),
       });
     } catch (error) {
       console.error("Error updating accuracy:", error);

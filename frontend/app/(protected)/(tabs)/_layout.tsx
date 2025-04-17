@@ -5,8 +5,11 @@ import { MaterialCommunityIcons } from "@expo/vector-icons";
 import useTheme from "@/src/hooks/useTheme";
 import Animated, { FadeInDown } from "react-native-reanimated";
 import { SafeAreaView } from "react-native-safe-area-context";
+import { useStore } from "@/src/stores/store";
+
 export default function AppLayout() {
   const { colors } = useTheme();
+  const diamonds = useStore((state) => state.userStats.diamonds);
 
   return (
     <View style={{ flex: 1 }}>
@@ -82,16 +85,18 @@ export default function AppLayout() {
                 entering={FadeInDown.duration(600).springify()}
                 style={styles.headerContainer}
               >
-                <View style={styles.headerIconContainer}>
-                  <MaterialCommunityIcons
-                    name="home"
-                    size={24}
-                    color={colors.primary}
-                  />
+                <View style={{ flexDirection: "row", alignItems: "center" }}>
+                  <View style={styles.headerIconContainer}>
+                    <MaterialCommunityIcons
+                      name="home"
+                      size={24}
+                      color={colors.primary}
+                    />
+                  </View>
+                  <Text style={[styles.headerText, { color: colors.primary }]}>
+                    Home
+                  </Text>
                 </View>
-                <Text style={[styles.headerText, { color: colors.primary }]}>
-                  Home
-                </Text>
               </Animated.View>
             ),
             headerStyle: {

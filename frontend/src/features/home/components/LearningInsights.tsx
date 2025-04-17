@@ -1,8 +1,8 @@
-import React from 'react';
-import { View, StyleSheet } from 'react-native';
-import { Text } from 'react-native-paper';
-import { MaterialCommunityIcons } from '@expo/vector-icons';
-import Animated, { FadeInDown } from 'react-native-reanimated';
+import React from "react";
+import { View, StyleSheet } from "react-native";
+import { Text } from "react-native-paper";
+import { MaterialCommunityIcons } from "@expo/vector-icons";
+import Animated, { FadeInDown } from "react-native-reanimated";
 
 interface LearningInsightsProps {
   colors: any;
@@ -17,44 +17,41 @@ const LearningInsights: React.FC<LearningInsightsProps> = ({
   streak = 3,
   wordsMastered = 42,
   accuracy = 85,
-  diamonds = 0
+  diamonds = 0,
 }) => {
   return (
     <Animated.View
       entering={FadeInDown.delay(400).duration(600).springify()}
-      style={[
-        styles.insightsCard,
-        { backgroundColor: colors.surfaceVariant },
-      ]}
+      style={[styles.insightsCard, { backgroundColor: colors.surfaceVariant }]}
     >
       <View style={styles.insightsContent}>
-        <InsightItem 
-          label="Current Streak" 
-          value={`${streak} days`} 
+        <InsightItem
+          label="Streak"
+          value={streak !== 1 ? `${streak} days` : `1 day`}
           icon="fire"
           iconColor={colors.streak || colors.tertiary}
           colors={colors}
         />
 
-        <InsightItem 
-          label="Words Mastered" 
-          value={wordsMastered.toString()} 
+        <InsightItem
+          label="Aced Words"
+          value={wordsMastered.toString()}
           icon="trophy"
           iconColor={colors.secondary}
           colors={colors}
         />
 
-        <InsightItem 
-          label="Diamonds" 
-          value={diamonds.toLocaleString()} 
+        <InsightItem
+          label="Diamonds"
+          value={diamonds.toLocaleString()}
           icon="diamond"
           iconColor={colors.info}
           colors={colors}
         />
 
-        <InsightItem 
-          label="Accuracy" 
-          value={`${accuracy}%`} 
+        <InsightItem
+          label="Accuracy"
+          value={`${accuracy}%`}
           icon="target"
           iconColor={colors.primary}
           colors={colors}
@@ -72,20 +69,20 @@ interface InsightItemProps {
   colors: any;
 }
 
-const InsightItem: React.FC<InsightItemProps> = ({ 
-  label, 
-  value, 
-  icon, 
-  iconColor, 
-  colors 
+const InsightItem: React.FC<InsightItemProps> = ({
+  label,
+  value,
+  icon,
+  iconColor,
+  colors,
 }) => {
   return (
     <View style={styles.insightItem}>
       {icon && (
-        <MaterialCommunityIcons 
-          name={icon as any} 
-          size={20} 
-          color={iconColor || colors.primary} 
+        <MaterialCommunityIcons
+          name={icon as any}
+          size={20}
+          color={iconColor || colors.primary}
           style={styles.insightIcon}
         />
       )}
@@ -105,24 +102,25 @@ const styles = StyleSheet.create({
     padding: 16,
   },
   insightsHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
     gap: 8,
     marginBottom: 16,
   },
   sectionTitle: {
     fontSize: 18,
-    fontWeight: '600',
+    fontWeight: "600",
   },
   insightsContent: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    justifyContent: 'space-between',
+    flexDirection: "row",
+    flexWrap: "wrap",
+    justifyContent: "space-between",
   },
   insightItem: {
-    alignItems: 'center',
-    gap: 4,
-    width: '25%',
+    alignItems: "center",
+    justifyContent: "space-between",
+    gap: 5,
+    width: "25%",
     paddingHorizontal: 4,
     marginBottom: 8,
   },
@@ -131,13 +129,13 @@ const styles = StyleSheet.create({
   },
   insightLabel: {
     fontSize: 13,
-    textAlign: 'center',
+    textAlign: "center",
   },
   insightValue: {
     fontSize: 16,
-    fontWeight: '600',
-    textAlign: 'center',
+    fontWeight: "600",
+    textAlign: "center",
   },
 });
 
-export default LearningInsights; 
+export default LearningInsights;

@@ -6,8 +6,6 @@ import { List, Switch, Divider } from "react-native-paper";
 const PreferencesScreen = () => {
   const [notifications, setNotifications] = useState(true);
   const [darkMode, setDarkMode] = useState(false);
-  const [soundEffects, setSoundEffects] = useState(true);
-  const [autoPlay, setAutoPlay] = useState(false);
   const { colors } = useTheme();
 
   return (
@@ -35,44 +33,6 @@ const PreferencesScreen = () => {
             right={() => (
               <Switch value={darkMode} onValueChange={setDarkMode} />
             )}
-          />
-        </List.Section>
-
-        <List.Section title="Quiz Settings">
-          <List.Item
-            title="Sound Effects"
-            description="Play sounds during quiz"
-            left={(props) => <List.Icon icon="volume-high" />}
-            right={() => (
-              <Switch value={soundEffects} onValueChange={setSoundEffects} />
-            )}
-          />
-          <Divider />
-          <List.Item
-            title="Auto-Play Next Question"
-            description="Automatically proceed to next question"
-            left={(props) => <List.Icon icon="play-circle" />}
-            right={() => (
-              <Switch value={autoPlay} onValueChange={setAutoPlay} />
-            )}
-          />
-        </List.Section>
-
-        <List.Section title="Data & Storage">
-          <List.Item
-            title="Clear Cache"
-            description="Free up space on your device"
-            left={(props) => <List.Icon icon="trash-can" />}
-            onPress={() => {
-              /* Handle clear cache */
-            }}
-          />
-          <Divider />
-          <List.Item
-            title="Download Quality"
-            description="Manage content download quality"
-            left={(props) => <List.Icon icon="download" />}
-            right={(props) => <List.Icon icon="chevron-right" />}
           />
         </List.Section>
       </ScrollView>

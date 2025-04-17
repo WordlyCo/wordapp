@@ -8,7 +8,7 @@ export type User = BaseEntity & {
   firstName?: string;
   lastName?: string;
   clerkId?: string;
-  profileImageUrl?: string;
+  profilePictureUrl?: string;
   preferences?: UserPreferences;
   stats?: UserStats;
 };

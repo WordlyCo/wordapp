@@ -10,7 +10,6 @@ import {
 import {
   Text,
   Chip,
-  Divider,
   Card,
   Searchbar,
   Button,
@@ -75,11 +74,24 @@ export default function ListDetailsScreen() {
   const { listId } = useLocalSearchParams<{ listId: string }>();
   const { colors } = useTheme();
   const [searchQuery, setSearchQuery] = useState("");
-  const { selectedList, fetchList, isFetchingList, addListToUserLists } =
-    useStore();
+  const {
+    selectedList,
+    fetchList,
+    isFetchingList,
+    addListToUserLists,
+    removeListFromUserLists,
+  } = useStore();
 
   const handleSearch = (text: string) => {
     setSearchQuery(text);
+  };
+
+  const handleAddListToUserLists = async () => {
+    await addListToUserLists(listId);
+  };
+
+  const handleRemoveListFromUserLists = async () => {
+    await removeListFromUserLists(listId);
   };
 
   const pronounceWord = (word: string) => {
@@ -213,26 +225,18 @@ export default function ListDetailsScreen() {
                     { backgroundColor: colors.primary },
                   ]}
                   icon="plus"
-                  onPress={() => addListToUserLists(selectedList?.id || "")}
+                  onPress={
+                    selectedList?.inUsersBank
+                      ? handleRemoveListFromUserLists
+                      : handleAddListToUserLists
+                  }
                 >
-                  Add to My Lists
-                </Button>
-
-                <Button
-                  mode="outlined"
-                  style={[
-                    styles.actionButton,
-                    { borderColor: colors.primary, marginTop: 10 },
-                  ]}
-                  icon="play"
-                  onPress={() => {}}
-                >
-                  Start Learning
+                  {selectedList?.inUsersBank
+                    ? "Remove from My Lists"
+                    : "Add to My Lists"}
                 </Button>
               </View>
             </View>
-
-            <Divider style={styles.divider} />
 
             {/* Words Search */}
             <View style={styles.searchContainer}>
@@ -464,9 +468,6 @@ const styles = StyleSheet.create({
   },
   actionButton: {
     borderRadius: 8,
-  },
-  divider: {
-    marginVertical: 20,
   },
   searchContainer: {
     marginBottom: 20,

@@ -14,7 +14,6 @@ import { PROFILE_BACKGROUND_COLORS } from "@/constants/profileColors";
 import { useRouter } from "expo-router";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
 
-
 const ProfileScreen = () => {
   const user = useStore((state) => state.user);
   const getMe = useStore((state) => state.getMe);
@@ -90,11 +89,14 @@ const ProfileScreen = () => {
               },
             ]}
           >
-            {user?.profileImageUrl ? (
-              <Image source={{ uri: user.profileImageUrl }} style={styles.avatar} />
+            {user?.profilePictureUrl ? (
+              <Image
+                source={{ uri: user.profilePictureUrl }}
+                style={styles.avatar}
+              />
             ) : (
               <View style={styles.avatarPlaceholder}>
-                <MaterialCommunityIcons 
+                <MaterialCommunityIcons
                   name="account"
                   size={80}
                   color={colors.primary}
@@ -159,33 +161,6 @@ const ProfileScreen = () => {
               Add Friends
             </Button>
           </View>
-
-          {/* Tab Selection */}
-          <View
-            style={[styles.tabContainer, { borderBottomColor: colors.outline }]}
-          >
-            <TouchableOpacity
-              style={[
-                styles.tabButton,
-                activeTab === "Stats" && { borderBottomColor: colors.primary },
-              ]}
-              onPress={() => setActiveTab("Stats")}
-            >
-              <Text
-                style={[
-                  { color: colors.onSurfaceVariant },
-                  activeTab === "Stats" && { color: colors.primary },
-                ]}
-              >
-                Stats
-              </Text>
-            </TouchableOpacity>
-          </View>
-
-          {/* Content Area */}
-          <View style={styles.contentArea}>
-            {/* Content will be added here */}
-          </View>
         </View>
       </ScrollView>
     </View>
@@ -217,7 +192,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
     paddingVertical: 10,
     paddingHorizontal: 20,
-    marginTop: -40,  
+    marginTop: -40,
   },
   avatarContainer: {
     marginBottom: 15,
@@ -233,9 +208,9 @@ const styles = StyleSheet.create({
     width: 120,
     height: 120,
     borderRadius: 60,
-    justifyContent: 'center',
-    alignItems: 'center',
-    backgroundColor: 'rgba(0,0,0,0.05)',
+    justifyContent: "center",
+    alignItems: "center",
+    backgroundColor: "rgba(0,0,0,0.05)",
   },
   userName: {
     fontSize: 24,

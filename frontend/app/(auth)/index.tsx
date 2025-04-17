@@ -8,7 +8,7 @@ import {
   IconButton,
 } from "react-native-paper";
 import { SafeAreaView } from "react-native-safe-area-context";
-import useTheme from "../../src/hooks/useTheme";
+import useTheme from "@/src/hooks/useTheme";
 import { useSignIn, useSignUp } from "@clerk/clerk-expo";
 import { useRouter } from "expo-router";
 
@@ -183,7 +183,7 @@ export default function AuthScreen() {
 
             <Image
               style={styles.image}
-              source={require("../../assets/images/CandyCueDarkishBlue.png")}
+              source={require("@/assets/images/CandyCueDarkishBlue.png")}
               resizeMode="contain"
             />
           </View>
@@ -247,7 +247,7 @@ export default function AuthScreen() {
 
           <Image
             style={styles.image}
-            source={require("../../assets/images/CandyCueDarkishBlue.png")}
+            source={require("@/assets/images/CandyCueDarkishBlue.png")}
             resizeMode="contain"
           />
         </View>

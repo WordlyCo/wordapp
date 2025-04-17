@@ -14,6 +14,7 @@ class WordList(BaseEntity):
     updated_at: Optional[datetime] = None
     words: Optional[List[Word]] = None
     word_count: Optional[int] = None
+    in_users_bank: Optional[bool] = None
 
 
 class WordListUpdate(CamelModel):

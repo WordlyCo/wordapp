@@ -11,6 +11,8 @@ class User(BaseEntity):
     email: EmailStr
     first_name: Optional[str] = None
     last_name: Optional[str] = None
+    profile_picture_url: Optional[str] = None
+    bio: Optional[str] = None
 
     model_config = ConfigDict(from_attributes=True)
 
@@ -21,6 +23,8 @@ class UserCreate(BaseModel):
     clerk_id: str
     first_name: Optional[str] = None
     last_name: Optional[str] = None
+    profile_picture_url: Optional[str] = None
+    bio: Optional[str] = None
     time_zone: Optional[str] = "America/Los_Angeles"
     theme: Optional[str] = "dark"
 
@@ -49,6 +53,8 @@ class UserUpdate(CamelModel):
     email: Optional[EmailStr] = None
     first_name: Optional[str] = None
     last_name: Optional[str] = None
+    profile_picture_url: Optional[str] = None
+    bio: Optional[str] = None
 
 
 class LoginRequest(CamelModel):
@@ -169,4 +175,8 @@ class UserNotFoundError(Exception):
 
 
 class UserAlreadyExistsError(Exception):
+    pass
+
+
+class UserListAlreadyExistsError(Exception):
     pass

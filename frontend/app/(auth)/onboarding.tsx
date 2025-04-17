@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect } from "react";
 import { View, StyleSheet, ScrollView, Image } from "react-native";
 import {
   Text,
@@ -6,7 +6,6 @@ import {
   TextInput,
   Switch,
   IconButton,
-  Menu,
 } from "react-native-paper";
 import { SafeAreaView } from "react-native-safe-area-context";
 import * as ImagePicker from "expo-image-picker";
@@ -16,13 +15,12 @@ import useTheme from "../../src/hooks/useTheme";
 import * as FileSystem from "expo-file-system";
 import timezones from "../../src/utils/timezones";
 import { useStore } from "@/src/stores/store";
+import DropDownPicker from "react-native-dropdown-picker";
 
 export default function OnboardingScreen() {
   const router = useRouter();
   const { user, isLoaded } = useUser();
   const { colors, theme } = useTheme();
-  const timezoneInputRef = useRef<any>(null);
-  const [menuPosition, setMenuPosition] = useState({ x: 0, y: 0 });
 
   const setHasOnboarded = useStore((state) => state.setHasOnboarded);
   
@@ -33,7 +31,13 @@ export default function OnboardingScreen() {
   const [profileImage, setProfileImage] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [showTimezoneMenu, setShowTimezoneMenu] = useState(false);
+  const [bio, setBio] = useState("");
+  
+  // Dropdown picker state
+  const [open, setOpen] = useState(false);
+  const [timezoneItems, setTimezoneItems] = useState(
+    timezones.map(tz => ({ label: tz, value: tz }))
+  );
 
   useEffect(() => {
     if (isLoaded && user) {
@@ -121,7 +125,7 @@ export default function OnboardingScreen() {
         },
       });
 
-      await setHasOnboarded(true);
+      setHasOnboarded(true);
       router.replace("/");
     } catch (error) {
       setError("Failed to update profile: " + (error instanceof Error ? error.message : String(error)));
@@ -130,13 +134,14 @@ export default function OnboardingScreen() {
     }
   };
 
-  const showTimezonePicker = () => {
-    if (timezoneInputRef.current) {
-      timezoneInputRef.current.measureInWindow((x: number, y: number, width: number, height: number) => {
-        setMenuPosition({ x, y: y + height });
-        setShowTimezoneMenu(true);
-      });
-    }
+  const handleSkip = () => {
+    setHasOnboarded(true);
+    router.replace("/");
+  };
+
+  const setLocalTimezone = () => {
+    const localTimezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+    setTimezone(localTimezone);
   };
 
   if (!isLoaded) {
@@ -231,56 +236,30 @@ export default function OnboardingScreen() {
             <Text variant="bodyMedium" style={{ marginBottom: 8 }}>
               Timezone
             </Text>
-            <View
-              style={[
-                styles.pickerWrapper,
-                { borderColor: colors.outline, backgroundColor: colors.surfaceVariant },
-              ]}
+            <DropDownPicker
+              open={open}
+              value={timezone}
+              items={timezoneItems}
+              setOpen={setOpen}
+              setValue={setTimezone}
+              setItems={setTimezoneItems}
+              style={[styles.dropdownStyle, { backgroundColor: colors.surfaceVariant }]}
+              textStyle={{ color: colors.onSurface }}
+              dropDownContainerStyle={[styles.dropdownContainer, { backgroundColor: colors.surfaceVariant }]}
+              listMode="SCROLLVIEW"
+              scrollViewProps={{
+                nestedScrollEnabled: true,
+              }}
+              searchable={true}
+              searchPlaceholder="Search for a timezone..."
+            />
+            <Button
+              mode="outlined"
+              onPress={setLocalTimezone}
+              style={{ marginTop: 16 }}
             >
-              <TextInput
-                ref={timezoneInputRef}
-                mode="outlined"
-                label="Select Timezone"
-                value={timezone}
-                style={styles.input}
-                right={
-                  <TextInput.Icon
-                    icon="menu-down"
-                    onPress={showTimezonePicker}
-                  />
-                }
-                onPressIn={showTimezonePicker}
-              />
-              <Menu
-                visible={showTimezoneMenu}
-                onDismiss={() => setShowTimezoneMenu(false)}
-                anchor={menuPosition}
-                style={styles.menu}
-              >
-                <ScrollView style={{ maxHeight: 300 }}>
-                  {timezones.map((tz) => (
-                    <Menu.Item
-                      key={tz}
-                      onPress={() => {
-                        setTimezone(tz);
-                        setShowTimezoneMenu(false);
-                      }}
-                      title={tz}
-                    />
-                  ))}
-                </ScrollView>
-              </Menu>
-              <Button
-                mode="outlined"
-                onPress={() => {
-                  const localTimezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
-                  setTimezone(localTimezone);
-                }}
-                style={{ marginTop: 8 }}
-              >
-                Set to Local Timezone
-              </Button>
-            </View>
+              Set to Local Timezone
+            </Button>
           </View>
 
           <View style={styles.themeContainer}>
@@ -305,7 +284,7 @@ export default function OnboardingScreen() {
           
           <Button
             mode="text"
-            onPress={() => router.replace("/")}
+            onPress={handleSkip}
             style={{ marginTop: 10 }}
           >
             Skip for Now
@@ -362,19 +341,24 @@ const styles = StyleSheet.create({
   },
   pickerContainer: {
     width: "100%",
+    zIndex: 100, // Needed for the dropdown to show properly
   },
-  pickerWrapper: {
+  dropdownStyle: {
+    borderWidth: 1,
     borderRadius: 4,
-    padding: 4,
+    minHeight: 50,
   },
-  menu: {
-    width: '100%',
+  dropdownContainer: {
+    borderWidth: 1,
+    borderRadius: 4,
+    maxHeight: 200,
   },
   themeContainer: {
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
     paddingVertical: 8,
+    marginTop: 50, // Add extra margin to avoid overlap with dropdown
   },
   submitButton: {
     marginTop: 16,

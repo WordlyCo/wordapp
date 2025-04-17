@@ -49,11 +49,26 @@ def upgrade() -> None:
         "user_preferences",
         sa.Column("id", sa.Integer(), nullable=False),
         sa.Column("user_id", sa.Integer(), nullable=False),
-        sa.Column("daily_word_goal", sa.Integer(), nullable=False),
-        sa.Column("difficulty_level", sa.String(length=20), nullable=False),
-        sa.Column("notifications_enabled", sa.Boolean(), nullable=False),
-        sa.Column("time_zone", sa.String(length=20), nullable=False),
-        sa.Column("theme", sa.String(length=20), nullable=False),
+        sa.Column("daily_word_goal", sa.Integer(), nullable=False, server_default="10"),
+        sa.Column(
+            "difficulty_level",
+            sa.String(length=20),
+            nullable=False,
+            server_default="beginner",
+        ),
+        sa.Column(
+            "notifications_enabled",
+            sa.Boolean(),
+            nullable=False,
+            server_default="false",
+        ),
+        sa.Column(
+            "time_zone",
+            sa.String(length=20),
+            nullable=False,
+            server_default="America/Los_Angeles",
+        ),
+        sa.Column("theme", sa.String(length=20), nullable=False, server_default="dark"),
         sa.Column(
             "created_at", sa.DateTime(), nullable=False, server_default=sa.func.now()
         ),
@@ -77,6 +92,12 @@ def upgrade() -> None:
             "total_words_learned", sa.Integer(), nullable=False, server_default="0"
         ),
         sa.Column("current_streak", sa.Integer(), nullable=False, server_default="0"),
+        sa.Column(
+            "last_streak_updated_at",
+            sa.DateTime(),
+            nullable=False,
+            server_default=sa.func.now(),
+        ),
         sa.Column("longest_streak", sa.Integer(), nullable=False, server_default="0"),
         sa.Column(
             "total_practice_time", sa.Integer(), nullable=False, server_default="0"

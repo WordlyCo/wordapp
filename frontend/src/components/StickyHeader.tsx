@@ -1,4 +1,4 @@
-import React, { useEffect } from "react";
+import React from "react";
 import { View, Text, StyleSheet } from "react-native";
 import { Ionicons, MaterialCommunityIcons } from "@expo/vector-icons";
 import useTheme from "@/src/hooks/useTheme";
@@ -8,12 +8,6 @@ import { useStore } from "@/src/stores/store";
 const StickyHeader = () => {
   const { colors } = useTheme();
   const userStats = useStore((state) => state.userStats);
-  const fetchUserStats = useStore((state) => state.fetchUserStats);
-
-  useEffect(() => {
-    // Fetch user stats when component mounts
-    fetchUserStats();
-  }, [fetchUserStats]);
 
   return (
     <View style={{ zIndex: 1000 }}>
@@ -66,8 +60,6 @@ const styles = StyleSheet.create({
     alignItems: "center",
     paddingVertical: 15,
     paddingHorizontal: 20,
-    borderBottomLeftRadius: 15,
-    borderBottomRightRadius: 15,
     elevation: 5,
   },
   leftContainer: {
