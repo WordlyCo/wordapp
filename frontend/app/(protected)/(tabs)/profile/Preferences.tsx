@@ -1,7 +1,7 @@
 import useTheme from "@/src/hooks/useTheme";
 import React, { useState } from "react";
 import { View, StyleSheet, ScrollView } from "react-native";
-import { List, Switch, Divider, Text } from "react-native-paper";
+import { List, Switch, Divider } from "react-native-paper";
 
 const PreferencesScreen = () => {
   const [notifications, setNotifications] = useState(true);

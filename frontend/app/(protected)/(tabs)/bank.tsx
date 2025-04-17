@@ -1,16 +1,14 @@
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect } from "react";
 import {
   View,
   StyleSheet,
   ScrollView,
   TouchableOpacity,
-  FlatList,
-  Dimensions,
   StatusBar,
 } from "react-native";
 import { useRouter } from "expo-router";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
-import { Text, Searchbar, Chip, Button, Surface } from "react-native-paper";
+import { Searchbar, Chip, Surface } from "react-native-paper";
 import useTheme from "@/src/hooks/useTheme";
 import { useStore } from "@/src/stores/store";
 import { WordListCard } from "@/src/components/WordListCard";
@@ -43,7 +41,7 @@ export default function BankScreen() {
 
   useEffect(() => {
     fetchUserLists();
-  }, []);
+  }, [fetchUserLists]);
 
   const scrollHandler = useAnimatedScrollHandler({
     onScroll: (event) => {
@@ -195,8 +193,6 @@ export default function BankScreen() {
     </View>
   );
 }
-
-const { width } = Dimensions.get("window");
 
 const styles = StyleSheet.create({
   container: {

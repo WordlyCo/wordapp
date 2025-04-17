@@ -7,7 +7,7 @@ import { useStore } from "@/src/stores/store";
 import useTheme from "@/src/hooks/useTheme";
 import { router } from "expo-router";
 import { Word } from "@/src/types/words";
-import { DifficultyLevel, DIFFICULTY_LEVELS } from "@/src/types/enums";
+import { DIFFICULTY_LEVELS } from "@/src/stores/enums";
 
 const QuestionScreen: React.FC = () => {
   const { colors } = useTheme();
@@ -20,7 +20,6 @@ const QuestionScreen: React.FC = () => {
   const quizWords = useStore((state) => state.quizWords);
   const quizStats = useStore((state) => state.quizStats);
   const setQuizStats = useStore((state) => state.setQuizStats);
-  const setQuizWords = useStore((state) => state.setQuizWords);
   const currentIndex = useStore((state) => state.quizStats.currentIndex);
   const score = useStore((state) => state.quizStats.score);
   const selectedAnswer = useStore((state) => state.quizStats.selectedAnswer);
@@ -31,18 +30,16 @@ const QuestionScreen: React.FC = () => {
   const fetchUserStats = useStore((state) => state.fetchUserStats);
   const updateAccuracy = useStore((state) => state.updateAccuracy);
   const [currentWord, setCurrentWord] = useState<Word | undefined>(undefined);
-  const [quizStartTime, setQuizStartTime] = useState<number | null>(null);
+  const [, setQuizStartTime] = useState<number | null>(null);
 
   useEffect(() => {
     setCurrentWord(quizWords.find((_, index) => index === currentIndex));
   }, [currentIndex, quizWords]);
 
   useEffect(() => {
-    // Fetch latest user stats at the start of the quiz
     fetchUserStats();
-    // Record start time for the quiz
     setQuizStartTime(Date.now());
-  }, []);
+  }, [fetchUserStats, setQuizStartTime]);
 
   const wordCount = quizWords.length;
 
@@ -66,7 +63,7 @@ const QuestionScreen: React.FC = () => {
         }),
       ]).start();
     }
-  }, [currentWord, currentIndex]);
+  }, [currentWord, currentIndex, setRandomizedOptions]);
 
   useEffect(() => {
     Animated.loop(

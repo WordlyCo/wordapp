@@ -4,7 +4,6 @@ import {
   StyleSheet,
   TouchableOpacity,
   StatusBar,
-  Dimensions,
 } from "react-native";
 import {
   Text,
@@ -22,7 +21,6 @@ import Animated, {
   useAnimatedScrollHandler,
   useSharedValue,
   useAnimatedStyle,
-  withTiming,
   FadeInUp,
   interpolate,
   Extrapolate,
@@ -317,9 +315,7 @@ export default function StoreScreen() {
     </View>
   );
 }
-
-const { width } = Dimensions.get("window");
-
+ 
 const styles = StyleSheet.create({
   container: {
     flex: 1,

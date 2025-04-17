@@ -13,7 +13,7 @@ const StickyHeader = () => {
   useEffect(() => {
     // Fetch user stats when component mounts
     fetchUserStats();
-  }, []);
+  }, [fetchUserStats]);
 
   return (
     <View style={{ zIndex: 1000 }}>

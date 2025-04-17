@@ -1,7 +1,7 @@
 import useTheme from "@/src/hooks/useTheme";
 import React from "react";
-import { View, StyleSheet, ScrollView } from "react-native";
-import { Text, List, Divider } from "react-native-paper";
+import { ScrollView, StyleSheet } from "react-native";
+import { List } from "react-native-paper";
 
 const HelpCenterScreen = () => {
   const { colors } = useTheme();

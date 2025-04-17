@@ -73,6 +73,7 @@ export const createAuthSlice: StateCreator<AuthSlice> = (set, get) => {
         stats: payload.stats || null,
       });
     } catch (error) {
+      console.log(error);
       set({
         authError: "Failed to get user",
         user: null,

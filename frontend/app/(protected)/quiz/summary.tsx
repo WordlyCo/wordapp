@@ -1,11 +1,10 @@
-import { Button, Text, IconButton } from "react-native-paper";
+import { Button, Text, IconButton , Card } from "react-native-paper";
 import { Animated, StyleSheet, View } from "react-native";
-import { Card } from "react-native-paper";
 import { useStore } from "@/src/stores/store";
 import useTheme from "@/src/hooks/useTheme";
 import React, { useEffect, useRef, useState } from "react";
 import { router } from "expo-router";
-import { DifficultyLevel, DIFFICULTY_LEVELS } from "@/src/types/enums";
+import { DIFFICULTY_LEVELS } from "@/src/stores/enums";
 
 const SummaryScreen = () => {
   const { colors } = useTheme();
@@ -25,16 +24,13 @@ const SummaryScreen = () => {
   const [scorePercentage, setScorePercentage] = useState((score / numberOfWords) * 100);
   
   useEffect(() => {
-    // Update practice time based on quiz duration (convert seconds to minutes)
     if (totalTime > 0) {
       const practiceMinutes = Math.ceil(totalTime / 60);
       updatePracticeTime(practiceMinutes);
     }
     
-    // Calculate diamonds earned in this session
     let totalDiamonds = 0;
     quizWords.forEach((word, index) => {
-      // Only count diamonds for correct answers
       if (answerResults[index]) {
         switch (word.difficultyLevel) {
           case DIFFICULTY_LEVELS.BEGINNER:
@@ -53,13 +49,11 @@ const SummaryScreen = () => {
     });
     setDiamondsEarned(totalDiamonds);
     
-    // Calculate the actual score based on the answer results
     const actualScore = Object.values(useStore.getState().quizStats.answerResults)
       .filter(result => result === true)
       .length;
     
     if (actualScore !== score) {
-      console.log("Correcting score from", score, "to", actualScore);
       setQuizStats({
         ...useStore.getState().quizStats,
         score: actualScore

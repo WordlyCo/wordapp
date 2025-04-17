@@ -16,10 +16,9 @@ import {
   Button,
   IconButton,
 } from "react-native-paper";
-import { Stack, useLocalSearchParams } from "expo-router";
+import { useLocalSearchParams } from "expo-router";
 import StickyHeader from "@/src/components/StickyHeader";
 import useTheme from "@/src/hooks/useTheme";
-import { Word } from "@/src/types/words";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
 import { DIFFICULTY_LEVELS } from "@/src/types/enums";
 import * as Speech from "expo-speech";

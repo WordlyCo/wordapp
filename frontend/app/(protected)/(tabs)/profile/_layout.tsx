@@ -1,8 +1,6 @@
 import React from "react";
 import { Stack } from "expo-router";
 import useTheme from "@/src/hooks/useTheme";
-import { View, Text, StyleSheet } from "react-native";
-import { MaterialCommunityIcons } from "@expo/vector-icons";
 
 export default function ProfileLayout() {
   const { colors } = useTheme();
@@ -41,15 +39,3 @@ export default function ProfileLayout() {
     </Stack>
   );
 }
-
-const styles = StyleSheet.create({
-  headerContainer: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 10,
-  },
-  headerText: {
-    fontSize: 20,
-    fontWeight: "bold",
-  },
-});

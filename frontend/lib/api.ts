@@ -21,6 +21,7 @@ export const updateCachedToken = (token: string | null): void => {
         tokenExpiryTime = Date.now() + 5 * 60 * 1000;
       }
     } catch (e) {
+      console.error("Failed to parse token:", e);
       tokenExpiryTime = Date.now() + 5 * 60 * 1000;
     }
   } else {

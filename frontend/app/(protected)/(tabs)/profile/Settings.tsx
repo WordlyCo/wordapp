@@ -1,11 +1,10 @@
 import React from "react";
 import { View, StyleSheet, ScrollView, TouchableOpacity } from "react-native";
-import { Text, Divider } from "react-native-paper";
+import { Text } from "react-native-paper";
 import { useRouter } from "expo-router";
 
 import useTheme from "@/src/hooks/useTheme";
 import MaterialCommunityIcons from "@expo/vector-icons/MaterialCommunityIcons";
-import { useStore } from "@/src/stores/store";
 import { useAuth } from "@/src/contexts/AuthContext";
 
 const SettingsScreen = () => {

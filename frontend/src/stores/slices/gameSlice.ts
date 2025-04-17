@@ -496,15 +496,3 @@ export const createGameSlice: StateCreator<GameSlice> = (set, get) => ({
     }
   },
 });
-
-function isYesterday(date: Date | null): boolean {
-  if (!date) return false;
-  
-  const yesterday = new Date();
-  yesterday.setDate(yesterday.getDate() - 1);
-  
-  const yesterdayString = yesterday.toDateString();
-  const dateString = new Date(date).toDateString();
-  
-  return yesterdayString === dateString;
-}

@@ -9,10 +9,7 @@ import {
   SegmentedButtons,
   IconButton,
 } from "react-native-paper";
-import useTheme from "@/src/hooks/useTheme";
-import StickyHeader from "@/src/components/StickyHeader";
-import LeaderboardEntry from "@/src/components/LeaderboardEntry";
- 
+import useTheme from "@/src/hooks/useTheme"; 
 
 export default function ProgressScreen() {
   const { colors } = useTheme();

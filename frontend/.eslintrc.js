@@ -1,4 +1,3 @@
-// https://docs.expo.dev/guides/using-eslint/
 module.exports = {
   extends: ['expo', 'plugin:import/errors', 'plugin:import/warnings', 'plugin:import/typescript'],
   plugins: ['import'],
@@ -21,5 +20,6 @@ module.exports = {
     'import/no-unresolved': 'error',
     'import/default': 'off',
     'import/namespace': 'off',
+    'react-hooks/exhaustive-deps': 'off',
   },
 };

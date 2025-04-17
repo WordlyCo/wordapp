@@ -1,15 +1,11 @@
-import { Button, Text, Divider, Chip, FAB } from "react-native-paper";
+import { Button, Text, Divider, Chip, FAB , Card , IconButton , Portal } from "react-native-paper";
 import { View, StyleSheet, ScrollView } from "react-native";
-import { Card } from "react-native-paper";
-import { IconButton } from "react-native-paper";
 import { DifficultyLevel, DIFFICULTY_LEVELS } from "@/src/types/enums";
-import { Portal } from "react-native-paper";
 import { useStore } from "@/src/stores/store";
 import useTheme from "@/src/hooks/useTheme";
 import { router } from "expo-router";
-import { useEffect } from "react";
+import { useEffect , useState } from "react";
 import { Word } from "@/src/types/words";
-import { useState } from "react";
 
 const getDifficultyColor = (difficulty: DifficultyLevel, colors: any) => {
   switch (difficulty) {
