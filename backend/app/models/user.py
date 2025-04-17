@@ -1,4 +1,4 @@
-from pydantic import EmailStr, BaseModel, Field
+from pydantic import EmailStr, BaseModel, Field, ConfigDict
 from typing import Optional, List
 from datetime import datetime
 from .base import BaseEntity, CamelModel
@@ -9,8 +9,10 @@ class User(BaseEntity):
     clerk_id: str
     username: str
     email: EmailStr
-    first_name: Optional[str]
-    last_name: Optional[str]
+    first_name: Optional[str] = None
+    last_name: Optional[str] = None
+
+    model_config = ConfigDict(from_attributes=True)
 
 
 class UserCreate(BaseModel):
@@ -19,6 +21,8 @@ class UserCreate(BaseModel):
     clerk_id: str
     first_name: Optional[str] = None
     last_name: Optional[str] = None
+    time_zone: Optional[str] = "America/Los_Angeles"
+    theme: Optional[str] = "dark"
 
 
 class UserRegister(CamelModel):
@@ -71,23 +75,46 @@ class UserListCreate(CamelModel):
 # User Stats
 
 
-class UserStats(BaseEntity):
+class UserStats(BaseModel):
+    id: Optional[int] = None
     user_id: int
+    diamonds: int = 0
     total_words_learned: int = 0
     current_streak: int = 0
     longest_streak: int = 0
     total_practice_time: int = 0
     average_accuracy: float = 0.0
-    diamonds: int = 0
+    created_at: Optional[datetime] = None
+    updated_at: Optional[datetime] = None
 
 
-class UserStatsUpdate(CamelModel):
+class UserStatsUpdate(BaseModel):
+    diamonds: Optional[int] = None
     total_words_learned: Optional[int] = None
     current_streak: Optional[int] = None
     longest_streak: Optional[int] = None
     total_practice_time: Optional[int] = None
     average_accuracy: Optional[float] = None
-    diamonds: Optional[int] = None
+
+
+class DailyProgress(BaseModel):
+    wordsPracticed: int = 0
+    totalWordsGoal: int = 10
+    practiceTime: int = 0
+    practiceTimeGoal: int = 30
+
+
+class LearningInsights(BaseModel):
+    wordsMastered: int = 0
+    accuracy: float = 0.0
+
+
+class FullUserStats(BaseModel):
+    diamonds: int = 0
+    streak: int = 0
+    lastActive: Optional[datetime] = None
+    dailyProgress: DailyProgress
+    learningInsights: LearningInsights
 
 
 # User Preferences
@@ -120,11 +147,12 @@ class WordProgress(BaseEntity):
     usage_mastery_score: int = 0
     practice_count: int = 0
     success_count: int = 0
-    last_practiced: datetime
+    last_practiced: Optional[datetime] = None
     number_of_times_to_practice: int = 5
 
 
 class WordProgressUpdate(CamelModel):
+    word_id: int
     recognition_mastery_score: Optional[int] = None
     usage_mastery_score: Optional[int] = None
     practice_count: Optional[int] = None

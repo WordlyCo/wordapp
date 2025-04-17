@@ -1,9 +1,17 @@
 import { StateCreator } from "zustand";
-import { categories } from "../mockData";
 import { authFetch } from "@/lib/api";
 import { WordListCategory, WordList } from "@/src/types/lists";
-import { Quiz } from "@/src/types/quiz";
-import { Word } from "@/src/types/words";
+import { Word, WordProgressUpdate } from "@/src/types/words";
+
+type QuizStats = {
+  currentIndex: number;
+  score: number;
+  selectedAnswer: string;
+  startTime: number;
+  correctAnswers: number;
+  totalTime: number;
+  answerResults: Record<number, boolean>;
+}
 export interface GameSlice {
   isLoading: boolean;
   isFetchingCategories: boolean;
@@ -23,6 +31,22 @@ export interface GameSlice {
   };
   userLists: WordList[];
   quizWords: Word[];
+  quizStats: QuizStats;
+  userStats: {
+    diamonds: number;
+    streak: number;
+    lastActive: Date | null;
+    dailyProgress: {
+      wordsPracticed: number;
+      totalWordsGoal: number;
+      practiceTime: number; // in minutes
+      practiceTimeGoal: number; // in minutes
+    };
+    learningInsights: {
+      wordsMastered: number;
+      accuracy: number; // percentage
+    }
+  };
   fetchCategories: () => Promise<void>;
   fetchCategory: (id: string) => Promise<void>;
   fetchList: (id: string) => Promise<void>;
@@ -31,6 +55,14 @@ export interface GameSlice {
   addListToUserLists: (listId: string) => Promise<void>;
   fetchUserLists: () => Promise<void>;
   fetchDailyQuiz: () => Promise<void>;
+  setQuizStats: (newState: QuizStats) => Promise<void>;
+  setQuizWords: (newState: Word[]) => Promise<void>;
+  updateWordProgress: (wordProgress: WordProgressUpdate) => Promise<void>;
+  updateDiamonds: (amount: number) => void;
+  updateStreak: () => void;
+  fetchUserStats: () => Promise<void>;
+  updatePracticeTime: (minutes: number) => void;
+  updateAccuracy: (correct: boolean) => void;
 }
 
 export const createGameSlice: StateCreator<GameSlice> = (set, get) => ({
@@ -52,8 +84,101 @@ export const createGameSlice: StateCreator<GameSlice> = (set, get) => ({
   isFetchingListsByCategory: false,
   userLists: [],
   quizWords: [],
+  quizStats: {
+    currentIndex: 0,
+    score: 0,
+    selectedAnswer: "",
+    startTime: 0,
+    correctAnswers: 0,
+    totalTime: 0,
+    answerResults: {},
+  },
+  userStats: {
+    diamonds: 0,
+    streak: 0,
+    lastActive: null,
+    dailyProgress: {
+      wordsPracticed: 0,
+      totalWordsGoal: 10,
+      practiceTime: 0,
+      practiceTimeGoal: 30,
+    },
+    learningInsights: {
+      wordsMastered: 0,
+      accuracy: 0,
+    }
+  },
 
- 
+  setQuizWords: async (newState: Word[]) => {
+    set({ quizWords: newState });
+  },
+
+  setQuizStats: async (newState) => {
+    set({ quizStats: newState });
+  },
+
+  updateWordProgress: async (wordProgress: WordProgressUpdate) => {
+    try {
+      const response = await authFetch(`/users/progress/words/${wordProgress.wordId}`, {
+        method: "PUT",
+        body: JSON.stringify(wordProgress),
+      });
+      
+      const data = await response.json();
+      const success = data.success;
+      const message = data.message;
+      
+      if (!success) {
+        console.error("Failed to update word progress:", message);
+        return;
+      }
+    
+      const state = get();
+      const updatedQuizWords = [...state.quizWords];
+      
+      const wordIndex = updatedQuizWords.findIndex(word => word.id === wordProgress.wordId);
+      
+      if (wordIndex !== -1) {
+        updatedQuizWords[wordIndex] = {
+          ...updatedQuizWords[wordIndex],
+          wordProgress: {
+            ...updatedQuizWords[wordIndex].wordProgress,
+            ...wordProgress,
+          },
+        };
+        
+        set({ quizWords: updatedQuizWords });
+        
+        const { userStats } = get();
+        set({
+          userStats: {
+            ...userStats,
+            dailyProgress: {
+              ...userStats.dailyProgress,
+              wordsPracticed: userStats.dailyProgress.wordsPracticed + 1
+            }
+          }
+        });
+        
+        const recognitionScore = wordProgress.recognitionMasteryScore;
+        const previousScore = updatedQuizWords[wordIndex].wordProgress?.recognitionMasteryScore || 0;
+        
+        if (recognitionScore && recognitionScore >= 3 && previousScore < 3) {
+          set({
+            userStats: {
+              ...userStats,
+              learningInsights: {
+                ...userStats.learningInsights,
+                wordsMastered: userStats.learningInsights.wordsMastered + 1
+              }
+            }
+          });
+        }
+      }
+    } catch (error) {
+      console.error("Error updating word progress:", error);
+    }
+  },
 
   fetchUserLists: async () => {
     try {
@@ -178,8 +303,6 @@ export const createGameSlice: StateCreator<GameSlice> = (set, get) => ({
 
       if (!success) {
         console.error("Failed to fetch categories:", message);
-        // Fall back to mock data if API fails
-        set({ categories: categories });
         return;
       }
 
@@ -188,8 +311,6 @@ export const createGameSlice: StateCreator<GameSlice> = (set, get) => ({
       set({ categories: items });
     } catch (error) {
       console.error("Error fetching categories:", error);
-      // Fall back to mock data if API errors
-      set({ categories: categories });
     } finally {
       set({ isFetchingCategories: false });
     }
@@ -201,21 +322,17 @@ export const createGameSlice: StateCreator<GameSlice> = (set, get) => ({
       const response = await authFetch(`/lists/categories/${id}`);
       const data = await response.json();
       const success = data.success;
-
-      if (success) {
-        set({ selectedCategory: data.payload });
-      } else {
-        // Fall back to mock data if API fails
-        set({
-          selectedCategory: categories.find((category) => category.id === id),
-        });
+      const message = data.message;
+      const payload = data.payload;
+      
+      if (!success) {
+        console.error("Failed to fetch category:", message);
+        return;
       }
+
+      set({ selectedCategory: payload });
     } catch (error) {
       console.error("Error fetching category:", error);
-      // Fall back to mock data
-      set({
-        selectedCategory: categories.find((category) => category.id === id),
-      });
     } finally {
       set({ isLoading: false });
     }
@@ -234,9 +351,160 @@ export const createGameSlice: StateCreator<GameSlice> = (set, get) => ({
         return;
       }
 
+      console.log("Daily quiz:", payload);
+
       set({ quizWords: payload });
     } catch (error) {
       console.error("Error fetching daily quiz:", error);
     }
   },
+
+  updateDiamonds: async (amount: number) => {
+    const { userStats } = get();
+    
+    // Update local state first for instant feedback
+    set({ 
+      userStats: { 
+        ...userStats, 
+        diamonds: userStats.diamonds + amount 
+      } 
+    });
+    
+    // Then update backend
+    try {
+      await authFetch(`/users/stats/diamonds/${amount}`, {
+        method: 'PUT'
+      });
+    } catch (error) {
+      console.error("Error updating diamonds:", error);
+    }
+  },
+
+  updateStreak: async () => {
+    try {
+      // Call backend endpoint to update streak
+      const response = await authFetch('/users/stats/streak/update', {
+        method: 'PUT'
+      });
+      
+      const data = await response.json();
+      if (data.success) {
+        // Get user stats to refresh with updated streak
+        await get().fetchUserStats();
+      }
+    } catch (error) {
+      console.error("Error updating streak:", error);
+    }
+  },
+
+  fetchUserStats: async () => {
+    try {
+      const response = await authFetch('/users/stats');
+      const data = await response.json();
+      const success = data.success;
+      const message = data.message;
+      const payload = data.payload;
+      
+      console.log("User stats:", payload);
+      if (!success) {
+        console.error("Failed to fetch user stats:", message);
+        return;
+      }
+      
+      // Backend response now matches our store format exactly
+      set({ userStats: payload });
+    } catch (error) {
+      console.error("Error fetching user stats:", error);
+      // Initialize with default values if fetch fails
+      const { userStats } = get();
+      if (!userStats.lastActive) {
+        set({ 
+          userStats: {
+            ...userStats,
+            lastActive: new Date(),
+            dailyProgress: {
+              wordsPracticed: 0,
+              totalWordsGoal: 10,
+              practiceTime: 0,
+              practiceTimeGoal: 30,
+            },
+            learningInsights: {
+              wordsMastered: 0,
+              accuracy: 0,
+            }
+          } 
+        });
+      }
+    }
+  },
+
+  updatePracticeTime: async (minutes: number) => {
+    const { userStats } = get();
+    
+    // Update local state first
+    set({
+      userStats: {
+        ...userStats,
+        dailyProgress: {
+          ...userStats.dailyProgress,
+          practiceTime: userStats.dailyProgress.practiceTime + minutes
+        }
+      }
+    });
+    
+    // Then update backend
+    try {
+      await authFetch('/users/practice-session', {
+        method: 'POST',
+        body: JSON.stringify({ 
+          practice_time: minutes,
+          session_type: 'quiz'
+        })
+      });
+    } catch (error) {
+      console.error("Error recording practice time:", error);
+    }
+  },
+  
+  updateAccuracy: async (correct: boolean) => {
+    const { userStats } = get();
+    const totalAttempts = Object.keys(get().quizStats.answerResults).length;
+    const correctAnswers = Object.values(get().quizStats.answerResults).filter(result => result === true).length;
+    const newAccuracy = totalAttempts > 0 ? Math.round((correctAnswers / totalAttempts) * 100) : 0;
+    
+    // Update local state
+    set({
+      userStats: {
+        ...userStats,
+        learningInsights: {
+          ...userStats.learningInsights,
+          accuracy: newAccuracy
+        }
+      }
+    });
+    
+    // Update backend
+    try {
+      await authFetch('/users/stats', {
+        method: 'PUT',
+        body: JSON.stringify({ 
+          average_accuracy: newAccuracy
+        })
+      });
+    } catch (error) {
+      console.error("Error updating accuracy:", error);
+    }
+  },
 });
+
+function isYesterday(date: Date | null): boolean {
+  if (!date) return false;
+  
+  const yesterday = new Date();
+  yesterday.setDate(yesterday.getDate() - 1);
+  
+  const yesterdayString = yesterday.toDateString();
+  const dateString = new Date(date).toDateString();
+  
+  return yesterdayString === dateString;
+}

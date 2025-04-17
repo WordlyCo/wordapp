@@ -4,6 +4,7 @@ from fastapi import Depends
 from app.models.quiz import Quiz, QuizCreate
 from typing import List, Dict, Any
 from app.models.word import Word
+from app.models.user import WordProgress
 
 
 class QuizService:
@@ -96,6 +97,12 @@ class QuizService:
         SELECT * FROM RankedQuizzes WHERE rn = 1
         """
 
+        # Query to get progress information for each word
+        query_progress = """
+        SELECT * FROM word_progress
+        WHERE user_id = $1 AND word_id = ANY($2)
+        """
+
         try:
             word_records = await self.pool.fetch(query_word_ids, user_id)
 
@@ -107,6 +114,7 @@ class QuizService:
 
             words_records = await self.pool.fetch(query_words, word_ids)
             quizzes_records = await self.pool.fetch(query_quizzes, word_ids)
+            progress_records = await self.pool.fetch(query_progress, user_id, word_ids)
 
             # Create a dictionary to map word IDs to their corresponding quiz
             quizzes_dict = {}
@@ -114,6 +122,13 @@ class QuizService:
                 # Use the Quiz model to convert to proper camelCase
                 quiz = Quiz(**dict(quiz_record))
                 quizzes_dict[quiz.word_id] = quiz
+
+            # Create a dictionary to map word IDs to their corresponding progress
+            progress_dict = {}
+            for progress_record in progress_records:
+                # Use the WordProgress model to convert to proper camelCase
+                progress = WordProgress(**dict(progress_record))
+                progress_dict[progress.word_id] = progress
 
             # Convert to Word models for proper camelCase
             words_with_quizzes = []
@@ -129,6 +144,15 @@ class QuizService:
                     )
                 else:
                     word_dict["quiz"] = None
+
+                # Add progress if available
+                progress = progress_dict.get(word_id)
+                if progress:
+                    word_dict["word_progress"] = progress.model_dump(
+                        by_alias=True, exclude_none=False
+                    )
+                else:
+                    word_dict["word_progress"] = None
 
                 # Create Word model for camelCase conversion
                 word = Word(**word_dict)

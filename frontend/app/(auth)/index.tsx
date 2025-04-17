@@ -133,7 +133,7 @@ export default function AuthScreen() {
 
       if (signUpAttempt.status === "complete") {
         await setSignUpActive({ session: signUpAttempt.createdSessionId });
-        router.replace("/");
+        router.replace("/(auth)/onboarding");
       } else {
         setAuthError("Verification failed. Please try again.");
       }

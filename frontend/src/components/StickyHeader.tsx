@@ -1,10 +1,20 @@
-import React from "react";
+import React, { useEffect } from "react";
 import { View, Text, StyleSheet } from "react-native";
 import { Ionicons, MaterialCommunityIcons } from "@expo/vector-icons";
 import useTheme from "@/src/hooks/useTheme";
 import { SafeAreaView } from "react-native-safe-area-context";
+import { useStore } from "@/src/stores/store";
+
 const StickyHeader = () => {
   const { colors } = useTheme();
+  const userStats = useStore((state) => state.userStats);
+  const fetchUserStats = useStore((state) => state.fetchUserStats);
+
+  useEffect(() => {
+    // Fetch user stats when component mounts
+    fetchUserStats();
+  }, []);
+
   return (
     <View style={{ zIndex: 1000 }}>
       <SafeAreaView
@@ -14,7 +24,6 @@ const StickyHeader = () => {
       <View
         style={[styles.headerContainer, { backgroundColor: colors.surface }]}
       >
-        {/* Left Section: Logo and Title */}
         <View style={styles.leftContainer}>
           <Ionicons name="book-outline" size={24} color={colors.primary} />
           <Text style={[styles.title, { color: colors.onSurface }]}>
@@ -22,11 +31,10 @@ const StickyHeader = () => {
           </Text>
         </View>
 
-        {/* Right Section: Stats */}
         <View style={styles.rightContainer}>
           <View style={styles.statItem}>
             <Text style={[styles.statValue, { color: colors.onSurface }]}>
-              67,042
+              {userStats.diamonds.toLocaleString()}
             </Text>
             <MaterialCommunityIcons
               name="diamond"
@@ -36,7 +44,7 @@ const StickyHeader = () => {
           </View>
           <View style={styles.statItem}>
             <Text style={[styles.statValue, { color: colors.onSurface }]}>
-              69
+              {userStats.streak}
             </Text>
             <MaterialCommunityIcons
               name="lightning-bolt"

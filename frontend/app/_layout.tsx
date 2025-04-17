@@ -19,7 +19,7 @@ export default function RootLayout() {
       try {
         await new Promise((resolve) => setTimeout(resolve, 100));
       } catch (e) {
-        // Silent error - no need to log
+        // not logging since not an actual error
       } finally {
         setIsReady(true);
       }

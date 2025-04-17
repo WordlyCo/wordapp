@@ -12,7 +12,7 @@ import {
 import useTheme from "@/src/hooks/useTheme";
 import StickyHeader from "@/src/components/StickyHeader";
 import LeaderboardEntry from "@/src/components/LeaderboardEntry";
-import { globalLeaderboard, friendsLeaderboard } from "@/src/stores/mockData";
+ 
 
 export default function ProgressScreen() {
   const { colors } = useTheme();
@@ -297,7 +297,7 @@ export default function ProgressScreen() {
               ]}
               style={styles.segmentedButtons}
             />
-
+{/* 
             <View style={styles.leaderboardList}>
               {(activeTab === "global"
                 ? globalLeaderboard
@@ -309,7 +309,7 @@ export default function ProgressScreen() {
                   rank={index + 1}
                 />
               ))}
-            </View>
+            </View> */}
           </Card.Content>
         </Card>
       </ScrollView>

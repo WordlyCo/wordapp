@@ -9,8 +9,19 @@ export type Quiz = {
   question: string;
   options: string[];
   correctOptions: string[];
+  quizStats: QuizStats;
 };
 
 export type QuizRequest = {
   wordIds: number[];
 };
+
+export type QuizStats = {
+  currentIndex: number;
+  score: number;
+  selectedAnswer: string;
+  startTime: number;
+  correctAnswers: number;
+  totalTime: number;
+  answerResults: Record<number, boolean>;
+}

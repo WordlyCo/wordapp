@@ -8,22 +8,12 @@ import {
   RefreshControl,
 } from "react-native";
 import { Text, Button, IconButton } from "react-native-paper";
-import { useNavigation } from "@react-navigation/native";
 import useTheme from "@/src/hooks/useTheme";
-import StickyHeader from "@/src/components/StickyHeader";
 import { useStore } from "@/src/stores/store";
 import { PROFILE_BACKGROUND_COLORS } from "@/constants/profileColors";
 import { useRouter } from "expo-router";
-import { useAuth } from "@/src/contexts/AuthContext";
+import { MaterialCommunityIcons } from "@expo/vector-icons";
 
-// Import local headshot image
-const headshotImage = require("@/assets/images/headshot.png");
-
-type ProfileStackParamList = {
-  ProfileMain: undefined;
-  Settings: undefined;
-  AccountSettings: undefined;
-};
 
 const ProfileScreen = () => {
   const user = useStore((state) => state.user);
@@ -31,7 +21,6 @@ const ProfileScreen = () => {
   const router = useRouter();
   const { colors } = useTheme();
   const [activeTab, setActiveTab] = useState("Stats");
-  const { logout } = useAuth();
   const [refreshing, setRefreshing] = useState(false);
 
   useEffect(() => {
@@ -52,14 +41,6 @@ const ProfileScreen = () => {
       await fetchUserData();
     } finally {
       setRefreshing(false);
-    }
-  };
-
-  const handleLogout = async () => {
-    try {
-      await logout();
-    } catch (error) {
-      console.error("Logout failed:", error);
     }
   };
 
@@ -104,12 +85,22 @@ const ProfileScreen = () => {
             style={[
               styles.avatarContainer,
               {
-                backgroundColor: colors.primaryContainer,
+                backgroundColor: colors.onBackground,
                 marginTop: -60,
               },
             ]}
           >
-            <Image source={headshotImage} style={styles.avatar} />
+            {user?.profileImageUrl ? (
+              <Image source={{ uri: user.profileImageUrl }} style={styles.avatar} />
+            ) : (
+              <View style={styles.avatarPlaceholder}>
+                <MaterialCommunityIcons 
+                  name="account"
+                  size={80}
+                  color={colors.primary}
+                />
+              </View>
+            )}
           </View>
 
           <Text style={[styles.userName, { color: colors.onSurface }]}>
@@ -176,16 +167,13 @@ const ProfileScreen = () => {
             <TouchableOpacity
               style={[
                 styles.tabButton,
-                activeTab === "Stats" && styles.activeTab,
                 activeTab === "Stats" && { borderBottomColor: colors.primary },
               ]}
               onPress={() => setActiveTab("Stats")}
             >
               <Text
                 style={[
-                  styles.tabText,
                   { color: colors.onSurfaceVariant },
-                  activeTab === "Stats" && styles.activeTabText,
                   activeTab === "Stats" && { color: colors.primary },
                 ]}
               >
@@ -212,9 +200,9 @@ const styles = StyleSheet.create({
     height: 150,
     width: "100%",
     borderBottomWidth: 1,
-    borderBottomColor: "rgba(0,0,0,0.1)", // Subtle border at the bottom
+    borderBottomColor: "rgba(0,0,0,0.1)",
     borderTopWidth: 1,
-    borderTopColor: "rgba(0,0,0,0.1)", // Subtle border at the top
+    borderTopColor: "rgba(0,0,0,0.1)",
   },
   profileHeader: {
     flexDirection: "row",
@@ -229,7 +217,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
     paddingVertical: 10,
     paddingHorizontal: 20,
-    marginTop: -40, // Pull card up to overlap with background
+    marginTop: -40,  
   },
   avatarContainer: {
     marginBottom: 15,
@@ -240,6 +228,14 @@ const styles = StyleSheet.create({
     width: 120,
     height: 120,
     borderRadius: 60,
+  },
+  avatarPlaceholder: {
+    width: 120,
+    height: 120,
+    borderRadius: 60,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: 'rgba(0,0,0,0.05)',
   },
   userName: {
     fontSize: 24,
@@ -302,12 +298,6 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
     borderBottomWidth: 2,
     borderBottomColor: "transparent",
-  },
-  activeTab: {
-    // Color will be set dynamically
-  },
-  tabText: {
-    // Color will be set dynamically
   },
   activeTabText: {
     fontWeight: "bold",

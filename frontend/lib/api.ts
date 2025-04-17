@@ -1,5 +1,3 @@
-import AsyncStorage from "@react-native-async-storage/async-storage";
-
 export const API_URL = process.env.EXPO_PUBLIC_API_URL;
 
 let cachedToken: string | null = null;

@@ -1,0 +1,286 @@
+import { Button, Text, IconButton } from "react-native-paper";
+import { Animated, StyleSheet, View } from "react-native";
+import { Card } from "react-native-paper";
+import { useStore } from "@/src/stores/store";
+import useTheme from "@/src/hooks/useTheme";
+import React, { useEffect, useRef, useState } from "react";
+import { router } from "expo-router";
+import { DifficultyLevel, DIFFICULTY_LEVELS } from "@/src/types/enums";
+
+const SummaryScreen = () => {
+  const { colors } = useTheme();
+  const score = useStore((state) => state.quizStats.score);
+  const quizWords = useStore((state) => state.quizWords);
+  const setQuizStats = useStore((state) => state.setQuizStats);
+  const totalTime = useStore((state) => state.quizStats.totalTime);
+  const answerResults = useStore((state) => state.quizStats.answerResults);
+  const userStats = useStore((state) => state.userStats);
+  const updatePracticeTime = useStore((state) => state.updatePracticeTime);
+  const [diamondsEarned, setDiamondsEarned] = useState(0);
+  
+  const fadeAnim = useRef(new Animated.Value(0)).current;
+  const scoreAnim = useRef(new Animated.Value(0)).current;
+  
+  const numberOfWords = quizWords.length || 0;
+  const [scorePercentage, setScorePercentage] = useState((score / numberOfWords) * 100);
+  
+  useEffect(() => {
+    // Update practice time based on quiz duration (convert seconds to minutes)
+    if (totalTime > 0) {
+      const practiceMinutes = Math.ceil(totalTime / 60);
+      updatePracticeTime(practiceMinutes);
+    }
+    
+    // Calculate diamonds earned in this session
+    let totalDiamonds = 0;
+    quizWords.forEach((word, index) => {
+      // Only count diamonds for correct answers
+      if (answerResults[index]) {
+        switch (word.difficultyLevel) {
+          case DIFFICULTY_LEVELS.BEGINNER:
+            totalDiamonds += 5;
+            break;
+          case DIFFICULTY_LEVELS.INTERMEDIATE:
+            totalDiamonds += 10;
+            break;
+          case DIFFICULTY_LEVELS.ADVANCED:
+            totalDiamonds += 20;
+            break;
+          default:
+            totalDiamonds += 5;
+        }
+      }
+    });
+    setDiamondsEarned(totalDiamonds);
+    
+    // Calculate the actual score based on the answer results
+    const actualScore = Object.values(useStore.getState().quizStats.answerResults)
+      .filter(result => result === true)
+      .length;
+    
+    if (actualScore !== score) {
+      console.log("Correcting score from", score, "to", actualScore);
+      setQuizStats({
+        ...useStore.getState().quizStats,
+        score: actualScore
+      });
+      setScorePercentage((actualScore / numberOfWords) * 100);
+    }
+  
+    Animated.sequence([
+      Animated.timing(fadeAnim, {
+        toValue: 1,
+        duration: 600,
+        useNativeDriver: true,
+      }),
+      Animated.timing(scoreAnim, {
+        toValue: (actualScore / numberOfWords) * 100,
+        duration: 800,
+        useNativeDriver: false,
+      })
+    ]).start();
+  }, []);
+ 
+  const playAgain = () => {
+    setQuizStats({
+      score: 0,
+      totalTime: 0,
+      correctAnswers: 0,
+      currentIndex: 0,
+      selectedAnswer: "",
+      startTime: Date.now(),
+      answerResults: {}
+    });
+    router.replace({
+      pathname: "/(protected)/quiz"
+    });
+  };
+  
+  const goHome = () => {
+    router.replace({
+      pathname: "/(protected)/(tabs)/home"
+    });
+  };
+
+  return (
+    <View style={[styles.container, { backgroundColor: colors.background }]}>
+      <Animated.View 
+        style={[
+          styles.contentContainer,
+          { opacity: fadeAnim }
+        ]}
+      >
+        <Card style={[styles.summaryCard, { backgroundColor: colors.surface }]} elevation={4}>
+          <View style={styles.confettiContainer}>
+            <IconButton icon="party-popper" size={32} iconColor={colors.secondary} />
+          </View>
+          
+          <Card.Content style={styles.cardContent}>
+            <Text 
+              variant="headlineMedium" 
+              style={[styles.summaryTitle, { color: colors.onSurface }]}
+            >
+              Quiz Complete!
+            </Text>
+            
+            <View style={styles.scoreCircleContainer}>
+              <View 
+                style={[
+                  styles.scoreCircle,
+                  {
+                    borderColor: scorePercentage > 70 ? colors.primary : colors.secondary,
+            
+                  }
+                ]}
+              >
+                <Text style={[styles.scoreText, { color: colors.onSurface }]}>
+                  {score}/{numberOfWords}
+                </Text>
+                <Text style={[styles.scoreLabel, { color: colors.onSurfaceVariant }]}>
+                  Score
+                </Text>
+              </View>
+            </View>
+            
+            <View style={styles.statsContainer}>
+              <View style={styles.statItem}>
+                <IconButton icon="clock-outline" size={28} iconColor={colors.primary} style={styles.statIcon} />
+                <Text variant="titleMedium" style={{ color: colors.onSurfaceVariant }}>Time</Text>
+                <Text variant="headlineSmall" style={{ color: colors.primary }}>
+                  {Math.round(totalTime)}s
+                </Text>
+              </View>
+              
+              <View style={styles.statItem}>
+                <IconButton icon="diamond" size={28} iconColor={colors.info} style={styles.statIcon} />
+                <Text variant="titleMedium" style={{ color: colors.onSurfaceVariant }}>Diamonds</Text>
+                <Text variant="headlineSmall" style={{ color: colors.info }}>
+                  +{diamondsEarned}
+                </Text>
+              </View>
+              
+              <View style={styles.statItem}>
+                <IconButton icon="lightning-bolt" size={28} iconColor={colors.streak} style={styles.statIcon} />
+                <Text variant="titleMedium" style={{ color: colors.onSurfaceVariant }}>Streak</Text>
+                <Text variant="headlineSmall" style={{ color: colors.streak }}>
+                  {userStats.streak}
+                </Text>
+              </View>
+            </View>
+            
+            <View style={styles.actionButtons}>
+              <Button
+                mode="contained"
+                onPress={playAgain}
+                style={[styles.button, styles.primaryButton]}
+                contentStyle={styles.buttonContent}
+                icon="replay"
+              >
+                Play Again
+              </Button>
+              
+              <Button
+                mode="outlined"
+                onPress={goHome}
+                style={[styles.button, { borderColor: colors.outline }]}
+                contentStyle={styles.buttonContent}
+                icon="home"
+                textColor={colors.primary}
+              >
+                Home
+              </Button>
+            </View>
+          </Card.Content>
+        </Card>
+      </Animated.View>
+    </View>
+  );
+};
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    justifyContent: 'center',
+    padding: 16,
+  },
+  contentContainer: {
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  summaryCard: {
+    width: '100%',
+    borderRadius: 16,
+    overflow: 'hidden',
+    elevation: 4,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 8,
+  },
+  cardContent: {
+    padding: 16,
+  },
+  confettiContainer: {
+    position: 'absolute',
+    top: 4,
+    right: 4,
+    zIndex: 1,
+  },
+  summaryTitle: {
+    textAlign: 'center',
+    marginBottom: 24,
+    fontWeight: '700',
+    letterSpacing: 0.5,
+  },
+  scoreCircleContainer: {
+    alignItems: 'center',
+    marginBottom: 24,
+  },
+  scoreCircle: {
+    width: 120,
+    height: 120,
+    borderRadius: 60,
+    borderWidth: 8,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: 10,
+  },
+  scoreText: {
+    fontSize: 28,
+    fontWeight: 'bold',
+  },
+  scoreLabel: {
+    fontSize: 16,
+    fontWeight: '500',
+  },
+  statsContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-around',
+    marginBottom: 24,
+    paddingHorizontal: 8,
+  },
+  statItem: {
+    alignItems: 'center',
+    padding: 12,
+    borderRadius: 12,
+  },
+  statIcon: {
+    margin: 0,
+    marginBottom: 4,
+  },
+  actionButtons: {
+    marginTop: 16,
+    gap: 12,
+  },
+  button: {
+    borderRadius: 12,
+  },
+  primaryButton: {
+    elevation: 2,
+  },
+  buttonContent: {
+    paddingVertical: 8,
+  },
+});
+
+export default SummaryScreen;

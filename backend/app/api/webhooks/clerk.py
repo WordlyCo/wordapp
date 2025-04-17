@@ -64,6 +64,8 @@ async def clerk_webhook(
                 clerk_id=user_id,
                 email=email,
                 username=username,
+                first_name=first_name,
+                last_name=last_name,
             )
 
             try:

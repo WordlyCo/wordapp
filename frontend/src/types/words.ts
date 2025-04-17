@@ -15,16 +15,27 @@ export type Word = BaseEntity & {
   tags: string[];
   audioUrl?: string;
   imageUrl?: string;
-  wordProgress?: WordProgress;
+  wordProgress: WordProgress;
   quiz?: Quiz;
 };
 
 export type WordProgress = BaseEntity & {
   userId: string;
   wordId: string;
-  recognitionLevel: number;
-  usageLevel: number;
-  masteryScore: number;
+  recognitionMasteryScore: number;
+  usageMasteryScore: number;
   practiceCount: number;
   successCount: number;
+  lastPracticed: Date;
+  numberOfTimesToPractice: number;
+};
+
+export type WordProgressUpdate = {
+  wordId: string;
+  recognitionMasteryScore: number;
+  usageMasteryScore: number;
+  practiceCount: number;
+  successCount: number;
+  lastPracticed: Date;
+  numberOfTimesToPractice: number;
 };

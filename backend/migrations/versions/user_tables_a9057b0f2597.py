@@ -92,6 +92,45 @@ def upgrade() -> None:
             server_default=sa.func.now(),
             onupdate=sa.func.now(),
         ),
+        sa.PrimaryKeyConstraint("id"),
+        sa.ForeignKeyConstraint(["user_id"], ["users.id"], ondelete="CASCADE"),
+    )
+
+    op.create_table(
+        "user_practice_sessions",
+        sa.Column("id", sa.Integer(), nullable=False),
+        sa.Column("user_id", sa.Integer(), nullable=False),
+        sa.Column(
+            "practice_time",
+            sa.Integer(),
+            nullable=False,
+            comment="Practice time in minutes",
+        ),
+        sa.Column(
+            "session_type",
+            sa.String(length=50),
+            nullable=False,
+            comment="Type of practice session (e.g., quiz, flashcard)",
+        ),
+        sa.Column(
+            "created_at", sa.DateTime(), nullable=False, server_default=sa.func.now()
+        ),
+        sa.Column(
+            "updated_at",
+            sa.DateTime(),
+            nullable=False,
+            server_default=sa.func.now(),
+            onupdate=sa.func.now(),
+        ),
+        sa.PrimaryKeyConstraint("id"),
+        sa.ForeignKeyConstraint(["user_id"], ["users.id"], ondelete="CASCADE"),
+    )
+
+    op.create_index(
+        "idx_user_practice_sessions_user_id",
+        "user_practice_sessions",
+        ["user_id"],
+        unique=False,
     )
 
     op.create_index(
@@ -112,6 +151,8 @@ def upgrade() -> None:
 def downgrade() -> None:
     op.drop_index("idx_user_stats_user_id")
     op.drop_index("idx_user_preferences_user_id")
+    op.drop_index("idx_user_practice_sessions_user_id")
+    op.drop_table("user_practice_sessions")
     op.drop_table("user_stats")
     op.drop_table("user_preferences")
     op.drop_table("users")

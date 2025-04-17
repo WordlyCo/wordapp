@@ -3,6 +3,7 @@ from typing import Optional, List
 from .base import BaseEntity
 from .quiz import QuizCreate
 from .quiz import Quiz
+from .user import WordProgress
 
 
 class Word(BaseEntity):
@@ -19,6 +20,7 @@ class Word(BaseEntity):
     antonyms: Optional[List[str]] = None
     tags: Optional[List[str]] = None
     quiz: Optional[Quiz] = None
+    word_progress: Optional[WordProgress] = None
 
 
 class WordUpdate(BaseEntity):

@@ -16,6 +16,9 @@ class BaseEntity(CamelModel):
     created_at: Optional[datetime] = None
     updated_at: Optional[datetime] = None
 
+    model_config = ConfigDict(from_attributes=True)
+    # This ensures the User model will properly convert from the database record
+
 
 class PageInfo(CamelModel):
     page: int = Field(..., description="Current page number")

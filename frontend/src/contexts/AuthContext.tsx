@@ -3,12 +3,9 @@ import { useRouter } from "expo-router";
 import { useStore } from "@/src/stores/store";
 import { updateCachedToken, setClerkTokenGetter } from "@/lib/api";
 import { useAuth as useClerkAuth } from "@clerk/clerk-expo";
-import AsyncStorage from "@react-native-async-storage/async-storage";
 
 interface AuthContextType {
-  user: any;
   isLoading: boolean;
-  getMe: () => Promise<void>;
   logout: () => Promise<void>;
 }
 
@@ -16,11 +13,13 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const {
-    user,
-    getMe: fetchMe,
     isAuthenticated,
+    hasOnboarded,
+    getMe,
     logout: logoutStore,
+    loadOnboardingStatus,
   } = useStore();
+  
   const [isLoading, setIsLoading] = useState(true);
   const [hasInitialized, setHasInitialized] = useState(false);
   const { isSignedIn, isLoaded, getToken, signOut } = useClerkAuth();
@@ -30,36 +29,14 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   useEffect(() => {
     if (isLoaded) {
       setClerkTokenGetter(() => getToken());
-    }
-  }, [isLoaded, getToken]);
-
-  const refreshTokenCache = async () => {
-    try {
+      
       if (isSignedIn) {
-        const token = await getToken();
-        updateCachedToken(token);
-        return token;
-      } else {
-        updateCachedToken(null);
+        getToken()
+          .then(token => updateCachedToken(token))
+          .catch(err => console.error("Failed to initialize token:", err));
       }
-      return null;
-    } catch (error) {
-      console.error("Failed to refresh token cache:", error);
-      return null;
     }
-  };
-
-  const getMe = async () => {
-    setIsLoading(true);
-    try {
-      await refreshTokenCache();
-      await fetchMe();
-    } catch (error) {
-      console.error("Failed to fetch user data:", error);
-    } finally {
-      setIsLoading(false);
-    }
-  };
+  }, [isLoaded, isSignedIn, getToken]);
 
   const logout = async () => {
     setIsLoading(true);
@@ -77,31 +54,14 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   };
 
   useEffect(() => {
-    if (isLoaded) {
-      refreshTokenCache()
-        .then(() => {})
-        .catch((err) =>
-          console.error("Failed to initialize token cache:", err)
-        );
-    }
-  }, [isLoaded, isSignedIn]);
-
-  useEffect(() => {
     if (!isLoaded) return;
 
     const initialize = async () => {
       setIsLoading(true);
       try {
+        await loadOnboardingStatus();
+        
         if (isSignedIn) {
-          const isFirstSignIn = !(await AsyncStorage.getItem(
-            "hasCompletedSignIn"
-          ));
-          if (isFirstSignIn) {
-            await new Promise((resolve) => setTimeout(resolve, 1500));
-            await AsyncStorage.setItem("hasCompletedSignIn", "true");
-          }
-
-          await refreshTokenCache();
           await getMe();
         }
       } catch (error) {
@@ -113,14 +73,16 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     };
 
     initialize();
-  }, [isLoaded, isSignedIn]);
+  }, [isLoaded, isSignedIn, getMe, loadOnboardingStatus]);
 
   useEffect(() => {
     if (!hasInitialized || !isLoaded) return;
 
     const routeUser = async () => {
       try {
-        if (isSignedIn && isAuthenticated) {
+        if (isSignedIn && isAuthenticated && !hasOnboarded) {
+          router.replace("/(auth)/onboarding");
+        } else if (isSignedIn && isAuthenticated) {
           router.replace("/(protected)/(tabs)/home");
         } else if (!isSignedIn) {
           router.replace("/(auth)");
@@ -131,10 +93,10 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     };
 
     routeUser();
-  }, [isAuthenticated, hasInitialized, isSignedIn, isLoaded]);
+  }, [isAuthenticated, hasInitialized, isSignedIn, isLoaded, hasOnboarded, router]);
 
   return (
-    <AuthContext.Provider value={{ user, isLoading, getMe, logout }}>
+    <AuthContext.Provider value={{ isLoading, logout }}>
       {children}
     </AuthContext.Provider>
   );

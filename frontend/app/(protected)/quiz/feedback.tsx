@@ -1,25 +1,16 @@
-import { Button, Text, Divider, Chip, Surface, Badge, FAB } from "react-native-paper";
-import { Animated, View, StyleSheet, ScrollView } from "react-native";
+import { Button, Text, Divider, Chip, FAB } from "react-native-paper";
+import { View, StyleSheet, ScrollView } from "react-native";
 import { Card } from "react-native-paper";
 import { IconButton } from "react-native-paper";
-import WordMasteryProgress from "@/src/components/WordMasteryProgress";
-import { Word } from "@/src/types/words";
 import { DifficultyLevel, DIFFICULTY_LEVELS } from "@/src/types/enums";
 import { Portal } from "react-native-paper";
+import { useStore } from "@/src/stores/store";
+import useTheme from "@/src/hooks/useTheme";
+import { router } from "expo-router";
+import { useEffect } from "react";
+import { Word } from "@/src/types/words";
+import { useState } from "react";
 
-type FeedbackStateProps = {
-  currentWord: Word | null;
-  numberOfWords: number;
-  colors: any;
-  fadeAnim: any;
-  scaleAnim: any;
-  slideAnim: any;
-  selectedAnswer: string;
-  currentIndex: number;
-  handleNext: () => void;
-};
-
-// Helper function to get difficulty color
 const getDifficultyColor = (difficulty: DifficultyLevel, colors: any) => {
   switch (difficulty) {
     case DIFFICULTY_LEVELS.BEGINNER:
@@ -33,7 +24,6 @@ const getDifficultyColor = (difficulty: DifficultyLevel, colors: any) => {
   }
 };
 
-// Helper function to get difficulty display name
 const getDifficultyLabel = (difficulty: DifficultyLevel): string => {
   switch (difficulty) {
     case DIFFICULTY_LEVELS.BEGINNER:
@@ -47,29 +37,27 @@ const getDifficultyLabel = (difficulty: DifficultyLevel): string => {
   }
 };
 
-// Helper function to create a color with opacity
 const withOpacity = (color: string, opacity: number): string => {
   // If it's already rgba, replace the alpha
-  if (color.startsWith('rgba')) {
+  if (color.startsWith("rgba")) {
     return color.replace(/[\d\.]+\)$/g, `${opacity})`);
   }
-  
+
   // If it's rgb, convert to rgba
-  if (color.startsWith('rgb')) {
-    return color.replace('rgb', 'rgba').replace(')', `, ${opacity})`);
+  if (color.startsWith("rgb")) {
+    return color.replace("rgb", "rgba").replace(")", `, ${opacity})`);
   }
-  
+
   // If it's a hex color
-  if (color.startsWith('#')) {
+  if (color.startsWith("#")) {
     // For simplicity, return a safe default with opacity
     return `rgba(0, 0, 0, ${opacity})`;
   }
-  
+
   // Default fallback
   return `rgba(0, 0, 0, ${opacity})`;
 };
 
-// Helper function to get difficulty icon
 const getDifficultyIcon = (difficulty: DifficultyLevel): string => {
   switch (difficulty) {
     case DIFFICULTY_LEVELS.BEGINNER:
@@ -83,35 +71,61 @@ const getDifficultyIcon = (difficulty: DifficultyLevel): string => {
   }
 };
 
-const FeedbackState = ({
-  currentWord,
-  numberOfWords,
-  colors,
-  fadeAnim,
-  scaleAnim,
-  slideAnim,
-  selectedAnswer,
-  currentIndex,
-  handleNext,
-}: FeedbackStateProps) => {
+const FeedbackScreen = () => {
+  const { colors } = useTheme();
+  const quizWords = useStore((state) => state.quizWords);
+  const currentIndex = useStore((state) => state.quizStats.currentIndex);
+  const selectedAnswer = useStore((state) => state.quizStats.selectedAnswer);
+  const quizStats = useStore((state) => state.quizStats);
+  const startTime = useStore((state) => state.quizStats.startTime);
+  const setQuizStats = useStore((state) => state.setQuizStats);
+
+  const [currentWord, setCurrentWord] = useState<Word | null>(null);  
+
+  const numberOfWords = quizWords.length || 0;
+
+  useEffect(() => {
+    // Make sure we're getting the freshest state
+    const word = quizWords.find((w, index) => index === currentIndex);
+    if (word) {
+      setCurrentWord(word);
+      console.log("Current word updated in feedback:", word);
+    } else {
+      console.error("Word not found for currentIndex:", currentIndex);
+    }
+  }, [currentIndex, quizWords]);
   if (!currentWord) return null;
-  
-  const isCorrect = currentWord?.quiz?.correctOptions.includes(selectedAnswer);
-  const difficultyColor = getDifficultyColor(currentWord.difficultyLevel, colors);
-  
+
+  const isCorrect = currentWord?.quiz?.correctOptions.includes(selectedAnswer) || false;
+  const difficultyColor = getDifficultyColor(
+    currentWord.difficultyLevel,
+    colors
+  );
+
+  console.log("Quiz Stats:", quizStats);
+
+  const handleNext = async () => {
+    const isLastQuestion = currentIndex === quizWords.length - 1;
+
+    if (isLastQuestion) {
+      setQuizStats({
+        ...quizStats,
+        totalTime: (Date.now() - startTime) / 1000,
+      });
+      router.replace("/(protected)/quiz/summary");
+    } else {
+      setQuizStats({
+        ...quizStats,
+        currentIndex: currentIndex + 1,
+        selectedAnswer: "",
+      });
+      router.replace("/(protected)/quiz");
+    }
+  };
+
   return (
-    <Animated.View
-      style={[
-        styles.feedbackContainer,
-        {
-          opacity: fadeAnim,
-          transform: [{ scale: scaleAnim }, { translateX: slideAnim }],
-        },
-      ]}
-    >
+    <ScrollView style={[styles.container]}>
       <View style={{ paddingBottom: 80 }}>
-        {/* Feedback Card */}
-      
         <Card
           style={[
             styles.feedbackCard,
@@ -121,47 +135,52 @@ const FeedbackState = ({
             },
           ]}
         >
-          
-            <Card.Content>
-              <View style={styles.feedbackContentContainer}>
-                <View style={styles.feedbackIconContainer}>
-                  <View style={[
-                    styles.iconSurface, 
-                    {backgroundColor: isCorrect ? "rgba(76, 175, 80, 0.1)" : "rgba(244, 67, 54, 0.1)"}
-                  ]}>
-                    <IconButton
-                      icon={isCorrect ? "check-circle" : "close-circle"}
-                      iconColor={isCorrect ? colors.secondary : colors.error}
-                      size={36}
-                    />
-                  </View>
-                </View>
-                <View style={styles.feedbackTextContainer}>
-                  <Text
-                    variant="headlineSmall"
-                    style={[
-                      styles.feedbackTitle,
-                      { color: isCorrect ? colors.secondary : colors.error },
-                    ]}
-                  >
-                    {isCorrect ? "Excellent!" : "Not Quite"}
-                  </Text>
-                  <Text
-                    variant="bodyMedium"
-                    style={[styles.feedbackMessage, { color: colors.onSurface }]}
-                  >
-                    {isCorrect
-                      ? "Well done! Keep up the good work."
-                      : `The correct answer is: ${currentWord?.quiz?.correctOptions[0]}`}
-                  </Text>
+          <Card.Content>
+            <View style={styles.feedbackContentContainer}>
+              <View style={styles.feedbackIconContainer}>
+                <View
+                  style={[
+                    styles.iconSurface,
+                    {
+                      backgroundColor: isCorrect
+                        ? "rgba(76, 175, 80, 0.1)"
+                        : "rgba(244, 67, 54, 0.1)",
+                    },
+                  ]}
+                >
+                  <IconButton
+                    icon={isCorrect ? "check-circle" : "close-circle"}
+                    iconColor={isCorrect ? colors.secondary : colors.error}
+                    size={36}
+                  />
                 </View>
               </View>
-            </Card.Content>
-       
+              <View style={styles.feedbackTextContainer}>
+                <Text
+                  variant="headlineSmall"
+                  style={[
+                    styles.feedbackTitle,
+                    { color: isCorrect ? colors.secondary : colors.error },
+                  ]}
+                >
+                  {isCorrect ? "Excellent!" : "Not Quite"}
+                </Text>
+                <Text
+                  variant="bodyMedium"
+                  style={[styles.feedbackMessage, { color: colors.onSurface }]}
+                >
+                  {isCorrect
+                    ? "Well done! Keep up the good work."
+                    : `The correct answer is: ${currentWord?.quiz?.correctOptions[0]}`}
+                </Text>
+              </View>
+            </View>
+          </Card.Content>
         </Card>
 
-        {/* Word Information Card */}
-        <Card style={[styles.wordInfoCard, { backgroundColor: colors.surface }]}>
+        <Card
+          style={[styles.wordInfoCard, { backgroundColor: colors.surface }]}
+        >
           <Card.Content style={styles.wordInfoContent}>
             <View style={styles.wordTitleRow}>
               <View style={styles.wordHeaderContainer}>
@@ -175,86 +194,119 @@ const FeedbackState = ({
                     iconColor={difficultyColor}
                     style={styles.difficultyIcon}
                   />
-                  <Text variant="labelSmall" style={[styles.difficultyText, {color: difficultyColor}]}>
+                  <Text
+                    variant="labelSmall"
+                    style={[styles.difficultyText, { color: difficultyColor }]}
+                  >
                     {getDifficultyLabel(currentWord.difficultyLevel)}
                   </Text>
                 </View>
               </View>
-              
-              <Chip 
-                style={[styles.partOfSpeechChip, {backgroundColor: "rgba(0, 0, 0, 0.05)"}]}
-                textStyle={{fontStyle: "italic"}}
+
+              <Chip
+                style={[
+                  styles.partOfSpeechChip,
+                  { backgroundColor: "rgba(0, 0, 0, 0.05)" },
+                ]}
+                textStyle={{ fontStyle: "italic" }}
               >
                 {currentWord.partOfSpeech}
               </Chip>
             </View>
-            
-            {/* Word Mastery Progress */}
+
             <View style={styles.masteryProgressContainer}>
-              { (
+              {
                 <View style={styles.simpleMasteryContainer}>
                   <View style={styles.masteryLevelContainer}>
-                    <Text variant="labelMedium" style={styles.masteryLabel}>Recognition</Text>
+                    <Text variant="labelMedium" style={styles.masteryLabel}>
+                      Recognition
+                    </Text>
                     <View style={styles.levelIndicatorRow}>
                       {[1, 2, 3, 4, 5].map((level) => (
-                        <View 
+                        <View
                           key={`recognition-${level}`}
                           style={[
                             styles.levelDot,
                             {
-                              backgroundColor: level <= (currentWord.wordProgress?.recognitionLevel || 0) 
-                                ? colors.primary 
-                                : withOpacity(colors.primary, 0.2)
-                            }
+                              backgroundColor:
+                                level <=
+                                (currentWord.wordProgress?.recognitionMasteryScore || 0)
+                                  ? colors.primary
+                                  : withOpacity(colors.primary, 0.2),
+                            },
                           ]}
                         />
                       ))}
-                      <Text variant="titleSmall" style={{color: colors.primary, marginLeft: 8}}>
-                        {currentWord.wordProgress?.recognitionLevel || 0}/5
+                      <Text
+                        variant="titleSmall"
+                        style={{ color: colors.primary, marginLeft: 8 }}
+                      >
+                        {currentWord.wordProgress?.recognitionMasteryScore || 0}/5
                       </Text>
                     </View>
                   </View>
-                  
+
                   <View style={styles.masteryLevelContainer}>
-                    <Text variant="labelMedium" style={styles.masteryLabel}>Usage</Text>
+                    <Text variant="labelMedium" style={styles.masteryLabel}>
+                      Usage
+                    </Text>
                     <View style={styles.levelIndicatorRow}>
                       {[1, 2, 3, 4, 5].map((level) => (
-                        <View 
+                        <View
                           key={`usage-${level}`}
                           style={[
                             styles.levelDot,
                             {
-                              backgroundColor: level <= (currentWord.wordProgress?.usageLevel || 0) 
-                                ? colors.secondary 
-                                : withOpacity(colors.secondary, 0.2)
-                            }
+                              backgroundColor:
+                                level <=
+                                (currentWord.wordProgress?.usageMasteryScore || 0)
+                                  ? colors.secondary
+                                  : withOpacity(colors.secondary, 0.2),
+                            },
                           ]}
                         />
                       ))}
-                      <Text variant="titleSmall" style={{color: colors.secondary, marginLeft: 8}}>
-                        {currentWord.wordProgress?.usageLevel || 0}/5
+                      <Text
+                        variant="titleSmall"
+                        style={{ color: colors.secondary, marginLeft: 8 }}
+                      >
+                        {currentWord.wordProgress?.usageMasteryScore || 0}/5
                       </Text>
                     </View>
                   </View>
                 </View>
-              )}
+              }
             </View>
-            
+
             <Divider style={styles.divider} />
-              
-            <Text variant="titleMedium" style={styles.sectionTitle}>Definition</Text>
-            <View style={[styles.definitionContainer, {backgroundColor: withOpacity(colors.onSurface, 0.05)}]}>
+
+            <Text variant="titleMedium" style={styles.sectionTitle}>
+              Definition
+            </Text>
+            <View
+              style={[
+                styles.definitionContainer,
+                { backgroundColor: withOpacity(colors.onSurface, 0.05) },
+              ]}
+            >
               <Text variant="bodyMedium" style={styles.definitionText}>
                 {currentWord.definition}
               </Text>
             </View>
-            
-            
+
             {currentWord.examples && currentWord.examples.length > 0 && (
               <View style={styles.section}>
-                <Text variant="titleMedium" style={styles.sectionTitle}>Examples</Text>
+                <Text variant="titleMedium" style={styles.sectionTitle}>
+                  Examples
+                </Text>
                 {currentWord.examples.slice(0, 2).map((example, index) => (
-                  <View key={index} style={[styles.exampleSurface, {backgroundColor:  withOpacity(colors.onSurface, 0.05)}]}>
+                  <View
+                    key={index}
+                    style={[
+                      styles.exampleSurface,
+                      { backgroundColor: withOpacity(colors.onSurface, 0.05) },
+                    ]}
+                  >
                     <Text variant="bodyMedium" style={styles.exampleText}>
                       "{example}"
                     </Text>
@@ -262,17 +314,27 @@ const FeedbackState = ({
                 ))}
               </View>
             )}
-            
+
             <View style={styles.wordRelationshipsContainer}>
-              {(currentWord.synonyms && currentWord.synonyms.length > 0) && (
+              {currentWord.synonyms && currentWord.synonyms.length > 0 && (
                 <View style={[styles.section, styles.halfSection]}>
-                  <Text variant="titleMedium" style={styles.sectionTitle}>Synonyms</Text>
+                  <Text variant="titleMedium" style={styles.sectionTitle}>
+                    Synonyms
+                  </Text>
                   <View style={styles.pillsContainer}>
                     {currentWord.synonyms.slice(0, 5).map((synonym, index) => (
-                      <Chip 
-                        key={index} 
-                        style={[styles.wordPill, {backgroundColor: withOpacity(colors.secondary, 0.15)}]}
-                        textStyle={{color: colors.secondary}}
+                      <Chip
+                        key={index}
+                        style={[
+                          styles.wordPill,
+                          {
+                            backgroundColor: withOpacity(
+                              colors.secondary,
+                              0.15
+                            ),
+                          },
+                        ]}
+                        textStyle={{ color: colors.secondary }}
                       >
                         {synonym}
                       </Chip>
@@ -280,16 +342,21 @@ const FeedbackState = ({
                   </View>
                 </View>
               )}
-              
-              {(currentWord.antonyms && currentWord.antonyms.length > 0) && (
+
+              {currentWord.antonyms && currentWord.antonyms.length > 0 && (
                 <View style={[styles.section, styles.halfSection]}>
-                  <Text variant="titleMedium" style={styles.sectionTitle}>Antonyms</Text>
+                  <Text variant="titleMedium" style={styles.sectionTitle}>
+                    Antonyms
+                  </Text>
                   <View style={styles.pillsContainer}>
                     {currentWord.antonyms.slice(0, 5).map((antonym, index) => (
-                      <Chip 
-                        key={index} 
-                        style={[styles.wordPill, {backgroundColor: withOpacity(colors.error, 0.15)}]}
-                        textStyle={{color: colors.error}}
+                      <Chip
+                        key={index}
+                        style={[
+                          styles.wordPill,
+                          { backgroundColor: withOpacity(colors.error, 0.15) },
+                        ]}
+                        textStyle={{ color: colors.error }}
                       >
                         {antonym}
                       </Chip>
@@ -298,11 +365,18 @@ const FeedbackState = ({
                 </View>
               )}
             </View>
-            
+
             {currentWord.etymology && (
               <View style={styles.section}>
-                <Text variant="titleMedium" style={styles.sectionTitle}>Etymology</Text>
-                <View style={[styles.etymologySurface, {backgroundColor:  withOpacity(colors.onSurface, 0.05)}]}>
+                <Text variant="titleMedium" style={styles.sectionTitle}>
+                  Etymology
+                </Text>
+                <View
+                  style={[
+                    styles.etymologySurface,
+                    { backgroundColor: withOpacity(colors.onSurface, 0.05) },
+                  ]}
+                >
                   <Text variant="bodyMedium" style={styles.etymologyText}>
                     {currentWord.etymology}
                   </Text>
@@ -312,116 +386,70 @@ const FeedbackState = ({
           </Card.Content>
         </Card>
 
-
-        {/* Practice Sentence Prompt */}
         {isCorrect && (
-          <Card style={[styles.practiceCard, { backgroundColor: colors.surface }]}>
-              <Card.Content>
-                <View style={styles.sentencePromptContainer}>
-                  <Text variant="titleMedium" style={[styles.promptTitle, { color: colors.primary }]}>
-                    Want to practice in a sentence?
-                  </Text>
-                  <View style={styles.sentencePromptButtons}>
-                    <Button
-                      mode="contained"
-                      onPress={() => {
-                        console.log("WILL IMPLEMENT");
-                      }}
-                      style={styles.sentencePromptButton}
-                      buttonColor={colors.primary}
-                      contentStyle={{ height: 48 }}
-                      icon="pencil"
-                    >
-                      Practice Now
-                    </Button>
-                  </View>
+          <Card
+            style={[styles.practiceCard, { backgroundColor: colors.surface }]}
+          >
+            <Card.Content>
+              <View style={styles.sentencePromptContainer}>
+                <Text
+                  variant="titleMedium"
+                  style={[styles.promptTitle, { color: colors.primary }]}
+                >
+                  Want to practice in a sentence?
+                </Text>
+                <View style={styles.sentencePromptButtons}>
+                  <Button
+                    mode="contained"
+                    onPress={() => {
+                      console.log("WILL IMPLEMENT");
+                    }}
+                    style={styles.sentencePromptButton}
+                    buttonColor={colors.primary}
+                    contentStyle={{ height: 48 }}
+                    icon="pencil"
+                  >
+                    Practice Now
+                  </Button>
                 </View>
-              </Card.Content>
-        
+              </View>
+            </Card.Content>
           </Card>
         )}
       </View>
 
-      {/* Using Portal to render FAB outside the scroll view context */}
       <Portal>
         <FAB
-          icon={currentIndex === numberOfWords - 1 ? "flag-checkered" : "arrow-right"}
-          label={currentIndex === numberOfWords - 1 ? "See Summary" : "Next Question"}
+          icon={
+            currentIndex === numberOfWords - 1
+              ? "flag-checkered"
+              : "arrow-right"
+          }
+          label={
+            currentIndex === numberOfWords - 1 ? "See Summary" : "Next Question"
+          }
           style={[
-            styles.fab, 
-            { 
+            styles.fab,
+            {
               backgroundColor: colors.primary,
-            }
+            },
           ]}
           onPress={handleNext}
           color="#fff"
           uppercase={false}
         />
       </Portal>
-    </Animated.View>
+    </ScrollView>
   );
 };
 
-export default FeedbackState;
+export default FeedbackScreen;
 
 const styles = StyleSheet.create({
   container: {
-    flex: 1,
-  },
-  scrollContent: {
-    padding: 20,
-    flexGrow: 1,
-  },
-  progressContainer: {
-    marginBottom: 20,
-  },
-  progressText: {
-    textAlign: "center",
-    marginBottom: 5,
-  },
-  progressBar: {
-    height: 8,
-    borderRadius: 4,
-  },
-  scoreText: {
-    textAlign: "center",
-    marginTop: 5,
-    fontWeight: "bold",
-  },
-  questionContainer: {
-    marginBottom: 20,
-  },
-  card: {
-    elevation: 4,
-  },
-  wordText: {
-    fontSize: 24,
-    fontWeight: "bold",
-    textAlign: "center",
-    marginBottom: 10,
-  },
-  questionText: {
-    fontSize: 18,
-    textAlign: "center",
-  },
-  optionsContainer: {
-    gap: 12,
-  },
-  optionButton: {
-    padding: 16,
-    borderRadius: 8,
-    minHeight: 50,
-    justifyContent: "center",
-    elevation: 2,
-  },
-  optionText: {
-    fontSize: 16,
-    textAlign: "center",
-    flexWrap: "wrap",
-  },
-  feedbackContainer: {
     marginTop: 20,
     marginBottom: 20,
+    padding: 16,
     flex: 1,
   },
   feedbackCard: {
@@ -444,7 +472,6 @@ const styles = StyleSheet.create({
     marginBottom: 12,
     elevation: 4,
     overflow: "hidden",
-
   },
   practiceCard: {
     width: "100%",
@@ -615,7 +642,6 @@ const styles = StyleSheet.create({
   definitionContainer: {
     padding: 12,
     borderRadius: 8,
-    
   },
   tagsContainer: {
     flexDirection: "row",
@@ -669,7 +695,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   fab: {
-    position: 'absolute',
+    position: "absolute",
     margin: 16,
     right: 16,
     bottom: 16,
@@ -682,19 +708,19 @@ const styles = StyleSheet.create({
     marginBottom: 8,
   },
   simpleMasteryContainer: {
-    flexDirection: 'column',
+    flexDirection: "column",
     gap: 8,
   },
   masteryLevelContainer: {
-    flexDirection: 'column',
+    flexDirection: "column",
   },
   masteryLabel: {
     marginBottom: 4,
     opacity: 0.7,
   },
   levelIndicatorRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
   },
   levelDot: {
     width: 10,

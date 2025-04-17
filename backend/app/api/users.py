@@ -3,26 +3,23 @@ from typing import List, Optional
 from app.middleware.auth import get_current_user
 from app.models.list import WordList
 from app.models.user import (
-    UserRegister,
-    UserLogin,
     User,
-    UserLoginResponse,
-    RefreshTokenRequest,
     UserListCreate,
     UserList,
+    WordProgress,
+    WordProgressUpdate,
+    UserStatsUpdate,
+    UserStats,
+    FullUserStats,
 )
 from app.models.base import Response
 from app.services.users import (
     get_user_service,
     UserService,
     UserNotFoundError,
-    UserAlreadyExistsError,
 )
 from app.api.errors import (
     USER_NOT_FOUND,
-    USERNAME_TAKEN,
-    EMAIL_TAKEN,
-    INVALID_CREDENTIALS,
     SERVER_ERROR,
 )
 
@@ -114,5 +111,223 @@ async def get_user_lists(
         return Response(
             success=False,
             message="Could not retrieve user lists due to an internal error",
+            error_code=SERVER_ERROR,
+        )
+
+
+@router.put("/progress/words/{word_id}")
+async def update_word_progress(
+    word_id: int,
+    progress_data: WordProgressUpdate,
+    user_service: UserService = Depends(get_user_service),
+    current_user: Optional[User] = Depends(get_current_user),
+) -> Response[WordProgress]:
+    try:
+        if current_user is None:
+            return Response(
+                success=False,
+                message="Authentication required",
+                error_code=SERVER_ERROR,
+            )
+
+        progress_data.word_id = word_id
+
+        updated_progress = await user_service.update_word_progress(
+            current_user.id, progress_data
+        )
+
+        return Response(
+            success=True,
+            message="Word progress updated successfully",
+            payload=updated_progress,
+        )
+    except Exception as e:
+        print(f"Error updating word progress: {e}")
+        import traceback
+
+        print(traceback.format_exc())
+        return Response(
+            success=False,
+            message="Could not update word progress due to an internal error",
+            error_code=SERVER_ERROR,
+        )
+
+
+@router.get("/stats")
+async def get_user_stats(
+    user_service: UserService = Depends(get_user_service),
+    current_user: Optional[User] = Depends(get_current_user),
+) -> Response[FullUserStats]:
+    """
+    Get a user's stats with all the details needed for the frontend.
+    Includes diamonds, streak, daily progress, and learning insights.
+    """
+    try:
+        if current_user is None:
+            return Response(
+                success=False,
+                message="Authentication required",
+                error_code=SERVER_ERROR,
+            )
+
+        user_stats = await user_service.get_user_stats(current_user.id)
+        return Response(
+            success=True,
+            message="User stats retrieved successfully",
+            payload=user_stats,
+        )
+    except Exception as e:
+        print(f"Error retrieving user stats: {e}")
+        import traceback
+
+        print(traceback.format_exc())
+        return Response(
+            success=False,
+            message="Could not retrieve user stats due to an internal error",
+            error_code=SERVER_ERROR,
+        )
+
+
+@router.put("/stats")
+async def update_user_stats(
+    stats_data: UserStatsUpdate,
+    user_service: UserService = Depends(get_user_service),
+    current_user: Optional[User] = Depends(get_current_user),
+) -> Response[UserStats]:
+    """
+    Update a user's stats directly.
+    """
+    try:
+        if current_user is None:
+            return Response(
+                success=False,
+                message="Authentication required",
+                error_code=SERVER_ERROR,
+            )
+
+        updated_stats = await user_service.update_user_stats(
+            current_user.id, stats_data
+        )
+        return Response(
+            success=True,
+            message="User stats updated successfully",
+            payload=updated_stats,
+        )
+    except Exception as e:
+        print(f"Error updating user stats: {e}")
+        import traceback
+
+        print(traceback.format_exc())
+        return Response(
+            success=False,
+            message="Could not update user stats due to an internal error",
+            error_code=SERVER_ERROR,
+        )
+
+
+@router.put("/stats/diamonds/{amount}")
+async def add_diamonds(
+    amount: int,
+    user_service: UserService = Depends(get_user_service),
+    current_user: Optional[User] = Depends(get_current_user),
+) -> Response[UserStats]:
+    """
+    Add diamonds to a user's account.
+    """
+    try:
+        if current_user is None:
+            return Response(
+                success=False,
+                message="Authentication required",
+                error_code=SERVER_ERROR,
+            )
+
+        updated_stats = await user_service.increment_diamonds(current_user.id, amount)
+        return Response(
+            success=True,
+            message=f"Added {amount} diamonds successfully",
+            payload=updated_stats,
+        )
+    except Exception as e:
+        print(f"Error adding diamonds: {e}")
+        import traceback
+
+        print(traceback.format_exc())
+        return Response(
+            success=False,
+            message="Could not add diamonds due to an internal error",
+            error_code=SERVER_ERROR,
+        )
+
+
+@router.put("/stats/streak/update")
+async def update_streak(
+    user_service: UserService = Depends(get_user_service),
+    current_user: Optional[User] = Depends(get_current_user),
+) -> Response[UserStats]:
+    """
+    Update a user's streak based on their activity.
+    """
+    try:
+        if current_user is None:
+            return Response(
+                success=False,
+                message="Authentication required",
+                error_code=SERVER_ERROR,
+            )
+
+        updated_stats = await user_service.update_user_streak(current_user.id)
+        return Response(
+            success=True,
+            message="Streak updated successfully",
+            payload=updated_stats,
+        )
+    except Exception as e:
+        print(f"Error updating streak: {e}")
+        import traceback
+
+        print(traceback.format_exc())
+        return Response(
+            success=False,
+            message="Could not update streak due to an internal error",
+            error_code=SERVER_ERROR,
+        )
+
+
+@router.post("/practice-session")
+async def record_practice_session(
+    practice_time: int,
+    session_type: str,
+    user_service: UserService = Depends(get_user_service),
+    current_user: Optional[User] = Depends(get_current_user),
+) -> Response:
+    """
+    Record a practice session with time spent.
+    """
+    try:
+        if current_user is None:
+            return Response(
+                success=False,
+                message="Authentication required",
+                error_code=SERVER_ERROR,
+            )
+
+        # Add a method to user_service to handle this
+        await user_service.record_practice_session(
+            current_user.id, practice_time, session_type
+        )
+
+        return Response(
+            success=True,
+            message="Practice session recorded successfully",
+        )
+    except Exception as e:
+        print(f"Error recording practice session: {e}")
+        import traceback
+
+        print(traceback.format_exc())
+        return Response(
+            success=False,
+            message="Could not record practice session due to an internal error",
             error_code=SERVER_ERROR,
         )
