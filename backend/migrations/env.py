@@ -2,8 +2,18 @@ from logging.config import fileConfig
 from sqlalchemy import engine_from_config
 from sqlalchemy import pool
 from alembic import context
+import os
+from dotenv import load_dotenv
+
+# Load environment variables
+load_dotenv()
 
 config = context.config
+
+# Override sqlalchemy.url with environment variable
+db_url = os.getenv("DATABASE_URL")
+if db_url:
+    config.set_main_option("sqlalchemy.url", db_url)
 
 if config.config_file_name is not None:
     fileConfig(config.config_file_name)

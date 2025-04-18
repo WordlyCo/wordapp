@@ -13,4 +13,12 @@ COPY . .
 
 EXPOSE 8000
 
-CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000"]
+# Create a startup script
+RUN echo '#!/bin/bash\n\
+echo "Running migrations..."\n\
+alembic upgrade head\n\
+echo "Starting app..."\n\
+uvicorn app.main:app --host 0.0.0.0 --port 8000\n\
+' > /code/start.sh && chmod +x /code/start.sh
+
+CMD ["/code/start.sh"]
