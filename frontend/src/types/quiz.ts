@@ -1,29 +1,27 @@
-import { Word } from "@/src/types/words";
-
-export type QuizType = "mcq";
-
-export type Question = {
-  id: number;
-  createdAt: string;
-  updatedAt: string;
-  word: Word;
-  type: QuizType;
-  question: string;
-  options: QuestionOption[];
-  correctAnswerIds: number[];
-};
-
-export type QuestionOption = {
-  id: number;
-  createdAt: string;
-  updatedAt: string;
-  questionId: number;
-  option: string;
-};
-
+export type QuizType = "multiple_choice" | "true_false" | "fill_in_the_blank";
+ 
 export type Quiz = {
   id: number;
   createdAt: string;
   updatedAt: string;
-  questions: Question[];
+  wordId: number;
+  quizType: QuizType;
+  question: string;
+  options: string[];
+  correctOptions: string[];
+  quizStats: QuizStats;
 };
+
+export type QuizRequest = {
+  wordIds: number[];
+};
+
+export type QuizStats = {
+  currentIndex: number;
+  score: number;
+  selectedAnswer: string;
+  startTime: number;
+  correctAnswers: number;
+  totalTime: number;
+  answerResults: Record<number, boolean>;
+}

@@ -1,8 +1,17 @@
 import { StateCreator } from "zustand";
-import { categories } from "../mockData";
 import { authFetch } from "@/lib/api";
 import { WordListCategory, WordList } from "@/src/types/lists";
-import { Quiz } from "@/src/types/quiz";
+import { Word, WordProgressUpdate } from "@/src/types/words";
+
+type QuizStats = {
+  currentIndex: number;
+  score: number;
+  selectedAnswer: string;
+  startTime: number;
+  correctAnswers: number;
+  totalTime: number;
+  answerResults: Record<number, boolean>;
+};
 export interface GameSlice {
   isLoading: boolean;
   isFetchingCategories: boolean;
@@ -21,15 +30,41 @@ export interface GameSlice {
     totalPages: number;
   };
   userLists: WordList[];
-  currentQuiz: Quiz | null;
+  quizWords: Word[];
+  quizWordsError: string | null;
+  quizStats: QuizStats;
+  userStats: {
+    diamonds: number;
+    streak: number;
+    lastActive: Date | null;
+    dailyProgress: {
+      wordsPracticed: number;
+      totalWordsGoal: number;
+      practiceTime: number; // in minutes
+      practiceTimeGoal: number; // in minutes
+    };
+    learningInsights: {
+      wordsMastered: number;
+      accuracy: number; // percentage
+    };
+  };
   fetchCategories: () => Promise<void>;
   fetchCategory: (id: string) => Promise<void>;
   fetchList: (id: string) => Promise<void>;
   fetchListsByCategory: (id: string) => Promise<void>;
   fetchWordLists: (page: number, perPage: number) => Promise<void>;
-  addListToUserLists: (listId: string) => Promise<void>;
+  addListToUserLists: (listId: string) => Promise<string | void>;
+  removeListFromUserLists: (listId: string) => Promise<string | void>;
   fetchUserLists: () => Promise<void>;
-  initializeQuiz: () => void;
+  fetchDailyQuiz: () => Promise<void>;
+  setQuizStats: (newState: QuizStats) => Promise<void>;
+  setQuizWords: (newState: Word[]) => Promise<void>;
+  updateWordProgress: (wordProgress: WordProgressUpdate) => Promise<void>;
+  updateDiamonds: (amount: number) => void;
+  updateStreak: () => void;
+  fetchUserStats: () => Promise<void>;
+  updatePracticeTime: (minutes: number) => void;
+  updateAccuracy: (correct: boolean) => void;
 }
 
 export const createGameSlice: StateCreator<GameSlice> = (set, get) => ({
@@ -50,62 +85,109 @@ export const createGameSlice: StateCreator<GameSlice> = (set, get) => ({
   selectedListsByCategory: [],
   isFetchingListsByCategory: false,
   userLists: [],
-  currentQuiz: null,
+  quizWords: [],
+  quizWordsError: null,
+  quizStats: {
+    currentIndex: 0,
+    score: 0,
+    selectedAnswer: "",
+    startTime: 0,
+    correctAnswers: 0,
+    totalTime: 0,
+    answerResults: {},
+  },
+  userStats: {
+    diamonds: 0,
+    streak: 0,
+    lastActive: null,
+    dailyProgress: {
+      wordsPracticed: 0,
+      totalWordsGoal: 10,
+      practiceTime: 0,
+      practiceTimeGoal: 30,
+    },
+    learningInsights: {
+      wordsMastered: 0,
+      accuracy: 0,
+    },
+  },
 
-  initializeQuiz: () => {
-    const mockQuiz: Quiz = {
-      id: 1,
-      createdAt: "2021-01-01",
-      updatedAt: "2021-01-01",
-      questions: [
+  setQuizWords: async (newState: Word[]) => {
+    set({ quizWords: newState });
+  },
+
+  setQuizStats: async (newState) => {
+    set({ quizStats: newState });
+  },
+
+  updateWordProgress: async (wordProgress: WordProgressUpdate) => {
+    try {
+      const response = await authFetch(
+        `/users/progress/words/${wordProgress.wordId}`,
         {
-          id: 1,
-          word: {
-            id: "1",
-            createdAt: new Date("2021-01-01"),
-            updatedAt: new Date("2021-01-01"),
-            word: "hello",
-            definition: "a greeting",
-            difficultyLevel: "beginner",
-            partOfSpeech: "noun",
-            synonyms: ["hi", "hey", "greeting"],
-            antonyms: ["bye", "goodbye", "farewell"],
-            examples: ["Hello, how are you?", "Hello, my name is John."],
-            usageNotes: "Hello is a common greeting used in English.",
-            tags: ["word", "greeting"],
-            audioUrl: "https://example.com/hello.mp3",
-            imageUrl: "https://example.com/hello.jpg",
-            wordProgress: {
-              id: "1",
-              createdAt: new Date("2021-01-01"),
-              updatedAt: new Date("2021-01-01"),
-              userId: "1",
-              wordId: "1",
-              recognitionLevel: 0,
-              usageLevel: 0,
-              masteryScore: 0,
-              practiceCount: 0,
-              successCount: 0,
+          method: "PUT",
+          body: JSON.stringify(wordProgress),
+        }
+      );
+
+      const data = await response.json();
+      const success = data.success;
+      const message = data.message;
+
+      if (!success) {
+        console.error("Failed to update word progress:", message);
+        return;
+      }
+
+      const state = get();
+      const updatedQuizWords = [...state.quizWords];
+
+      const wordIndex = updatedQuizWords.findIndex(
+        (word) => word.id === wordProgress.wordId
+      );
+
+      if (wordIndex !== -1) {
+        updatedQuizWords[wordIndex] = {
+          ...updatedQuizWords[wordIndex],
+          wordProgress: {
+            ...updatedQuizWords[wordIndex].wordProgress,
+            ...wordProgress,
+          },
+        };
+
+        set({ quizWords: updatedQuizWords });
+
+        const { userStats } = get();
+        set({
+          userStats: {
+            ...userStats,
+            dailyProgress: {
+              ...userStats.dailyProgress,
+              wordsPracticed: userStats.dailyProgress.wordsPracticed + 1,
             },
           },
-          type: "mcq",
-          question: "What is the definition of hello?",
-          options: [
-            {
-              id: 1,
-              createdAt: "2021-01-01",
-              updatedAt: "2021-01-01",
-              option: "a greeting",
-              questionId: 1,
+        });
+
+        const recognitionScore = wordProgress.recognitionMasteryScore;
+        const previousScore =
+          updatedQuizWords[wordIndex].wordProgress?.recognitionMasteryScore ||
+          0;
+
+        if (recognitionScore && recognitionScore >= 3 && previousScore < 3) {
+          set({
+            userStats: {
+              ...userStats,
+              learningInsights: {
+                ...userStats.learningInsights,
+                wordsMastered: userStats.learningInsights.wordsMastered + 1,
+              },
             },
-          ],
-          correctAnswerIds: [1],
-          createdAt: "2021-01-01",
-          updatedAt: "2021-01-01",
-        },
-      ],
-    };
-    set({ currentQuiz: mockQuiz });
+          });
+        }
+      }
+    } catch (error) {
+      console.error("Error updating word progress:", error);
+    }
   },
 
   fetchUserLists: async () => {
@@ -128,6 +210,7 @@ export const createGameSlice: StateCreator<GameSlice> = (set, get) => ({
   },
 
   addListToUserLists: async (listId: string) => {
+    const state = get();
     try {
       const response = await authFetch(`/users/lists`, {
         method: "POST",
@@ -136,14 +219,48 @@ export const createGameSlice: StateCreator<GameSlice> = (set, get) => ({
 
       const data = await response.json();
       const success = data.success;
-      const message = data.message;
+      const errorCode = data.errorCode;
 
       if (!success) {
-        console.error("Failed to add list to user lists:", message);
-        return;
+        return errorCode;
       }
+
+      const newSelectedList = state.selectedList
+        ? { ...state.selectedList, inUsersBank: true }
+        : null;
+
+      set({ selectedList: newSelectedList });
+      await get().fetchUserLists();
     } catch (error) {
       console.error("Error adding list to user lists:", error);
+    }
+  },
+
+  removeListFromUserLists: async (listId: string) => {
+    const state = get();
+    try {
+      const response = await authFetch(`/users/lists/${listId}`, {
+        method: "DELETE",
+      });
+
+      const data = await response.json();
+      const success = data.success;
+      const message = data.message;
+      const errorCode = data.errorCode;
+
+      if (!success) {
+        console.error("Failed to remove list from user lists:", message);
+        return errorCode;
+      }
+
+      const newSelectedList = state.selectedList
+        ? { ...state.selectedList, inUsersBank: false }
+        : null;
+
+      set({ selectedList: newSelectedList });
+      await get().fetchUserLists();
+    } catch (error) {
+      console.error("Error removing list from user lists:", error);
     }
   },
 
@@ -151,7 +268,7 @@ export const createGameSlice: StateCreator<GameSlice> = (set, get) => ({
     set({ isFetchingWordLists: true });
     try {
       const response = await authFetch(
-        `/lists?page=${page}&per_page=${perPage}`
+        `/lists/?page=${page}&per_page=${perPage}`
       );
       const data = await response.json();
       const success = data.success;
@@ -231,8 +348,6 @@ export const createGameSlice: StateCreator<GameSlice> = (set, get) => ({
 
       if (!success) {
         console.error("Failed to fetch categories:", message);
-        // Fall back to mock data if API fails
-        set({ categories: categories });
         return;
       }
 
@@ -241,8 +356,6 @@ export const createGameSlice: StateCreator<GameSlice> = (set, get) => ({
       set({ categories: items });
     } catch (error) {
       console.error("Error fetching categories:", error);
-      // Fall back to mock data if API errors
-      set({ categories: categories });
     } finally {
       set({ isFetchingCategories: false });
     }
@@ -254,23 +367,172 @@ export const createGameSlice: StateCreator<GameSlice> = (set, get) => ({
       const response = await authFetch(`/lists/categories/${id}`);
       const data = await response.json();
       const success = data.success;
+      const message = data.message;
+      const payload = data.payload;
 
-      if (success) {
-        set({ selectedCategory: data.payload });
-      } else {
-        // Fall back to mock data if API fails
-        set({
-          selectedCategory: categories.find((category) => category.id === id),
-        });
+      if (!success) {
+        console.error("Failed to fetch category:", message);
+        return;
       }
+
+      set({ selectedCategory: payload });
     } catch (error) {
       console.error("Error fetching category:", error);
-      // Fall back to mock data
-      set({
-        selectedCategory: categories.find((category) => category.id === id),
-      });
     } finally {
       set({ isLoading: false });
+    }
+  },
+
+  fetchDailyQuiz: async () => {
+    set({ quizWordsError: null });
+    try {
+      const response = await authFetch("/quizzes/daily-quiz");
+      const data = await response.json();
+      const success = data.success;
+      const payload = data.payload;
+
+      if (!success) {
+        set({ quizWordsError: "No daily quiz found" });
+        return;
+      }
+
+      console.log("Daily quiz:", payload);
+
+      set({ quizWords: payload });
+    } catch (error) {
+      console.error("Error fetching daily quiz:", error);
+      set({ quizWordsError: "Error fetching daily quiz" });
+    }
+  },
+
+  updateDiamonds: async (amount: number) => {
+    const { userStats } = get();
+
+    set({
+      userStats: {
+        ...userStats,
+        diamonds: userStats.diamonds + amount,
+      },
+    });
+
+    try {
+      await authFetch(`/users/stats/diamonds/${amount}`, {
+        method: "PUT",
+      });
+    } catch (error) {
+      console.error("Error updating diamonds:", error);
+    }
+  },
+
+  updateStreak: async () => {
+    try {
+      const response = await authFetch("/users/stats/streak/update", {
+        method: "PUT",
+      });
+
+      const data = await response.json();
+      if (data.success) {
+        await get().fetchUserStats();
+      }
+    } catch (error) {
+      console.error("Error updating streak:", error);
+    }
+  },
+
+  fetchUserStats: async () => {
+    try {
+      const response = await authFetch("/users/stats");
+      const data = await response.json();
+      const success = data.success;
+      const message = data.message;
+      const payload = data.payload;
+
+      console.log("User stats:", payload);
+      if (!success) {
+        console.error("Failed to fetch user stats:", message);
+        return;
+      }
+
+      set({ userStats: payload });
+    } catch (error) {
+      console.error("Error fetching user stats:", error);
+      const { userStats } = get();
+      if (!userStats.lastActive) {
+        set({
+          userStats: {
+            ...userStats,
+            lastActive: new Date(),
+            dailyProgress: {
+              wordsPracticed: 0,
+              totalWordsGoal: 10,
+              practiceTime: 0,
+              practiceTimeGoal: 30,
+            },
+            learningInsights: {
+              wordsMastered: 0,
+              accuracy: 0,
+            },
+          },
+        });
+      }
+    }
+  },
+
+  updatePracticeTime: async (minutes: number) => {
+    const { userStats } = get();
+
+    set({
+      userStats: {
+        ...userStats,
+        dailyProgress: {
+          ...userStats.dailyProgress,
+          practiceTime: userStats.dailyProgress.practiceTime + minutes,
+        },
+      },
+    });
+
+    try {
+      await authFetch(
+        `/users/practice-session?practice_time=${minutes}&session_type=quiz`,
+        {
+          method: "POST",
+        }
+      );
+    } catch (error) {
+      console.error("Error recording practice time:", error);
+    }
+  },
+
+  updateAccuracy: async (correct: boolean) => {
+    const { userStats } = get();
+    const totalAttempts = Object.keys(get().quizStats.answerResults).length;
+    const correctAnswers = Object.values(get().quizStats.answerResults).filter(
+      (result) => result === true
+    ).length;
+    const newAccuracy =
+      totalAttempts > 0
+        ? Math.round((correctAnswers / totalAttempts) * 100)
+        : 0;
+
+    set({
+      userStats: {
+        ...userStats,
+        learningInsights: {
+          ...userStats.learningInsights,
+          accuracy: newAccuracy,
+        },
+      },
+    });
+
+    try {
+      await authFetch("/users/stats", {
+        method: "PUT",
+        body: JSON.stringify({
+          average_accuracy: newAccuracy,
+        }),
+      });
+    } catch (error) {
+      console.error("Error updating accuracy:", error);
     }
   },
 });

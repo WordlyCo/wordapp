@@ -1,39 +1,10 @@
 import { View, StyleSheet, Image } from "react-native";
-import { Text, Card, IconButton, Chip } from "react-native-paper";
+import { Text, Card, IconButton } from "react-native-paper";
 import useTheme from "@/src/hooks/useTheme";
 import { WordList } from "@/src/types/lists";
 import MaterialCommunityIcons from "@expo/vector-icons/MaterialCommunityIcons";
 import { DIFFICULTY_LEVELS } from "@/src/stores/enums";
 
-// Helper function to get appropriate icon for category
-const getCategoryIcon = (
-  category: string
-): keyof typeof MaterialCommunityIcons.glyphMap => {
-  switch (category) {
-    case "education":
-      return "school";
-    case "business":
-      return "briefcase";
-    case "medical":
-      return "medical-bag";
-    case "technology":
-      return "laptop";
-    case "literature":
-      return "book-open-page-variant";
-    case "legal":
-      return "scale-balance";
-    case "general":
-      return "comment-text-outline";
-    case "academic":
-      return "school";
-    case "creative":
-      return "brush";
-    default:
-      return "book-open-variant";
-  }
-};
-
-// Helper function to get difficulty color
 const getDifficultyColor = (difficulty: string, colors: any) => {
   switch (difficulty) {
     case DIFFICULTY_LEVELS.BEGINNER:

@@ -1,5 +1,5 @@
 import useTheme from "@/src/hooks/useTheme";
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   View,
   StyleSheet,
@@ -8,52 +8,99 @@ import {
   TouchableOpacity,
   Image,
 } from "react-native";
-import { Text, Divider, TextInput, Button } from "react-native-paper";
+import {
+  Text,
+  Divider,
+  TextInput,
+  Button,
+  ActivityIndicator,
+} from "react-native-paper";
 import FontAwesome from "@expo/vector-icons/FontAwesome";
 import { useStore } from "@/src/stores/store";
+import { useUser } from "@clerk/clerk-expo";
 import { PROFILE_BACKGROUND_COLORS } from "@/constants/profileColors";
-
-// Import local headshot image
-const headshotImage = require("@/assets/images/headshot.png");
+import * as ImagePicker from "expo-image-picker";
+import * as FileSystem from "expo-file-system";
+import { MaterialCommunityIcons } from "@expo/vector-icons";
 
 const AccountSettingsScreen = () => {
   const { colors } = useTheme();
   const updatePreferences = useStore((state) => state.updatePreferences);
   const preferences = useStore((state) => state.preferences);
-
-  const [displayName, setDisplayName] = useState("John Doe");
+  const { user, isLoaded } = useUser();
+  const [firstName, setFirstName] = useState("");
+  const [lastName, setLastName] = useState("");
   const [username, setUsername] = useState("johndoe");
   const [email, setEmail] = useState("john.doe@example.com");
-  const [phone, setPhone] = useState("+1 234 567 8900");
-
-  // State for revealing masked fields
+  const [profileImage, setProfileImage] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null);
+  const [bio, setBio] = useState("");
   const [revealEmail, setRevealEmail] = useState(false);
-  const [revealPhone, setRevealPhone] = useState(false);
 
-  // Get current profile background color index
   const [selectedColorIndex, setSelectedColorIndex] = useState(
     preferences?.profileBackgroundColorIndex ?? 0
   );
 
-  // Function to mask email
   const maskEmail = (email: string) => {
     if (!email || !email.includes("@")) return email;
     const [username, domain] = email.split("@");
     return "•".repeat(username.length) + "@" + domain;
   };
 
-  // Function to mask phone number
-  const maskPhone = (phone: string) => {
-    if (!phone || phone.length < 4) return phone;
-    const lastFourDigits = phone.slice(-4);
-    return "•".repeat(phone.length - 4) + lastFourDigits;
-  };
+  const handleSave = async () => {
+    if (profileImage) {
+      await uploadProfileImage();
+    }
 
-  const handleSave = () => {
-    // Save user preferences including color
     updatePreferences({
       profileBackgroundColorIndex: selectedColorIndex,
     });
+    user?.update({
+      firstName,
+      lastName,
+    });
+  };
+
+  const pickImage = async () => {
+    const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
+
+    if (status !== "granted") {
+      setError("Permission to access media library is required");
+      return;
+    }
+
+    const result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ImagePicker.MediaTypeOptions.Images,
+      allowsEditing: true,
+      aspect: [1, 1],
+      quality: 0.5,
+    });
+
+    if (!result.canceled && result.assets && result.assets.length > 0) {
+      setProfileImage(result.assets[0].uri);
+    }
+  };
+
+  const uploadProfileImage = async (): Promise<string | null> => {
+    if (!profileImage) return null;
+
+    try {
+      const base64Image = await FileSystem.readAsStringAsync(profileImage, {
+        encoding: FileSystem.EncodingType.Base64,
+      });
+
+      const imageType = profileImage.endsWith(".png") ? "png" : "jpeg";
+      const formattedBase64 = `data:image/${imageType};base64,${base64Image}`;
+
+      await user?.setProfileImage({
+        file: formattedBase64,
+      });
+
+      return profileImage;
+    } catch (error) {
+      console.error("Error uploading profile image:", error);
+      throw error;
+    }
   };
 
   const renderColorItem = ({
@@ -77,6 +124,25 @@ const AccountSettingsScreen = () => {
     </TouchableOpacity>
   );
 
+  useEffect(() => {
+    if (isLoaded) {
+      setFirstName(user?.firstName ?? "");
+      setLastName(user?.lastName ?? "");
+      setEmail(user?.emailAddresses[0].emailAddress ?? "");
+      setUsername(user?.username ?? "");
+      setProfileImage(user?.imageUrl ?? null);
+      // setBio(user?.unsafeMetadata?.bio ?? "");
+    }
+  }, [isLoaded]);
+
+  if (!isLoaded) {
+    return (
+      <View style={styles.container}>
+        <ActivityIndicator size="large" color={colors.primary} />
+      </View>
+    );
+  }
+
   return (
     <ScrollView
       style={[styles.container, { backgroundColor: colors.background }]}
@@ -86,12 +152,27 @@ const AccountSettingsScreen = () => {
         <View
           style={[
             styles.avatarContainer,
-            { backgroundColor: colors.primaryContainer },
+            { backgroundColor: colors.onBackground },
           ]}
         >
-          <Image source={headshotImage} style={styles.avatar} />
+          {profileImage ? (
+            <Image
+              source={{ uri: profileImage }}
+              style={[styles.avatar, { backgroundColor: colors.onBackground }]}
+            />
+          ) : (
+            <MaterialCommunityIcons
+              name="account"
+              size={80}
+              color={colors.primary}
+            />
+          )}
         </View>
-        <Button mode="outlined" style={styles.changePhotoButton}>
+        <Button
+          mode="outlined"
+          style={styles.changePhotoButton}
+          onPress={pickImage}
+        >
           Change Photo
         </Button>
       </View>
@@ -101,19 +182,36 @@ const AccountSettingsScreen = () => {
       {/* Edit Profile Section */}
       <View style={styles.inputSection}>
         <TextInput
-          label="DISPLAY NAME"
-          value={displayName}
-          onChangeText={setDisplayName}
-          mode="outlined"
-          style={styles.input}
-        />
-        <TextInput
           label="USERNAME"
           value={username}
           onChangeText={setUsername}
           mode="outlined"
           style={styles.input}
         />
+        <TextInput
+          label="First Name"
+          value={firstName}
+          onChangeText={setFirstName}
+          mode="outlined"
+          style={styles.input}
+        />
+        <TextInput
+          label="Last Name"
+          value={lastName}
+          onChangeText={setLastName}
+          mode="outlined"
+          style={styles.input}
+        />
+        <TextInput
+          label="Bio"
+          value={bio}
+          onChangeText={setBio}
+          multiline={true}
+          numberOfLines={5}
+          mode="outlined"
+          style={styles.input}
+        />
+
         <View style={styles.sensitiveFieldWrapper}>
           <TextInput
             label="EMAIL"
@@ -126,21 +224,6 @@ const AccountSettingsScreen = () => {
           <TouchableOpacity onPress={() => setRevealEmail(!revealEmail)}>
             <Text style={[styles.revealText, { color: colors.primary }]}>
               {revealEmail ? "Hide" : "Reveal"}
-            </Text>
-          </TouchableOpacity>
-        </View>
-        <View style={styles.sensitiveFieldWrapper}>
-          <TextInput
-            label="PHONE NUMBER"
-            value={revealPhone ? phone : maskPhone(phone)}
-            onChangeText={setPhone}
-            mode="outlined"
-            style={styles.input}
-            keyboardType="phone-pad"
-          />
-          <TouchableOpacity onPress={() => setRevealPhone(!revealPhone)}>
-            <Text style={[styles.revealText, { color: colors.primary }]}>
-              {revealPhone ? "Hide" : "Reveal"}
             </Text>
           </TouchableOpacity>
         </View>
@@ -193,6 +276,7 @@ const styles = StyleSheet.create({
   },
   inputSection: {
     padding: 20,
+    gap: 15,
   },
   input: {
     marginBottom: 5,

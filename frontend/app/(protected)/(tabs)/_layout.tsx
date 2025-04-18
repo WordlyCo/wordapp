@@ -3,10 +3,15 @@ import { StyleSheet, View, Text, Platform } from "react-native";
 import { Tabs } from "expo-router";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
 import useTheme from "@/src/hooks/useTheme";
+import { useTheme as usePaperTheme } from "react-native-paper";
 import Animated, { FadeInDown } from "react-native-reanimated";
 import { SafeAreaView } from "react-native-safe-area-context";
+import { useStore } from "@/src/stores/store";
+
 export default function AppLayout() {
   const { colors } = useTheme();
+  const { dark } = usePaperTheme();
+  const diamonds = useStore((state) => state.userStats.diamonds);
 
   return (
     <View style={{ flex: 1 }}>
@@ -82,16 +87,23 @@ export default function AppLayout() {
                 entering={FadeInDown.duration(600).springify()}
                 style={styles.headerContainer}
               >
-                <View style={styles.headerIconContainer}>
-                  <MaterialCommunityIcons
-                    name="home"
-                    size={24}
-                    color={colors.primary}
-                  />
+                <View style={{ flexDirection: "row", alignItems: "center" }}>
+                  <View style={styles.headerIconContainer}>
+                    <MaterialCommunityIcons
+                      name="home"
+                      size={24}
+                      color={dark ? colors.onSurface : colors.primary}
+                    />
+                  </View>
+                  <Text
+                    style={[
+                      styles.headerText,
+                      { color: dark ? colors.onSurface : colors.primary },
+                    ]}
+                  >
+                    Home
+                  </Text>
                 </View>
-                <Text style={[styles.headerText, { color: colors.primary }]}>
-                  Home
-                </Text>
               </Animated.View>
             ),
             headerStyle: {
@@ -119,10 +131,15 @@ export default function AppLayout() {
                   <MaterialCommunityIcons
                     name="book"
                     size={24}
-                    color={colors.primary}
+                    color={dark ? colors.onSurface : colors.primary}
                   />
                 </View>
-                <Text style={[styles.headerText, { color: colors.primary }]}>
+                <Text
+                  style={[
+                    styles.headerText,
+                    { color: dark ? colors.onSurface : colors.primary },
+                  ]}
+                >
                   Word Store
                 </Text>
               </Animated.View>
@@ -152,10 +169,15 @@ export default function AppLayout() {
                   <MaterialCommunityIcons
                     name="chart-line-stacked"
                     size={24}
-                    color={colors.primary}
+                    color={dark ? colors.onSurface : colors.primary}
                   />
                 </View>
-                <Text style={[styles.headerText, { color: colors.primary }]}>
+                <Text
+                  style={[
+                    styles.headerText,
+                    { color: dark ? colors.onSurface : colors.primary },
+                  ]}
+                >
                   Progress
                 </Text>
               </Animated.View>
@@ -185,10 +207,15 @@ export default function AppLayout() {
                   <MaterialCommunityIcons
                     name="bank"
                     size={24}
-                    color={colors.primary}
+                    color={dark ? colors.onSurface : colors.primary}
                   />
                 </View>
-                <Text style={[styles.headerText, { color: colors.primary }]}>
+                <Text
+                  style={[
+                    styles.headerText,
+                    { color: dark ? colors.onSurface : colors.primary },
+                  ]}
+                >
                   Word Bank
                 </Text>
               </Animated.View>
@@ -233,7 +260,6 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     alignItems: "center",
     backgroundColor: "rgba(0, 0, 0, 0.03)",
-    marginRight: 12,
   },
   headerText: {
     fontSize: 24,

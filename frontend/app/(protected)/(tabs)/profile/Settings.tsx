@@ -1,17 +1,24 @@
 import React from "react";
-import { View, StyleSheet, ScrollView, TouchableOpacity } from "react-native";
-import { Text, Divider } from "react-native-paper";
+import {
+  View,
+  StyleSheet,
+  ScrollView,
+  TouchableOpacity,
+  Alert,
+} from "react-native";
+import { Text } from "react-native-paper";
 import { useRouter } from "expo-router";
 
 import useTheme from "@/src/hooks/useTheme";
 import MaterialCommunityIcons from "@expo/vector-icons/MaterialCommunityIcons";
-import { useStore } from "@/src/stores/store";
 import { useAuth } from "@/src/contexts/AuthContext";
+import { useStore } from "@/src/stores/store";
 
 const SettingsScreen = () => {
   const router = useRouter();
   const { colors } = useTheme();
   const { logout } = useAuth();
+  const setHasOnboarded = useStore((state) => state.setHasOnboarded);
 
   const renderSettingItem = (
     icon: keyof typeof MaterialCommunityIcons.glyphMap,
@@ -32,9 +39,17 @@ const SettingsScreen = () => {
   const handleLogout = async () => {
     try {
       await logout();
-      // Navigation is handled in the logout function
     } catch (error) {
       console.error("Logout failed:", error);
+    }
+  };
+
+  const handleResetOnboarding = async () => {
+    try {
+      setHasOnboarded(false);
+      handleLogout();
+    } catch (error) {
+      console.error("Reset onboarding failed:", error);
     }
   };
 
@@ -61,14 +76,11 @@ const SettingsScreen = () => {
             router.push("/(protected)/(tabs)/profile/AccountSettings")
           )}
           {renderSettingItem(
-            "shield-account",
-            "Security",
-            () => {} // Add navigation to Security screen when available
-          )}
-          {renderSettingItem(
             "bell",
             "Notifications",
-            () => {} // Add navigation to Notifications screen when available
+            () => {
+              Alert.alert("Coming soon!");
+            } // Add navigation to Notifications screen when available
           )}
           {renderSettingItem("lock", "Privacy", () =>
             router.push("/(protected)/(tabs)/profile/PrivacyPolicy")
@@ -86,31 +98,9 @@ const SettingsScreen = () => {
           {renderSettingItem(
             "credit-card",
             "My Subscription",
-            () => {} // Add navigation to Subscription screen when available
-          )}
-          {renderSettingItem("help-circle", "Help & Support", () =>
-            router.push("/(protected)/(tabs)/profile/HelpCenter")
-          )}
-          {renderSettingItem("file-document", "Terms and Policies", () =>
-            router.push("/(protected)/(tabs)/profile/PrivacyPolicy")
-          )}
-        </View>
-
-        {/* Cache & Cellular Section */}
-        {renderSectionTitle("Cache & Cellular")}
-        <View
-          style={[
-            styles.sectionContainer,
-            { backgroundColor: colors.surfaceVariant },
-          ]}
-        >
-          {renderSettingItem(
-            "trash-can",
-            "Free up space",
-            () => {} // Add functionality to free up space
-          )}
-          {renderSettingItem("data-matrix", "Data Saver", () =>
-            router.push("/(protected)/(tabs)/profile/Preferences")
+            () => {
+              Alert.alert("Coming soon!");
+            } // Add navigation to Subscription screen when available
           )}
         </View>
 
@@ -125,13 +115,17 @@ const SettingsScreen = () => {
           {renderSettingItem(
             "flag",
             "Report a problem",
-            () => {} // Add functionality to report a problem
+            () => {
+              Alert.alert("Coming soon!");
+            } // Add functionality to report a problem
           )}
           {renderSettingItem(
-            "account-plus",
-            "Add account",
-            () => {} // Add functionality to add account
+            "restart",
+            "Reset Onboarding",
+            handleResetOnboarding,
+            colors.tertiary
           )}
+
           {renderSettingItem("logout", "Log out", handleLogout, colors.error)}
         </View>
 

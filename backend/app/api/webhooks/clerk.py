@@ -1,9 +1,10 @@
-from fastapi import APIRouter, Request, Depends, Response
-from app.models.user import UserCreate
+from fastapi import APIRouter, Depends, HTTPException
+from app.models.user import UserCreate, UserUpdate
 from app.services.users import get_user_service, UserService, UserAlreadyExistsError
-import json
 import logging
-import traceback
+from pydantic import BaseModel, EmailStr
+from typing import List, Optional
+
 
 logger = logging.getLogger("clerk_webhook")
 logger.setLevel(logging.INFO)
@@ -11,84 +12,122 @@ logger.setLevel(logging.INFO)
 router = APIRouter()
 
 
-@router.post("/clerk")
-async def clerk_webhook(
-    request: Request,
-    response: Response,
+class EmailAddress(BaseModel):
+    email_address: EmailStr
+
+
+class CreatedData(BaseModel):
+    id: str
+    email_addresses: List[EmailAddress]
+    first_name: Optional[str] = ""
+    last_name: Optional[str] = ""
+    username: Optional[str]
+
+
+class UpdatedData(BaseModel):
+    id: str
+    first_name: Optional[str] = ""
+    last_name: Optional[str] = ""
+    username: Optional[str] = ""
+    profile_image_url: Optional[str] = ""
+
+
+class DeletedData(BaseModel):
+    id: str
+
+
+class ClerkCreatedPayload(BaseModel):
+    data: CreatedData
+
+
+class ClerkUpdatedPayload(BaseModel):
+    data: UpdatedData
+
+
+class ClerkDeletedPayload(BaseModel):
+    data: DeletedData
+
+
+@router.post("/clerk/user-created")
+async def on_user_created(
+    payload: ClerkCreatedPayload,
     user_service: UserService = Depends(get_user_service),
 ):
-
     try:
-        body = await request.body()
-        body_text = body.decode()
-        event_type = None
+        data = payload.data
+        logger.info(f"User data from Clerk: {data}")
+
+        email_addresses = data.email_addresses
+        email = None
+        if email_addresses and len(email_addresses) > 0:
+            email = email_addresses[0].email_address
+
+        first_name = data.first_name
+        last_name = data.last_name
+        username = data.username
+
+        db_user = UserCreate(
+            clerk_id=data.id,
+            email=email,
+            username=username,
+            first_name=first_name,
+            last_name=last_name,
+        )
 
         try:
-            payload = json.loads(body_text)
-            event_type = payload.get("type")
-        except json.JSONDecodeError as e:
-            logger.error(f"Failed to parse webhook JSON: {str(e)}")
-            payload = {}
-
-        if event_type == "user.created":
-            data = payload.get("data", {})
-            user_id = data.get("id")
-
-            if not user_id:
-                logger.error("No user ID found in payload")
-                response.status_code = 400
-                return {"status": "error", "message": "No user ID in payload"}
-
-            logger.info(f"User data from Clerk: {json.dumps(data)}")
-
-            email_addresses = data.get("email_addresses", [])
-            email = None
-            if email_addresses and len(email_addresses) > 0:
-                email = email_addresses[0].get("email_address")
-
-            if not email:
-                logger.error("No email found in payload")
-                response.status_code = 400
-                return {"status": "error", "message": "No email found in payload"}
-
-            first_name = data.get("first_name", "")
-            last_name = data.get("last_name", "")
-            username = data.get("username")
-
-            logger.info(
-                f"Creating user with: clerk_id={user_id}, email={email}, "
-                + f"username={username}, first_name={first_name}, last_name={last_name}"
-            )
-
-            db_user = UserCreate(
-                clerk_id=user_id,
-                email=email,
-                username=username,
-            )
-
-            try:
-                created_user = await user_service.create_user(db_user)
-                logger.info(
-                    f"Successfully created user in database: ID={created_user.id}"
-                )
-                return {
-                    "status": "success",
-                    "message": "User created",
-                    "user_id": created_user.id,
-                }
-            except UserAlreadyExistsError as e:
-                logger.warning(f"User already exists error: {str(e)}")
-                return {"status": "success", "message": "User already exists"}
-            except Exception as e:
-                logger.error(f"Database error creating user: {str(e)}")
-                logger.error(traceback.format_exc())
-                response.status_code = 500
-                return {
-                    "status": "error",
-                    "message": f"Failed to create user: {str(e)}",
-                }
-
-        return {"status": "success", "message": f"Event {event_type} processed"}
+            created_user = await user_service.create_user(db_user)
+            return {
+                "status": "success",
+                "message": "User created",
+                "user_id": created_user.id,
+            }
+        except UserAlreadyExistsError as e:
+            raise HTTPException(status_code=400, detail="User already exists")
+        except Exception as e:
+            print("ERROR: ", e)
+            raise HTTPException(status_code=500, detail=str(e))
     except Exception as e:
-        response.status_code = 500
-        return {"status": "error", "message": str(e)}
+        print("ERROR: ", e)
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.post("/clerk/user-updated")
+async def on_user_updated(
+    payload: ClerkUpdatedPayload,
+    user_service: UserService = Depends(get_user_service),
+):
+    try:
+        data = payload.data
+
+        user_update = UserUpdate(
+            first_name=data.first_name,
+            last_name=data.last_name,
+            username=data.username,
+            profile_picture_url=data.profile_image_url,
+        )
+
+        await user_service.update_user_by_clerk_id(data.id, user_update)
+        return {
+            "status": "success",
+            "message": "User updated",
+        }
+    except Exception as e:
+        print("ERROR: ", e)
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.post("/clerk/user-deleted")
+async def on_user_deleted(
+    payload: ClerkDeletedPayload,
+    user_service: UserService = Depends(get_user_service),
+):
+    try:
+        data = payload.data
+        await user_service.delete_user_by_clerk_id(data.id)
+        return {
+            "status": "success",
+            "message": "User deleted",
+        }
+    except Exception as e:
+        print("ERROR: ", e)
+        raise HTTPException(status_code=500, detail=str(e))

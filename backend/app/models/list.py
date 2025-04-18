@@ -1,7 +1,7 @@
 from .base import BaseEntity, CamelModel
 from typing import Optional, List
 from datetime import datetime
-from app.models.word import Word
+from app.models.word import Word, WordCreate
 
 
 class WordList(BaseEntity):
@@ -14,6 +14,7 @@ class WordList(BaseEntity):
     updated_at: Optional[datetime] = None
     words: Optional[List[Word]] = None
     word_count: Optional[int] = None
+    in_users_bank: Optional[bool] = None
 
 
 class WordListUpdate(CamelModel):
@@ -25,7 +26,7 @@ class WordListUpdate(CamelModel):
 
 
 class WordListCreate(WordList):
-    pass
+    words: Optional[List[WordCreate]] = None
 
 
 class WordListWord(CamelModel):

@@ -1,31 +1,49 @@
 import { StateCreator } from "zustand";
 import { User, UserPreferences, UserStats } from "@/src/types/user";
-import { API_URL, authFetch, clearCachedToken } from "@/lib/api";
+import { authFetch, clearCachedToken } from "@/lib/api";
+import AsyncStorage from "@react-native-async-storage/async-storage";
+
+const HAS_ONBOARDED_KEY = "hasOnboarded";
 
 export interface AuthSlice {
   user: User | null;
   isAuthenticated: boolean;
+  hasOnboarded: boolean;
   preferences: UserPreferences | null;
   stats: UserStats | null;
   authError: string | null;
   isFetchingUser: boolean;
-  // Methods
   setAuthError: (error: string) => void;
   updatePreferences: (preferences: Partial<UserPreferences>) => void;
   updateStats: (stats: Partial<UserStats>) => void;
   getMe: () => Promise<void>;
   logout: () => Promise<void>;
-  // Note: Clerk handles the actual sign out process,
-  // this method just cleans up our local state
+  setHasOnboarded: (hasOnboarded: boolean) => void;
+  loadOnboardingStatus: () => Promise<void>;
 }
 
-export const createAuthSlice: StateCreator<AuthSlice> = (set, get) => ({
-  user: null,
-  isFetchingUser: false,
-  authError: null,
-  isAuthenticated: false,
-  preferences: null,
-  stats: null,
+export const createAuthSlice: StateCreator<AuthSlice> = (set, get) => {
+  const initializeStore = async () => {
+    try {
+      const storedHasOnboarded = await AsyncStorage.getItem(HAS_ONBOARDED_KEY);
+      if (storedHasOnboarded !== null) {
+        set({ hasOnboarded: JSON.parse(storedHasOnboarded) });
+      }
+    } catch (error) {
+      console.error("Failed to load onboarding status:", error);
+    }
+  };
+  
+  initializeStore();
+  
+  return {
+    user: null,
+    isFetchingUser: false,
+    authError: null,
+    isAuthenticated: false,
+    hasOnboarded: false,
+    preferences: null,
+    stats: null,
 
   setAuthError: (error: string) => {
     set({ authError: error });
@@ -34,7 +52,6 @@ export const createAuthSlice: StateCreator<AuthSlice> = (set, get) => ({
   getMe: async () => {
     set({ isFetchingUser: true });
     try {
-      // We no longer need to update the token here since AuthContext handles it
       const response = await authFetch(`/users/me`);
       const data = await response.json();
 
@@ -56,6 +73,7 @@ export const createAuthSlice: StateCreator<AuthSlice> = (set, get) => ({
         stats: payload.stats || null,
       });
     } catch (error) {
+      console.log(error);
       set({
         authError: "Failed to get user",
         user: null,
@@ -67,10 +85,8 @@ export const createAuthSlice: StateCreator<AuthSlice> = (set, get) => ({
   },
 
   logout: async () => {
-    // Clear our cached token to prevent further API calls
     clearCachedToken();
 
-    // Reset the app state
     set({
       user: null,
       isAuthenticated: false,
@@ -102,6 +118,23 @@ export const createAuthSlice: StateCreator<AuthSlice> = (set, get) => ({
           updatedAt: new Date(),
         },
       });
-    }
-  },
-});
+      }
+    },
+
+    setHasOnboarded: async (hasOnboarded: boolean) => {
+      await AsyncStorage.setItem(HAS_ONBOARDED_KEY, JSON.stringify(hasOnboarded));
+      set({ hasOnboarded });
+    },
+    
+    loadOnboardingStatus: async () => {
+      try {
+        const storedHasOnboarded = await AsyncStorage.getItem(HAS_ONBOARDED_KEY);
+        if (storedHasOnboarded !== null) {
+          set({ hasOnboarded: JSON.parse(storedHasOnboarded) });
+        }
+      } catch (error) {
+        console.error("Failed to load onboarding status:", error);
+      }
+    },
+  };
+};

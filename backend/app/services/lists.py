@@ -14,6 +14,7 @@ from app.models.list import (
 )
 from app.models.word import WordNotFoundError, Word
 from app.services.words import WordService, get_word_service
+from app.services.quizzes import QuizService, get_quiz_service
 import asyncpg
 from typing import List
 from fastapi import Depends
@@ -22,16 +23,34 @@ import math
 
 
 class ListService:
-    def __init__(self, pool: asyncpg.Pool, word_service: WordService):
+    def __init__(
+        self,
+        pool: asyncpg.Pool,
+        word_service: WordService,
+        quiz_service: QuizService,
+    ):
         self.pool = pool
         self.word_service = word_service
+        self.quiz_service = quiz_service
 
-    async def get_list_by_id(self, list_id: int) -> WordList:
+    async def get_list_by_id(self, list_id: int, user_id: int = None) -> WordList:
         try:
             async with self.pool.acquire() as conn:
                 list_data = await conn.fetchrow(
                     "SELECT * FROM lists WHERE id = $1", list_id
                 )
+
+                in_users_bank = False
+                if user_id is not None:
+                    user_list_record = await conn.fetchrow(
+                        "SELECT COUNT(*) FROM user_lists WHERE user_id = $1 AND list_id = $2",
+                        user_id,
+                        list_id,
+                    )
+                    in_users_bank = (
+                        user_list_record["count"] > 0 if user_list_record else False
+                    )
+
                 return WordList(
                     id=list_data["id"],
                     name=list_data["name"],
@@ -40,6 +59,7 @@ class ListService:
                     icon_name=list_data["icon_name"],
                     created_at=list_data["created_at"],
                     updated_at=list_data["updated_at"],
+                    in_users_bank=in_users_bank,
                 )
         except Exception as e:
             raise Exception(f"Error getting list by ID: {str(e)}")
@@ -61,7 +81,6 @@ class ListService:
                         list.icon_name,
                     )
 
-            # Collect existing categories and identify new ones to create
             existing_categories_names: List[str] = []
             new_categories_names: List[str] = []
 
@@ -124,6 +143,9 @@ class ListService:
                 try:
                     new_word = await self.word_service.insert_word(word)
                     await self.insert_list_word(list_data["id"], new_word.id)
+                    for quiz in word.quizzes:
+                        quiz.word_id = new_word.id
+                        await self.quiz_service.insert_quiz(quiz)
                 except Exception as e:
                     print(f"Error inserting word {word.word}: {str(e)}")
                     continue
@@ -152,7 +174,7 @@ class ListService:
         except Exception as e:
             raise Exception(f"Error inserting list word: {str(e)}")
 
-    async def get_full_list(self, list_id: int) -> WordList:
+    async def get_full_list(self, list_id: int, user_id: int = None) -> WordList:
         try:
             async with self.pool.acquire() as conn:
                 list_data = await conn.fetchrow(
@@ -207,6 +229,17 @@ class ListService:
                     words_list_data = json.loads(words_json_string)
                     words_list = words_list_data
 
+                in_users_bank = False
+                if user_id is not None:
+                    user_list_record = await conn.fetchrow(
+                        "SELECT COUNT(*) FROM user_lists WHERE user_id = $1 AND list_id = $2",
+                        user_id,
+                        list_id,
+                    )
+                    in_users_bank = (
+                        user_list_record["count"] > 0 if user_list_record else False
+                    )
+
                 return WordList(
                     id=list_data["id"],
                     name=list_data["name"],
@@ -217,6 +250,7 @@ class ListService:
                     icon_name=list_data.get("icon_name"),
                     words=words_list,
                     categories=categories_list,
+                    in_users_bank=in_users_bank,
                 )
         except ListNotFoundError as e:
             raise e
@@ -372,7 +406,7 @@ class ListService:
             raise Exception(f"Error getting all categories: {str(e)}")
 
     async def get_all_lists(
-        self, page: int = 1, per_page: int = 10
+        self, page: int = 1, per_page: int = 10, user_id: int = None
     ) -> PaginatedPayload[WordList]:
         offset = (page - 1) * per_page
 
@@ -413,6 +447,19 @@ class ListService:
                             category["name"] for category in categories_data
                         ]
 
+                        in_users_bank = False
+                        if user_id is not None:
+                            user_list_record = await conn.fetchrow(
+                                "SELECT COUNT(*) FROM user_lists WHERE user_id = $1 AND list_id = $2",
+                                user_id,
+                                list_data["id"],
+                            )
+                            in_users_bank = (
+                                user_list_record["count"] > 0
+                                if user_list_record
+                                else False
+                            )
+
                         items.append(
                             WordList(
                                 id=list_data["id"],
@@ -422,6 +469,7 @@ class ListService:
                                 icon_name=list_data["icon_name"],
                                 word_count=list_data["word_count"],
                                 categories=categories_list,
+                                in_users_bank=in_users_bank,
                             )
                         )
                 else:
@@ -446,6 +494,9 @@ class ListService:
 async def get_list_service(
     pool: asyncpg.Pool = Depends(get_pool),
     word_service: WordService = Depends(get_word_service),
+    quiz_service: QuizService = Depends(get_quiz_service),
 ) -> ListService:
-    service = ListService(pool=pool, word_service=word_service)
+    service = ListService(
+        pool=pool, word_service=word_service, quiz_service=quiz_service
+    )
     return service

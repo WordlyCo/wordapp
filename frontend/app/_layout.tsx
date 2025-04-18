@@ -1,4 +1,4 @@
-import React, { useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import { Slot, SplashScreen } from "expo-router";
 import { PaperProvider } from "react-native-paper";
 import { SafeAreaProvider } from "react-native-safe-area-context";
@@ -12,14 +12,14 @@ SplashScreen.preventAutoHideAsync().catch(() => {});
 export default function RootLayout() {
   const { theme } = useTheme();
 
-  const [isReady, setIsReady] = React.useState(false);
+  const [isReady, setIsReady] = useState(false);
 
   useEffect(() => {
     async function prepare() {
       try {
         await new Promise((resolve) => setTimeout(resolve, 100));
-      } catch (e) {
-        // Silent error - no need to log
+      } catch {
+        // not logging since not an actual error
       } finally {
         setIsReady(true);
       }

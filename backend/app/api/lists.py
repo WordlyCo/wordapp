@@ -1,4 +1,5 @@
 from fastapi import APIRouter, Depends, Query
+from typing import Optional
 from app.models.list import (
     WordListCategory,
     WordListCategoryCreate,
@@ -18,6 +19,8 @@ from app.services.lists import (
     ListWordAlreadyExistsError,
     ListNotFoundError,
 )
+from app.middleware.auth import get_current_user
+from app.models.user import User
 
 router = APIRouter()
 
@@ -154,11 +157,19 @@ async def insert_list(
 
 @router.get("/{list_id}", response_model=Response[WordList])
 async def get_list_by_id(
-    list_id: int, list_service: ListService = Depends(get_list_service)
+    list_id: int,
+    list_service: ListService = Depends(get_list_service),
+    current_user: Optional[User] = Depends(get_current_user),
 ) -> Response[WordList]:
     """Get detailed information about a specific word list, including its words."""
     try:
-        word_list = await list_service.get_full_list(list_id)
+        if current_user is None:
+            return Response(
+                success=False,
+                message="Authentication required",
+                error_code=SERVER_ERROR,
+            )
+        word_list = await list_service.get_full_list(list_id, current_user.id)
         return Response(
             success=True, message="List retrieved successfully", payload=word_list
         )
@@ -203,10 +214,20 @@ async def get_all_lists(
     list_service: ListService = Depends(get_list_service),
     page: int = Query(1, ge=1, description="Page number to retrieve"),
     per_page: int = Query(10, ge=1, le=100, description="Number of items per page"),
+    current_user: Optional[User] = Depends(get_current_user),
 ) -> Response[PaginatedPayload[WordList]]:
     """Retrieve a paginated list of all available word lists."""
     try:
-        paginated_lists = await list_service.get_all_lists(page=page, per_page=per_page)
+        if current_user is None:
+            return Response(
+                success=False,
+                message="Authentication required",
+                error_code=SERVER_ERROR,
+            )
+
+        paginated_lists = await list_service.get_all_lists(
+            page=page, per_page=per_page, user_id=current_user.id
+        )
         return Response(
             success=True,
             message="Lists retrieved successfully",

@@ -8,7 +8,7 @@ import {
   IconButton,
 } from "react-native-paper";
 import { SafeAreaView } from "react-native-safe-area-context";
-import useTheme from "../../src/hooks/useTheme";
+import useTheme from "@/src/hooks/useTheme";
 import { useSignIn, useSignUp } from "@clerk/clerk-expo";
 import { useRouter } from "expo-router";
 
@@ -133,7 +133,7 @@ export default function AuthScreen() {
 
       if (signUpAttempt.status === "complete") {
         await setSignUpActive({ session: signUpAttempt.createdSessionId });
-        router.replace("/");
+        router.replace("/(auth)/onboarding");
       } else {
         setAuthError("Verification failed. Please try again.");
       }
@@ -183,7 +183,7 @@ export default function AuthScreen() {
 
             <Image
               style={styles.image}
-              source={require("../../assets/images/CandyCueDarkishBlue.png")}
+              source={require("@/assets/images/CandyCueDarkishBlue.png")}
               resizeMode="contain"
             />
           </View>
@@ -247,7 +247,7 @@ export default function AuthScreen() {
 
           <Image
             style={styles.image}
-            source={require("../../assets/images/CandyCueDarkishBlue.png")}
+            source={require("@/assets/images/CandyCueDarkishBlue.png")}
             resizeMode="contain"
           />
         </View>
@@ -259,10 +259,24 @@ export default function AuthScreen() {
             clearFields();
           }}
           buttons={[
-            { value: "login", label: "Login" },
-            { value: "register", label: "Register" },
+            {
+              value: "login",
+              label: "Login",
+              style: { borderRadius: 5 },
+            },
+            {
+              value: "register",
+              label: "Register",
+              style: { borderRadius: 5 },
+            },
           ]}
-          style={styles.segmentedButtons}
+          style={[styles.segmentedButtons, { backgroundColor: colors.surface }]}
+          theme={{
+            colors: {
+              secondaryContainer: colors.primary,
+              onSecondaryContainer: colors.onPrimary,
+            },
+          }}
         />
 
         {authError && (

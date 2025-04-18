@@ -12,6 +12,7 @@ export type WordList = BaseEntity & {
   difficultyLevel: DifficultyLevel;
   words: Word[];
   wordCount: number;
+  inUsersBank: boolean;
 };
 
 export type WordListCategory = BaseEntity & {

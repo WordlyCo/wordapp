@@ -14,7 +14,6 @@ const CategoryItem = ({
 }) => {
   const { colors } = useTheme();
 
-  // Get the category-specific color from the theme
   const getCategoryColor = () => {
     if (item.name.toLowerCase() in colors.categories) {
       return colors.categories[
