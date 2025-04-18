@@ -5,7 +5,7 @@ import { useStore } from "@/src/stores/store";
 export default function AuthLayout() {
   const { isSignedIn } = useAuth();
   const hasOnboarded = useStore((state) => state.hasOnboarded);
-  
+
   if (isSignedIn && hasOnboarded) {
     return <Redirect href={"/(protected)/(tabs)/home"} />;
   }

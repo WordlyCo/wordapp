@@ -15,7 +15,11 @@
       "backgroundColor": "#6460CD"
     },
     "ios": {
-      "supportsTablet": true
+      "supportsTablet": true,
+      "bundleIdentifier": "com.nverkhachoyan.wordapp",
+      "infoPlist": {
+        "ITSAppUsesNonExemptEncryption": false
+      }
     },
     "android": {
       "adaptiveIcon": {
@@ -32,6 +36,17 @@
       "typedRoutes": true,
       "tsconfigPaths": true
     },
-    "plugins": ["expo-font", "expo-router"]
+    "plugins": [
+      "expo-font",
+      "expo-router"
+    ],
+    "extra": {
+      "router": {
+        "origin": false
+      },
+      "eas": {
+        "projectId": "92da9ce0-e740-48ac-ba65-ecfe0bd03d74"
+      }
+    }
   }
 }

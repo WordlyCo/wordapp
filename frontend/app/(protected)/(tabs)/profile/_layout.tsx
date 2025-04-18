@@ -64,7 +64,6 @@ export default function ProfileLayout() {
         name="PrivacyPolicy"
         options={{ headerTitle: "Privacy Policy" }}
       />
-      <Stack.Screen name="HelpCenter" />
       <Stack.Screen name="Preferences" />
     </Stack>
   );

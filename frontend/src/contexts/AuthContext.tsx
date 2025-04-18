@@ -19,7 +19,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     logout: logoutStore,
     loadOnboardingStatus,
   } = useStore();
-  
+
   const [isLoading, setIsLoading] = useState(true);
   const [hasInitialized, setHasInitialized] = useState(false);
   const { isSignedIn, isLoaded, getToken, signOut } = useClerkAuth();
@@ -28,12 +28,36 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
   useEffect(() => {
     if (isLoaded) {
-      setClerkTokenGetter(() => getToken());
-      
-      if (isSignedIn) {
-        getToken()
-          .then(token => updateCachedToken(token))
-          .catch(err => console.error("Failed to initialize token:", err));
+      const getMyToken = async () => {
+        try {
+          const token = await getToken();
+          return token;
+        } catch (error) {
+          console.error("Failed to get token:", error);
+          return null;
+        }
+      };
+
+      getMyToken();
+    }
+  }, [isLoaded, getToken]);
+
+  useEffect(() => {
+    if (isLoaded) {
+      try {
+        setClerkTokenGetter(() => getToken());
+
+        if (isSignedIn) {
+          getToken()
+            .then((token) => {
+              if (token) updateCachedToken(token);
+            })
+            .catch((err) => {
+              console.error("Failed to initialize token:", err);
+            });
+        }
+      } catch (err) {
+        console.error("Error setting up token getter:", err);
       }
     }
   }, [isLoaded, isSignedIn, getToken]);
@@ -48,6 +72,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       router.replace("/(auth)");
     } catch (error) {
       console.error("Logout failed:", error);
+      router.replace("/(auth)");
     } finally {
       setIsLoading(false);
     }
@@ -59,10 +84,18 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     const initialize = async () => {
       setIsLoading(true);
       try {
-        await loadOnboardingStatus();
-        
+        try {
+          await loadOnboardingStatus();
+        } catch (error) {
+          console.error("Failed to load onboarding status:", error);
+        }
+
         if (isSignedIn) {
-          await getMe();
+          try {
+            await getMe();
+          } catch (error) {
+            console.error("Failed to get user data:", error);
+          }
         }
       } catch (error) {
         console.error("Auth initialization failed:", error);
@@ -89,11 +122,19 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         }
       } catch (error) {
         console.error("Routing error:", error);
+        router.replace("/(auth)");
       }
     };
 
     routeUser();
-  }, [isAuthenticated, hasInitialized, isSignedIn, isLoaded, hasOnboarded, router]);
+  }, [
+    isAuthenticated,
+    hasInitialized,
+    isSignedIn,
+    isLoaded,
+    hasOnboarded,
+    router,
+  ]);
 
   return (
     <AuthContext.Provider value={{ isLoading, logout }}>
