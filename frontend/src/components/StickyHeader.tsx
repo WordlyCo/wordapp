@@ -10,7 +10,7 @@ const StickyHeader = () => {
   const userStats = useStore((state) => state.userStats);
 
   return (
-    <View style={{ zIndex: 1000 }}>
+    <View>
       <SafeAreaView
         style={[styles.safeAreaView, { backgroundColor: colors.surface }]}
         edges={["top"]}

@@ -8,7 +8,7 @@ import {
 } from "react-native";
 import { useRouter } from "expo-router";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
-import { Searchbar, Chip, Surface } from "react-native-paper";
+import { Searchbar, Chip, Surface, Text, Button } from "react-native-paper";
 import useTheme from "@/src/hooks/useTheme";
 import { useStore } from "@/src/stores/store";
 import { WordListCard } from "@/src/components/WordListCard";
@@ -35,7 +35,6 @@ export default function BankScreen() {
   const [activeFilter, setActiveFilter] = useState("all");
   const [searchQuery, setSearchQuery] = useState("");
 
-  // Animation values
   const scrollY = useSharedValue(0);
   const headerHeight = 140; // Increased height to account for filters
 
@@ -165,31 +164,44 @@ export default function BankScreen() {
         </Animated.View>
       </Animated.View>
 
-      <Animated.FlatList
-        data={userLists}
-        keyExtractor={(item) => item.id}
-        contentContainerStyle={[
-          styles.listsContainer,
-          { paddingTop: headerHeight },
-        ]}
-        onScroll={scrollHandler}
-        scrollEventThrottle={16}
-        ItemSeparatorComponent={() => <View style={styles.separator} />}
-        renderItem={({ item, index }) => (
-          <Animated.View
-            entering={FadeInUp.delay(200 + index * 100)
-              .duration(600)
-              .springify()}
+      {userLists.length > 0 ? (
+        <Animated.FlatList
+          data={userLists}
+          keyExtractor={(item) => item.id}
+          contentContainerStyle={[
+            styles.listsContainer,
+            { paddingTop: headerHeight },
+          ]}
+          onScroll={scrollHandler}
+          scrollEventThrottle={16}
+          ItemSeparatorComponent={() => <View style={styles.separator} />}
+          renderItem={({ item, index }) => (
+            <Animated.View
+              entering={FadeInUp.delay(200 + index * 100)
+                .duration(600)
+                .springify()}
+            >
+              <WordListCard
+                list={item}
+                onPress={() => {
+                  router.push(`/(protected)/list/${item.id}`);
+                }}
+              />
+            </Animated.View>
+          )}
+        />
+      ) : (
+        <View style={styles.noListsContainer}>
+          <Text style={styles.noListsText}>No word lists found.</Text>
+          <Button
+            mode="contained"
+            icon="magnify"
+            onPress={() => router.push("/(protected)/(tabs)/store")}
           >
-            <WordListCard
-              list={item}
-              onPress={() => {
-                router.push(`/(protected)/list/${item.id}`);
-              }}
-            />
-          </Animated.View>
-        )}
-      />
+            Explore Word Lists
+          </Button>
+        </View>
+      )}
     </View>
   );
 }
@@ -236,5 +248,16 @@ const styles = StyleSheet.create({
   },
   separator: {
     height: 12,
+  },
+  noListsContainer: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+    paddingHorizontal: 16,
+    gap: 16,
+  },
+  noListsText: {
+    fontSize: 16,
+    textAlign: "center",
   },
 });

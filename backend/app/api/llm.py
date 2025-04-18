@@ -6,7 +6,7 @@ import os
 from typing import Optional
 import json
 
-router = APIRouter(prefix="/sentence-stage", tags=["sentence-stage"])
+router = APIRouter()
 client = OpenAI(api_key=env.openai_api_key)
 
 

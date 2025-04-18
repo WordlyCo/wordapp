@@ -344,7 +344,6 @@ async def record_practice_session(
                 error_code=SERVER_ERROR,
             )
 
-        # Add a method to user_service to handle this
         await user_service.record_practice_session(
             current_user.id, practice_time, session_type
         )

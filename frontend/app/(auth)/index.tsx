@@ -259,10 +259,24 @@ export default function AuthScreen() {
             clearFields();
           }}
           buttons={[
-            { value: "login", label: "Login" },
-            { value: "register", label: "Register" },
+            {
+              value: "login",
+              label: "Login",
+              style: { borderRadius: 5 },
+            },
+            {
+              value: "register",
+              label: "Register",
+              style: { borderRadius: 5 },
+            },
           ]}
-          style={styles.segmentedButtons}
+          style={[styles.segmentedButtons, { backgroundColor: colors.surface }]}
+          theme={{
+            colors: {
+              secondaryContainer: colors.primary,
+              onSecondaryContainer: colors.onPrimary,
+            },
+          }}
         />
 
         {authError && (

@@ -224,7 +224,7 @@ export default function ListDetailsScreen() {
                     styles.actionButton,
                     { backgroundColor: colors.primary },
                   ]}
-                  icon="plus"
+                  icon={selectedList?.inUsersBank ? "minus" : "plus"}
                   onPress={
                     selectedList?.inUsersBank
                       ? handleRemoveListFromUserLists

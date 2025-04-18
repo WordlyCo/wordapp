@@ -1,5 +1,10 @@
 import { Animated, View, Text, StyleSheet, ScrollView } from "react-native";
-import { Card, IconButton } from "react-native-paper";
+import {
+  Card,
+  IconButton,
+  Button,
+  ActivityIndicator,
+} from "react-native-paper";
 import React, { useEffect, useState, useRef } from "react";
 import { OptionButton, ProgressDots } from "@/src/features/quiz/components";
 import { shuffleArray } from "@/lib/utils";
@@ -8,6 +13,7 @@ import useTheme from "@/src/hooks/useTheme";
 import { router } from "expo-router";
 import { Word } from "@/src/types/words";
 import { DIFFICULTY_LEVELS } from "@/src/stores/enums";
+import Ionicons from "@expo/vector-icons/Ionicons";
 
 const QuestionScreen: React.FC = () => {
   const { colors } = useTheme();
@@ -18,6 +24,7 @@ const QuestionScreen: React.FC = () => {
   const dotsScrollViewRef = useRef<ScrollView>(null);
 
   const quizWords = useStore((state) => state.quizWords);
+  const quizWordsError = useStore((state) => state.quizWordsError);
   const quizStats = useStore((state) => state.quizStats);
   const setQuizStats = useStore((state) => state.setQuizStats);
   const currentIndex = useStore((state) => state.quizStats.currentIndex);
@@ -29,7 +36,7 @@ const QuestionScreen: React.FC = () => {
   const updateStreak = useStore((state) => state.updateStreak);
   const fetchUserStats = useStore((state) => state.fetchUserStats);
   const updateAccuracy = useStore((state) => state.updateAccuracy);
-  
+
   const [currentWord, setCurrentWord] = useState<Word | undefined>(undefined);
   const [, setQuizStartTime] = useState<number | null>(null);
 
@@ -83,6 +90,35 @@ const QuestionScreen: React.FC = () => {
     ).start();
   }, []);
 
+  if (quizWordsError) {
+    return (
+      <View
+        style={[styles.errorContainer, { backgroundColor: colors.background }]}
+      >
+        <Text style={[styles.errorText, { color: colors.onBackground }]}>
+          You don't have any word lists yet!
+        </Text>
+        <Ionicons
+          name="sad-outline"
+          size={44}
+          color={colors.primary}
+          style={{ marginVertical: 15 }}
+        />
+        <Button
+          icon="arrow-right"
+          onPress={() => router.push("/(protected)/(tabs)/store")}
+          mode="contained"
+          style={{ marginTop: 10 }}
+          contentStyle={{
+            flexDirection: "row-reverse",
+          }}
+        >
+          Add Word Lists
+        </Button>
+      </View>
+    );
+  }
+
   if (!currentWord) {
     return (
       <View
@@ -91,7 +127,20 @@ const QuestionScreen: React.FC = () => {
           { backgroundColor: colors.background },
         ]}
       >
-        <Text style={{ color: colors.onBackground }}>Loading word</Text>
+        <Text style={[styles.loadingText, { color: colors.onBackground }]}>
+          Loading words...
+        </Text>
+        <ActivityIndicator size="large" color={colors.primary} />
+        <Button
+          mode="contained"
+          onPress={() => router.back()}
+          style={{ marginTop: 10 }}
+          contentStyle={{
+            flexDirection: "row-reverse",
+          }}
+        >
+          Go Back
+        </Button>
       </View>
     );
   }
@@ -120,20 +169,20 @@ const QuestionScreen: React.FC = () => {
       let diamondReward = 0;
       switch (currentWord.difficultyLevel) {
         case DIFFICULTY_LEVELS.BEGINNER:
-          diamondReward = 5;
+          diamondReward = 1;
           break;
         case DIFFICULTY_LEVELS.INTERMEDIATE:
-          diamondReward = 10;
+          diamondReward = 2;
           break;
         case DIFFICULTY_LEVELS.ADVANCED:
-          diamondReward = 20;
+          diamondReward = 3;
           break;
         default:
-          diamondReward = 5;
+          diamondReward = 1;
       }
-      
+
       updateDiamonds(diamondReward);
-      
+
       updateStreak();
     }
 
@@ -141,20 +190,21 @@ const QuestionScreen: React.FC = () => {
       wordId: currentWord.id,
       practiceCount: (currentWord.wordProgress?.practiceCount || 0) + 1,
       lastPracticed: new Date(),
-      successCount: isCorrect 
-        ? (currentWord.wordProgress?.successCount || 0) + 1 
-        : (currentWord.wordProgress?.successCount || 0),
-      recognitionMasteryScore: isCorrect 
-        ? (currentWord.wordProgress?.recognitionMasteryScore || 0) + 1 
-        : (currentWord.wordProgress?.recognitionMasteryScore || 0),
-      usageMasteryScore: isCorrect 
-        ? (currentWord.wordProgress?.usageMasteryScore || 0) + 1 
-        : (currentWord.wordProgress?.usageMasteryScore || 0),
-      numberOfTimesToPractice: (currentWord.wordProgress?.numberOfTimesToPractice || 0) + 1,
+      successCount: isCorrect
+        ? (currentWord.wordProgress?.successCount || 0) + 1
+        : currentWord.wordProgress?.successCount || 0,
+      recognitionMasteryScore: isCorrect
+        ? (currentWord.wordProgress?.recognitionMasteryScore || 0) + 1
+        : currentWord.wordProgress?.recognitionMasteryScore || 0,
+      usageMasteryScore: isCorrect
+        ? (currentWord.wordProgress?.usageMasteryScore || 0) + 1
+        : currentWord.wordProgress?.usageMasteryScore || 0,
+      numberOfTimesToPractice:
+        (currentWord.wordProgress?.numberOfTimesToPractice || 0) + 1,
     };
 
     await updateWordProgress(wordProgressUpdate);
-    
+
     router.replace("/(protected)/quiz/feedback");
   };
 
@@ -264,8 +314,14 @@ const styles = StyleSheet.create({
   },
   loadingContainer: {
     flex: 1,
-    justifyContent: "space-between",
+    justifyContent: "center",
     alignItems: "center",
+    gap: 16,
+    padding: 16,
+  },
+  loadingText: {
+    fontSize: 16,
+    fontWeight: "500",
   },
   headerContainer: {},
   progressInfoContainer: {
@@ -328,6 +384,18 @@ const styles = StyleSheet.create({
   optionsContainer: {
     gap: 14,
     marginBottom: 20,
+  },
+  errorContainer: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  errorText: {
+    fontSize: 22,
+    fontWeight: "600",
+    textAlign: "center",
+    marginVertical: 10,
+    lineHeight: 32,
   },
 });
 

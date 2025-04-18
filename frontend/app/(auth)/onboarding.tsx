@@ -13,7 +13,7 @@ import { useUser } from "@clerk/clerk-expo";
 import { useRouter } from "expo-router";
 import useTheme from "../../src/hooks/useTheme";
 import * as FileSystem from "expo-file-system";
-import timezones from "../../src/utils/timezones";
+import { timezones } from "@/lib/utils";
 import { useStore } from "@/src/stores/store";
 import DropDownPicker from "react-native-dropdown-picker";
 
@@ -23,7 +23,7 @@ export default function OnboardingScreen() {
   const { colors, theme } = useTheme();
 
   const setHasOnboarded = useStore((state) => state.setHasOnboarded);
-  
+
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
   const [timezone, setTimezone] = useState("");
@@ -32,18 +32,18 @@ export default function OnboardingScreen() {
   const [error, setError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [bio, setBio] = useState("");
-  
+
   // Dropdown picker state
   const [open, setOpen] = useState(false);
   const [timezoneItems, setTimezoneItems] = useState(
-    timezones.map(tz => ({ label: tz, value: tz }))
+    timezones.map((tz: string) => ({ label: tz, value: tz }))
   );
 
   useEffect(() => {
     if (isLoaded && user) {
       setFirstName(user.firstName || "");
       setLastName(user.lastName || "");
-      
+
       const userTimezone = user.unsafeMetadata?.timezone as string;
       if (userTimezone) {
         setTimezone(userTimezone);
@@ -51,7 +51,7 @@ export default function OnboardingScreen() {
         const localTimezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
         setTimezone(localTimezone);
       }
-      
+
       const themePreference = user.unsafeMetadata?.theme as string;
       if (themePreference) {
         setDarkMode(themePreference === "dark");
@@ -61,7 +61,7 @@ export default function OnboardingScreen() {
 
   const pickImage = async () => {
     const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
-    
+
     if (status !== "granted") {
       setError("Permission to access media library is required");
       return;
@@ -81,20 +81,20 @@ export default function OnboardingScreen() {
 
   const uploadProfileImage = async (): Promise<string | null> => {
     if (!profileImage) return null;
-    
+
     try {
       const base64Image = await FileSystem.readAsStringAsync(profileImage, {
         encoding: FileSystem.EncodingType.Base64,
       });
-      
+
       // Add data URL prefix to the base64 string
-      const imageType = profileImage.endsWith('.png') ? 'png' : 'jpeg';
+      const imageType = profileImage.endsWith(".png") ? "png" : "jpeg";
       const formattedBase64 = `data:image/${imageType};base64,${base64Image}`;
-      
+
       await user?.setProfileImage({
         file: formattedBase64,
       });
-      
+
       return profileImage;
     } catch (error) {
       console.error("Error uploading profile image:", error);
@@ -104,7 +104,7 @@ export default function OnboardingScreen() {
 
   const handleSubmit = async () => {
     if (!isLoaded || !user) return;
-    
+
     setIsSubmitting(true);
     setError(null);
 
@@ -128,7 +128,10 @@ export default function OnboardingScreen() {
       setHasOnboarded(true);
       router.replace("/");
     } catch (error) {
-      setError("Failed to update profile: " + (error instanceof Error ? error.message : String(error)));
+      setError(
+        "Failed to update profile: " +
+          (error instanceof Error ? error.message : String(error))
+      );
     } finally {
       setIsSubmitting(false);
     }
@@ -178,11 +181,7 @@ export default function OnboardingScreen() {
             <Text variant="bodyMedium" style={styles.errorText}>
               {error}
             </Text>
-            <IconButton
-              icon="close"
-              size={20}
-              onPress={() => setError(null)}
-            />
+            <IconButton icon="close" size={20} onPress={() => setError(null)} />
           </View>
         )}
 
@@ -232,6 +231,15 @@ export default function OnboardingScreen() {
             style={styles.input}
           />
 
+          <TextInput
+            mode="outlined"
+            label="Bio"
+            numberOfLines={3}
+            value={bio}
+            onChangeText={setBio}
+            style={styles.input}
+          />
+
           <View style={styles.pickerContainer}>
             <Text variant="bodyMedium" style={{ marginBottom: 8 }}>
               Timezone
@@ -243,9 +251,15 @@ export default function OnboardingScreen() {
               setOpen={setOpen}
               setValue={setTimezone}
               setItems={setTimezoneItems}
-              style={[styles.dropdownStyle, { backgroundColor: colors.surfaceVariant }]}
+              style={[
+                styles.dropdownStyle,
+                { backgroundColor: colors.surfaceVariant },
+              ]}
               textStyle={{ color: colors.onSurface }}
-              dropDownContainerStyle={[styles.dropdownContainer, { backgroundColor: colors.surfaceVariant }]}
+              dropDownContainerStyle={[
+                styles.dropdownContainer,
+                { backgroundColor: colors.surfaceVariant },
+              ]}
               listMode="SCROLLVIEW"
               scrollViewProps={{
                 nestedScrollEnabled: true,
@@ -281,12 +295,8 @@ export default function OnboardingScreen() {
           >
             Save Profile
           </Button>
-          
-          <Button
-            mode="text"
-            onPress={handleSkip}
-            style={{ marginTop: 10 }}
-          >
+
+          <Button mode="text" onPress={handleSkip} style={{ marginTop: 10 }}>
             Skip for Now
           </Button>
         </View>
@@ -382,4 +392,4 @@ const styles = StyleSheet.create({
     fontWeight: "bold",
     fontSize: 16,
   },
-}); 
+});

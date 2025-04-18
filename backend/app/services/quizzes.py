@@ -70,12 +70,12 @@ class QuizService:
         )
         WHERE wp.user_id = $1
         AND ul.user_id = $1
-        AND wp.recognition_mastery_score < 80  -- Adjust threshold as needed
+        AND wp.recognition_mastery_score <= 4  -- THRESHOLD FOR WORDS TO BE PRACTICED
         ORDER BY 
             -- Prioritize words that need review (low mastery but some practice)
             CASE 
-                WHEN wp.recognition_mastery_score BETWEEN 30 AND 60 THEN 1
-                WHEN wp.recognition_mastery_score < 30 THEN 2
+                WHEN wp.recognition_mastery_score BETWEEN 1 AND 3 THEN 1
+                WHEN wp.recognition_mastery_score < 3 THEN 2
                 ELSE 3
             END,
             -- Then by recency (less recently practiced first)
@@ -87,7 +87,7 @@ class QuizService:
         SELECT * FROM words WHERE id = ANY($1)
         """
 
-        # Modified to get one random quiz per word using a window function
+        # one random quiz per word using a window function
         query_quizzes = """
         WITH RankedQuizzes AS (
             SELECT *, ROW_NUMBER() OVER (PARTITION BY word_id ORDER BY RANDOM()) as rn
@@ -97,7 +97,7 @@ class QuizService:
         SELECT * FROM RankedQuizzes WHERE rn = 1
         """
 
-        # Query to get progress information for each word
+        # progress information for each word
         query_progress = """
         SELECT * FROM word_progress
         WHERE user_id = $1 AND word_id = ANY($2)
@@ -106,7 +106,6 @@ class QuizService:
         try:
             word_records = await self.pool.fetch(query_word_ids, user_id)
 
-            # Extract word IDs from records
             word_ids = [record["id"] for record in word_records]
 
             if not word_ids:
@@ -116,27 +115,21 @@ class QuizService:
             quizzes_records = await self.pool.fetch(query_quizzes, word_ids)
             progress_records = await self.pool.fetch(query_progress, user_id, word_ids)
 
-            # Create a dictionary to map word IDs to their corresponding quiz
             quizzes_dict = {}
             for quiz_record in quizzes_records:
-                # Use the Quiz model to convert to proper camelCase
                 quiz = Quiz(**dict(quiz_record))
                 quizzes_dict[quiz.word_id] = quiz
 
-            # Create a dictionary to map word IDs to their corresponding progress
             progress_dict = {}
             for progress_record in progress_records:
-                # Use the WordProgress model to convert to proper camelCase
                 progress = WordProgress(**dict(progress_record))
                 progress_dict[progress.word_id] = progress
 
-            # Convert to Word models for proper camelCase
             words_with_quizzes = []
             for word_record in words_records:
                 word_dict = dict(word_record)
                 word_id = word_dict["id"]
 
-                # Add quiz if available
                 quiz = quizzes_dict.get(word_id)
                 if quiz:
                     word_dict["quiz"] = quiz.model_dump(
@@ -145,7 +138,6 @@ class QuizService:
                 else:
                     word_dict["quiz"] = None
 
-                # Add progress if available
                 progress = progress_dict.get(word_id)
                 if progress:
                     word_dict["word_progress"] = progress.model_dump(
@@ -154,7 +146,6 @@ class QuizService:
                 else:
                     word_dict["word_progress"] = None
 
-                # Create Word model for camelCase conversion
                 word = Word(**word_dict)
                 words_with_quizzes.append(
                     word.model_dump(by_alias=True, exclude_none=False)

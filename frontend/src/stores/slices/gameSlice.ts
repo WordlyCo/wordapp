@@ -31,6 +31,7 @@ export interface GameSlice {
   };
   userLists: WordList[];
   quizWords: Word[];
+  quizWordsError: string | null;
   quizStats: QuizStats;
   userStats: {
     diamonds: number;
@@ -85,6 +86,7 @@ export const createGameSlice: StateCreator<GameSlice> = (set, get) => ({
   isFetchingListsByCategory: false,
   userLists: [],
   quizWords: [],
+  quizWordsError: null,
   quizStats: {
     currentIndex: 0,
     score: 0,
@@ -208,6 +210,7 @@ export const createGameSlice: StateCreator<GameSlice> = (set, get) => ({
   },
 
   addListToUserLists: async (listId: string) => {
+    const state = get();
     try {
       const response = await authFetch(`/users/lists`, {
         method: "POST",
@@ -221,12 +224,20 @@ export const createGameSlice: StateCreator<GameSlice> = (set, get) => ({
       if (!success) {
         return errorCode;
       }
+
+      const newSelectedList = state.selectedList
+        ? { ...state.selectedList, inUsersBank: true }
+        : null;
+
+      set({ selectedList: newSelectedList });
+      await get().fetchUserLists();
     } catch (error) {
       console.error("Error adding list to user lists:", error);
     }
   },
 
   removeListFromUserLists: async (listId: string) => {
+    const state = get();
     try {
       const response = await authFetch(`/users/lists/${listId}`, {
         method: "DELETE",
@@ -241,6 +252,13 @@ export const createGameSlice: StateCreator<GameSlice> = (set, get) => ({
         console.error("Failed to remove list from user lists:", message);
         return errorCode;
       }
+
+      const newSelectedList = state.selectedList
+        ? { ...state.selectedList, inUsersBank: false }
+        : null;
+
+      set({ selectedList: newSelectedList });
+      await get().fetchUserLists();
     } catch (error) {
       console.error("Error removing list from user lists:", error);
     }
@@ -366,15 +384,15 @@ export const createGameSlice: StateCreator<GameSlice> = (set, get) => ({
   },
 
   fetchDailyQuiz: async () => {
+    set({ quizWordsError: null });
     try {
       const response = await authFetch("/quizzes/daily-quiz");
       const data = await response.json();
       const success = data.success;
-      const message = data.message;
       const payload = data.payload;
 
       if (!success) {
-        console.error("Failed to fetch daily quiz:", message);
+        set({ quizWordsError: "No daily quiz found" });
         return;
       }
 
@@ -383,13 +401,13 @@ export const createGameSlice: StateCreator<GameSlice> = (set, get) => ({
       set({ quizWords: payload });
     } catch (error) {
       console.error("Error fetching daily quiz:", error);
+      set({ quizWordsError: "Error fetching daily quiz" });
     }
   },
 
   updateDiamonds: async (amount: number) => {
     const { userStats } = get();
 
-    // Update local state first for instant feedback
     set({
       userStats: {
         ...userStats,
@@ -397,7 +415,6 @@ export const createGameSlice: StateCreator<GameSlice> = (set, get) => ({
       },
     });
 
-    // Then update backend
     try {
       await authFetch(`/users/stats/diamonds/${amount}`, {
         method: "PUT",
@@ -409,14 +426,12 @@ export const createGameSlice: StateCreator<GameSlice> = (set, get) => ({
 
   updateStreak: async () => {
     try {
-      // Call backend endpoint to update streak
       const response = await authFetch("/users/stats/streak/update", {
         method: "PUT",
       });
 
       const data = await response.json();
       if (data.success) {
-        // Get user stats to refresh with updated streak
         await get().fetchUserStats();
       }
     } catch (error) {
@@ -438,11 +453,9 @@ export const createGameSlice: StateCreator<GameSlice> = (set, get) => ({
         return;
       }
 
-      // Backend response now matches our store format exactly
       set({ userStats: payload });
     } catch (error) {
       console.error("Error fetching user stats:", error);
-      // Initialize with default values if fetch fails
       const { userStats } = get();
       if (!userStats.lastActive) {
         set({
@@ -468,7 +481,6 @@ export const createGameSlice: StateCreator<GameSlice> = (set, get) => ({
   updatePracticeTime: async (minutes: number) => {
     const { userStats } = get();
 
-    // Update local state first
     set({
       userStats: {
         ...userStats,
@@ -479,15 +491,13 @@ export const createGameSlice: StateCreator<GameSlice> = (set, get) => ({
       },
     });
 
-    // Then update backend
     try {
-      await authFetch("/users/practice-session", {
-        method: "POST",
-        body: JSON.stringify({
-          practice_time: minutes,
-          session_type: "quiz",
-        }),
-      });
+      await authFetch(
+        `/users/practice-session?practice_time=${minutes}&session_type=quiz`,
+        {
+          method: "POST",
+        }
+      );
     } catch (error) {
       console.error("Error recording practice time:", error);
     }
@@ -504,7 +514,6 @@ export const createGameSlice: StateCreator<GameSlice> = (set, get) => ({
         ? Math.round((correctAnswers / totalAttempts) * 100)
         : 0;
 
-    // Update local state
     set({
       userStats: {
         ...userStats,
@@ -515,7 +524,6 @@ export const createGameSlice: StateCreator<GameSlice> = (set, get) => ({
       },
     });
 
-    // Update backend
     try {
       await authFetch("/users/stats", {
         method: "PUT",

@@ -1,4 +1,4 @@
-import { Button, Text, IconButton , Card } from "react-native-paper";
+import { Button, Text, IconButton, Card } from "react-native-paper";
 import { Animated, StyleSheet, View } from "react-native";
 import { useStore } from "@/src/stores/store";
 import useTheme from "@/src/hooks/useTheme";
@@ -16,51 +16,53 @@ const SummaryScreen = () => {
   const userStats = useStore((state) => state.userStats);
   const updatePracticeTime = useStore((state) => state.updatePracticeTime);
   const [diamondsEarned, setDiamondsEarned] = useState(0);
-  
+
   const fadeAnim = useRef(new Animated.Value(0)).current;
   const scoreAnim = useRef(new Animated.Value(0)).current;
-  
+
   const numberOfWords = quizWords.length || 0;
-  const [scorePercentage, setScorePercentage] = useState((score / numberOfWords) * 100);
-  
+  const [scorePercentage, setScorePercentage] = useState(
+    (score / numberOfWords) * 100
+  );
+
   useEffect(() => {
     if (totalTime > 0) {
       const practiceMinutes = Math.ceil(totalTime / 60);
       updatePracticeTime(practiceMinutes);
     }
-    
+
     let totalDiamonds = 0;
     quizWords.forEach((word, index) => {
       if (answerResults[index]) {
         switch (word.difficultyLevel) {
           case DIFFICULTY_LEVELS.BEGINNER:
-            totalDiamonds += 5;
+            totalDiamonds += 1;
             break;
           case DIFFICULTY_LEVELS.INTERMEDIATE:
-            totalDiamonds += 10;
+            totalDiamonds += 2;
             break;
           case DIFFICULTY_LEVELS.ADVANCED:
-            totalDiamonds += 20;
+            totalDiamonds += 3;
             break;
           default:
-            totalDiamonds += 5;
+            totalDiamonds += 1;
         }
       }
     });
     setDiamondsEarned(totalDiamonds);
-    
-    const actualScore = Object.values(useStore.getState().quizStats.answerResults)
-      .filter(result => result === true)
-      .length;
-    
+
+    const actualScore = Object.values(
+      useStore.getState().quizStats.answerResults
+    ).filter((result) => result === true).length;
+
     if (actualScore !== score) {
       setQuizStats({
         ...useStore.getState().quizStats,
-        score: actualScore
+        score: actualScore,
       });
       setScorePercentage((actualScore / numberOfWords) * 100);
     }
-  
+
     Animated.sequence([
       Animated.timing(fadeAnim, {
         toValue: 1,
@@ -71,10 +73,10 @@ const SummaryScreen = () => {
         toValue: (actualScore / numberOfWords) * 100,
         duration: 800,
         useNativeDriver: false,
-      })
+      }),
     ]).start();
   }, []);
- 
+
   const playAgain = () => {
     setQuizStats({
       score: 0,
@@ -83,85 +85,122 @@ const SummaryScreen = () => {
       currentIndex: 0,
       selectedAnswer: "",
       startTime: Date.now(),
-      answerResults: {}
+      answerResults: {},
     });
     router.replace({
-      pathname: "/(protected)/quiz"
+      pathname: "/(protected)/quiz",
     });
   };
-  
+
   const goHome = () => {
     router.replace({
-      pathname: "/(protected)/(tabs)/home"
+      pathname: "/(protected)/(tabs)/home",
     });
   };
 
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>
-      <Animated.View 
-        style={[
-          styles.contentContainer,
-          { opacity: fadeAnim }
-        ]}
-      >
-        <Card style={[styles.summaryCard, { backgroundColor: colors.surface }]} elevation={4}>
+      <Animated.View style={[styles.contentContainer, { opacity: fadeAnim }]}>
+        <Card
+          style={[styles.summaryCard, { backgroundColor: colors.surface }]}
+          elevation={4}
+        >
           <View style={styles.confettiContainer}>
-            <IconButton icon="party-popper" size={32} iconColor={colors.secondary} />
+            <IconButton
+              icon="party-popper"
+              size={32}
+              iconColor={colors.secondary}
+            />
           </View>
-          
+
           <Card.Content style={styles.cardContent}>
-            <Text 
-              variant="headlineMedium" 
+            <Text
+              variant="headlineMedium"
               style={[styles.summaryTitle, { color: colors.onSurface }]}
             >
               Quiz Complete!
             </Text>
-            
+
             <View style={styles.scoreCircleContainer}>
-              <View 
+              <View
                 style={[
                   styles.scoreCircle,
                   {
-                    borderColor: scorePercentage > 70 ? colors.primary : colors.secondary,
-            
-                  }
+                    borderColor:
+                      scorePercentage > 70 ? colors.primary : colors.secondary,
+                  },
                 ]}
               >
                 <Text style={[styles.scoreText, { color: colors.onSurface }]}>
                   {score}/{numberOfWords}
                 </Text>
-                <Text style={[styles.scoreLabel, { color: colors.onSurfaceVariant }]}>
+                <Text
+                  style={[
+                    styles.scoreLabel,
+                    { color: colors.onSurfaceVariant },
+                  ]}
+                >
                   Score
                 </Text>
               </View>
             </View>
-            
+
             <View style={styles.statsContainer}>
               <View style={styles.statItem}>
-                <IconButton icon="clock-outline" size={28} iconColor={colors.primary} style={styles.statIcon} />
-                <Text variant="titleMedium" style={{ color: colors.onSurfaceVariant }}>Time</Text>
+                <IconButton
+                  icon="clock-outline"
+                  size={28}
+                  iconColor={colors.primary}
+                  style={styles.statIcon}
+                />
+                <Text
+                  variant="titleMedium"
+                  style={{ color: colors.onSurfaceVariant }}
+                >
+                  Time
+                </Text>
                 <Text variant="headlineSmall" style={{ color: colors.primary }}>
                   {Math.round(totalTime)}s
                 </Text>
               </View>
-              
+
               <View style={styles.statItem}>
-                <IconButton icon="diamond" size={28} iconColor={colors.info} style={styles.statIcon} />
-                <Text variant="titleMedium" style={{ color: colors.onSurfaceVariant }}>Diamonds</Text>
+                <IconButton
+                  icon="diamond"
+                  size={28}
+                  iconColor={colors.info}
+                  style={styles.statIcon}
+                />
+                <Text
+                  variant="titleMedium"
+                  style={{ color: colors.onSurfaceVariant }}
+                >
+                  Diamonds
+                </Text>
                 <Text variant="headlineSmall" style={{ color: colors.info }}>
                   +{diamondsEarned}
                 </Text>
               </View>
-              
+
               <View style={styles.statItem}>
-                <IconButton icon="lightning-bolt" size={28} iconColor={colors.streak} style={styles.statIcon} />
-                <Text variant="titleMedium" style={{ color: colors.onSurfaceVariant }}>Streak</Text>
+                <IconButton
+                  icon="lightning-bolt"
+                  size={28}
+                  iconColor={colors.streak}
+                  style={styles.statIcon}
+                />
+                <Text
+                  variant="titleMedium"
+                  style={{ color: colors.onSurfaceVariant }}
+                >
+                  Streak
+                </Text>
                 <Text variant="headlineSmall" style={{ color: colors.streak }}>
                   {userStats.streak}
                 </Text>
               </View>
             </View>
-            
+
             <View style={styles.actionButtons}>
               <Button
                 mode="contained"
@@ -172,7 +211,7 @@ const SummaryScreen = () => {
               >
                 Play Again
               </Button>
-              
+
               <Button
                 mode="outlined"
                 onPress={goHome}
@@ -194,19 +233,19 @@ const SummaryScreen = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    justifyContent: 'center',
+    justifyContent: "center",
     padding: 16,
   },
   contentContainer: {
-    alignItems: 'center',
-    justifyContent: 'center',
+    alignItems: "center",
+    justifyContent: "center",
   },
   summaryCard: {
-    width: '100%',
+    width: "100%",
     borderRadius: 16,
-    overflow: 'hidden',
+    overflow: "hidden",
     elevation: 4,
-    shadowColor: '#000',
+    shadowColor: "#000",
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
     shadowRadius: 8,
@@ -215,19 +254,19 @@ const styles = StyleSheet.create({
     padding: 16,
   },
   confettiContainer: {
-    position: 'absolute',
+    position: "absolute",
     top: 4,
     right: 4,
     zIndex: 1,
   },
   summaryTitle: {
-    textAlign: 'center',
+    textAlign: "center",
     marginBottom: 24,
-    fontWeight: '700',
+    fontWeight: "700",
     letterSpacing: 0.5,
   },
   scoreCircleContainer: {
-    alignItems: 'center',
+    alignItems: "center",
     marginBottom: 24,
   },
   scoreCircle: {
@@ -235,26 +274,26 @@ const styles = StyleSheet.create({
     height: 120,
     borderRadius: 60,
     borderWidth: 8,
-    justifyContent: 'center',
-    alignItems: 'center',
+    justifyContent: "center",
+    alignItems: "center",
     marginBottom: 10,
   },
   scoreText: {
     fontSize: 28,
-    fontWeight: 'bold',
+    fontWeight: "bold",
   },
   scoreLabel: {
     fontSize: 16,
-    fontWeight: '500',
+    fontWeight: "500",
   },
   statsContainer: {
-    flexDirection: 'row',
-    justifyContent: 'space-around',
+    flexDirection: "row",
+    justifyContent: "space-around",
     marginBottom: 24,
     paddingHorizontal: 8,
   },
   statItem: {
-    alignItems: 'center',
+    alignItems: "center",
     padding: 12,
     borderRadius: 12,
   },

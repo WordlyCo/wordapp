@@ -6,7 +6,7 @@ from app.models.quiz import (
 )
 from app.models.base import Response
 from app.models.user import User
-from app.api.errors import SERVER_ERROR, UNAUTHORIZED
+from app.api.errors import SERVER_ERROR, UNAUTHORIZED, NOT_FOUND
 from app.services.quizzes import (
     get_quiz_service,
     QuizService,
@@ -28,6 +28,10 @@ async def get_daily_words_with_quiz(
                 success=False, message="User not found", error_code=UNAUTHORIZED
             )
         quiz = await quiz_service.get_daily_words_with_quizzes(current_user.id)
+        if len(quiz) == 0:
+            return Response(
+                success=False, message="No daily quiz found", error_code=NOT_FOUND
+            )
         return Response(
             success=True, message="Daily quiz retrieved successfully", payload=quiz
         )

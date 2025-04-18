@@ -81,7 +81,6 @@ class ListService:
                         list.icon_name,
                     )
 
-            # Collect existing categories and identify new ones to create
             existing_categories_names: List[str] = []
             new_categories_names: List[str] = []
 

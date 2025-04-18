@@ -1,10 +1,19 @@
-import { Button, Text, Divider, Chip, FAB , Card , IconButton , Portal } from "react-native-paper";
+import {
+  Button,
+  Text,
+  Divider,
+  Chip,
+  FAB,
+  Card,
+  IconButton,
+  Portal,
+} from "react-native-paper";
 import { View, StyleSheet, ScrollView } from "react-native";
 import { DifficultyLevel, DIFFICULTY_LEVELS } from "@/src/types/enums";
 import { useStore } from "@/src/stores/store";
 import useTheme from "@/src/hooks/useTheme";
 import { router } from "expo-router";
-import { useEffect , useState } from "react";
+import { useEffect, useState } from "react";
 import { Word } from "@/src/types/words";
 
 const getDifficultyColor = (difficulty: DifficultyLevel, colors: any) => {
@@ -34,23 +43,18 @@ const getDifficultyLabel = (difficulty: DifficultyLevel): string => {
 };
 
 const withOpacity = (color: string, opacity: number): string => {
-  // If it's already rgba, replace the alpha
   if (color.startsWith("rgba")) {
     return color.replace(/[\d\.]+\)$/g, `${opacity})`);
   }
 
-  // If it's rgb, convert to rgba
   if (color.startsWith("rgb")) {
     return color.replace("rgb", "rgba").replace(")", `, ${opacity})`);
   }
 
-  // If it's a hex color
   if (color.startsWith("#")) {
-    // For simplicity, return a safe default with opacity
     return `rgba(0, 0, 0, ${opacity})`;
   }
 
-  // Default fallback
   return `rgba(0, 0, 0, ${opacity})`;
 };
 
@@ -76,12 +80,11 @@ const FeedbackScreen = () => {
   const startTime = useStore((state) => state.quizStats.startTime);
   const setQuizStats = useStore((state) => state.setQuizStats);
 
-  const [currentWord, setCurrentWord] = useState<Word | null>(null);  
+  const [currentWord, setCurrentWord] = useState<Word | null>(null);
 
   const numberOfWords = quizWords.length || 0;
 
   useEffect(() => {
-    // Make sure we're getting the freshest state
     const word = quizWords.find((w, index) => index === currentIndex);
     if (word) {
       setCurrentWord(word);
@@ -92,7 +95,8 @@ const FeedbackScreen = () => {
   }, [currentIndex, quizWords]);
   if (!currentWord) return null;
 
-  const isCorrect = currentWord?.quiz?.correctOptions.includes(selectedAnswer) || false;
+  const isCorrect =
+    currentWord?.quiz?.correctOptions.includes(selectedAnswer) || false;
   const difficultyColor = getDifficultyColor(
     currentWord.difficultyLevel,
     colors
@@ -226,7 +230,8 @@ const FeedbackScreen = () => {
                             {
                               backgroundColor:
                                 level <=
-                                (currentWord.wordProgress?.recognitionMasteryScore || 0)
+                                (currentWord.wordProgress
+                                  ?.recognitionMasteryScore || 0)
                                   ? colors.primary
                                   : withOpacity(colors.primary, 0.2),
                             },
@@ -237,7 +242,8 @@ const FeedbackScreen = () => {
                         variant="titleSmall"
                         style={{ color: colors.primary, marginLeft: 8 }}
                       >
-                        {currentWord.wordProgress?.recognitionMasteryScore || 0}/5
+                        {currentWord.wordProgress?.recognitionMasteryScore || 0}
+                        /5
                       </Text>
                     </View>
                   </View>
@@ -255,7 +261,8 @@ const FeedbackScreen = () => {
                             {
                               backgroundColor:
                                 level <=
-                                (currentWord.wordProgress?.usageMasteryScore || 0)
+                                (currentWord.wordProgress?.usageMasteryScore ||
+                                  0)
                                   ? colors.secondary
                                   : withOpacity(colors.secondary, 0.2),
                             },

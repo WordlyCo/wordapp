@@ -1,5 +1,11 @@
 import React from "react";
-import { View, StyleSheet, ScrollView, TouchableOpacity } from "react-native";
+import {
+  View,
+  StyleSheet,
+  ScrollView,
+  TouchableOpacity,
+  Alert,
+} from "react-native";
 import { Text } from "react-native-paper";
 import { useRouter } from "expo-router";
 
@@ -72,7 +78,9 @@ const SettingsScreen = () => {
           {renderSettingItem(
             "bell",
             "Notifications",
-            () => {} // Add navigation to Notifications screen when available
+            () => {
+              Alert.alert("Coming soon!");
+            } // Add navigation to Notifications screen when available
           )}
           {renderSettingItem("lock", "Privacy", () =>
             router.push("/(protected)/(tabs)/profile/PrivacyPolicy")
@@ -90,11 +98,9 @@ const SettingsScreen = () => {
           {renderSettingItem(
             "credit-card",
             "My Subscription",
-            () => {} // Add navigation to Subscription screen when available
-          )}
-
-          {renderSettingItem("file-document", "Terms and Policies", () =>
-            router.push("/(protected)/(tabs)/profile/PrivacyPolicy")
+            () => {
+              Alert.alert("Coming soon!");
+            } // Add navigation to Subscription screen when available
           )}
         </View>
 
@@ -109,7 +115,9 @@ const SettingsScreen = () => {
           {renderSettingItem(
             "flag",
             "Report a problem",
-            () => {} // Add functionality to report a problem
+            () => {
+              Alert.alert("Coming soon!");
+            } // Add functionality to report a problem
           )}
           {renderSettingItem(
             "restart",

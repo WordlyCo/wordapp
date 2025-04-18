@@ -3,12 +3,14 @@ import { StyleSheet, View, Text, Platform } from "react-native";
 import { Tabs } from "expo-router";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
 import useTheme from "@/src/hooks/useTheme";
+import { useTheme as usePaperTheme } from "react-native-paper";
 import Animated, { FadeInDown } from "react-native-reanimated";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useStore } from "@/src/stores/store";
 
 export default function AppLayout() {
   const { colors } = useTheme();
+  const { dark } = usePaperTheme();
   const diamonds = useStore((state) => state.userStats.diamonds);
 
   return (
@@ -90,10 +92,15 @@ export default function AppLayout() {
                     <MaterialCommunityIcons
                       name="home"
                       size={24}
-                      color={colors.primary}
+                      color={dark ? colors.onSurface : colors.primary}
                     />
                   </View>
-                  <Text style={[styles.headerText, { color: colors.primary }]}>
+                  <Text
+                    style={[
+                      styles.headerText,
+                      { color: dark ? colors.onSurface : colors.primary },
+                    ]}
+                  >
                     Home
                   </Text>
                 </View>
@@ -124,10 +131,15 @@ export default function AppLayout() {
                   <MaterialCommunityIcons
                     name="book"
                     size={24}
-                    color={colors.primary}
+                    color={dark ? colors.onSurface : colors.primary}
                   />
                 </View>
-                <Text style={[styles.headerText, { color: colors.primary }]}>
+                <Text
+                  style={[
+                    styles.headerText,
+                    { color: dark ? colors.onSurface : colors.primary },
+                  ]}
+                >
                   Word Store
                 </Text>
               </Animated.View>
@@ -157,10 +169,15 @@ export default function AppLayout() {
                   <MaterialCommunityIcons
                     name="chart-line-stacked"
                     size={24}
-                    color={colors.primary}
+                    color={dark ? colors.onSurface : colors.primary}
                   />
                 </View>
-                <Text style={[styles.headerText, { color: colors.primary }]}>
+                <Text
+                  style={[
+                    styles.headerText,
+                    { color: dark ? colors.onSurface : colors.primary },
+                  ]}
+                >
                   Progress
                 </Text>
               </Animated.View>
@@ -190,10 +207,15 @@ export default function AppLayout() {
                   <MaterialCommunityIcons
                     name="bank"
                     size={24}
-                    color={colors.primary}
+                    color={dark ? colors.onSurface : colors.primary}
                   />
                 </View>
-                <Text style={[styles.headerText, { color: colors.primary }]}>
+                <Text
+                  style={[
+                    styles.headerText,
+                    { color: dark ? colors.onSurface : colors.primary },
+                  ]}
+                >
                   Word Bank
                 </Text>
               </Animated.View>
@@ -238,7 +260,6 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     alignItems: "center",
     backgroundColor: "rgba(0, 0, 0, 0.03)",
-    marginRight: 12,
   },
   headerText: {
     fontSize: 24,
