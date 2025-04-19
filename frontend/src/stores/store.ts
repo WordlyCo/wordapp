@@ -1,16 +1,12 @@
 import { create } from "zustand";
 import { persist, createJSONStorage } from "zustand/middleware";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import { createAuthSlice, AuthSlice } from "./slices/authSlice";
-import { createGameSlice, GameSlice } from "./slices/gameSlice";
+import { createWordAppSlice, WordAppSlice } from "./slice";
 
-interface StoreState extends AuthSlice, GameSlice {}
-
-export const useStore = create<StoreState>()(
+export const useStore = create<WordAppSlice>()(
   persist(
     (...a) => ({
-      ...createAuthSlice(...a),
-      ...createGameSlice(...a),
+      ...createWordAppSlice(...a),
     }),
     {
       name: "app-storage",
@@ -18,11 +14,8 @@ export const useStore = create<StoreState>()(
       partialize: (state) => ({
         user: state.user,
         isAuthenticated: state.isAuthenticated,
-        preferences: state.preferences,
-        stats: state.stats,
         categories: state.categories,
         selectedCategory: state.selectedCategory,
-        currentSession: state.currentSession,
       }),
     }
   )

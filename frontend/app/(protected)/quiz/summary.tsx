@@ -13,7 +13,7 @@ const SummaryScreen = () => {
   const setQuizStats = useStore((state) => state.setQuizStats);
   const totalTime = useStore((state) => state.quizStats.totalTime);
   const answerResults = useStore((state) => state.quizStats.answerResults);
-  const userStats = useStore((state) => state.userStats);
+  const userStats = useStore((state) => state.user?.userStats);
   const updatePracticeTime = useStore((state) => state.updatePracticeTime);
   const [diamondsEarned, setDiamondsEarned] = useState(0);
 
@@ -205,7 +205,7 @@ const SummaryScreen = () => {
                     variant="headlineSmall"
                     style={{ color: colors.streak }}
                   >
-                    {userStats.streak}
+                    {userStats?.streak}
                   </Text>
                 </View>
               </View>

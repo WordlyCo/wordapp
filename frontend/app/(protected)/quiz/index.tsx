@@ -34,8 +34,8 @@ const QuestionScreen: React.FC = () => {
   const updateWordProgress = useStore((state) => state.updateWordProgress);
   const updateDiamonds = useStore((state) => state.updateDiamonds);
   const updateStreak = useStore((state) => state.updateStreak);
-  const fetchUserStats = useStore((state) => state.fetchUserStats);
   const updateAccuracy = useStore((state) => state.updateAccuracy);
+  const fetchMe = useStore((state) => state.getMe);
 
   const [currentWord, setCurrentWord] = useState<Word | undefined>(undefined);
   const [, setQuizStartTime] = useState<number | null>(null);
@@ -45,9 +45,9 @@ const QuestionScreen: React.FC = () => {
   }, [currentIndex, quizWords]);
 
   useEffect(() => {
-    fetchUserStats();
+    fetchMe();
     setQuizStartTime(Date.now());
-  }, [fetchUserStats, setQuizStartTime]);
+  }, [fetchMe, setQuizStartTime]);
 
   const wordCount = quizWords.length;
 
@@ -180,8 +180,6 @@ const QuestionScreen: React.FC = () => {
       }
 
       updateDiamonds(diamondReward);
-
-      updateStreak();
     }
 
     const wordProgressUpdate = {
@@ -206,13 +204,14 @@ const QuestionScreen: React.FC = () => {
     }
 
     await updateWordProgress(wordProgressUpdate);
+    updateStreak();
 
     router.replace("/(protected)/quiz/feedback");
   };
 
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>
-      <View style={styles.headerContainer}>
+      <View>
         <View style={styles.progressInfoContainer}>
           <Text style={[styles.progressText, { color: colors.onBackground }]}>
             Word {currentIndex + 1} of {wordCount}
@@ -332,7 +331,6 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: "500",
   },
-  headerContainer: {},
   progressInfoContainer: {
     flexDirection: "row",
     justifyContent: "space-between",
@@ -355,7 +353,6 @@ const styles = StyleSheet.create({
     justifyContent: "center",
   },
   card: {
-    borderRadius: 16,
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.1,
     shadowRadius: 8,
@@ -391,7 +388,7 @@ const styles = StyleSheet.create({
   },
   optionsContainer: {
     gap: 14,
-    marginBottom: 20,
+    marginTop: 40,
   },
   errorContainer: {
     flex: 1,

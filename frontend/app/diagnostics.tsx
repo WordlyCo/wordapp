@@ -10,6 +10,7 @@ import {
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { router } from "expo-router";
 import { useStore } from "@/src/stores/store";
+import { APP_ERRORS_KEY } from "@/constants";
 
 export default function DiagnosticsScreen() {
   const [errors, setErrors] = useState<any[]>([]);
@@ -24,7 +25,7 @@ export default function DiagnosticsScreen() {
 
   const loadData = async () => {
     try {
-      const errorsData = await AsyncStorage.getItem("app_errors");
+      const errorsData = await AsyncStorage.getItem(APP_ERRORS_KEY);
       const parsedErrors = errorsData ? JSON.parse(errorsData) : [];
       setErrors(parsedErrors);
 
@@ -62,7 +63,7 @@ export default function DiagnosticsScreen() {
 
   const clearErrors = async () => {
     try {
-      await AsyncStorage.removeItem("app_errors");
+      await AsyncStorage.removeItem(APP_ERRORS_KEY);
       setErrors([]);
       Alert.alert("Success", "Error logs cleared");
     } catch (e) {

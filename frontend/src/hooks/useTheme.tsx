@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { MD3DarkTheme, MD3LightTheme } from "react-native-paper";
 import { useColorScheme } from "react-native";
-
+import { useStore } from "@/src/stores/store";
 const palette = {
   purple: {
     main: "rgb(100, 96, 205)",
@@ -275,14 +275,25 @@ const extendedDarkTheme = {
 };
 
 const useTheme = () => {
+  const user = useStore((state) => state.user);
   const colorScheme = useColorScheme();
   const [theme, setTheme] = useState(
     colorScheme === "light" ? extendedLightTheme : extendedDarkTheme
   );
-
+  console.log("user", user);
   useEffect(() => {
-    setTheme(colorScheme === "light" ? extendedLightTheme : extendedDarkTheme);
-  }, [colorScheme]);
+    if (user?.preferences?.theme) {
+      setTheme(
+        user.preferences.theme === "light"
+          ? extendedLightTheme
+          : extendedDarkTheme
+      );
+    } else {
+      setTheme(
+        colorScheme === "light" ? extendedLightTheme : extendedDarkTheme
+      );
+    }
+  }, [colorScheme, user]);
 
   return {
     theme,

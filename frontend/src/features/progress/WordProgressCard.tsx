@@ -114,11 +114,11 @@ export const WordProgressCard: React.FC<WordProgressCardProps> = ({
                   <Text
                     style={[styles.masteryValue, { color: colors.primary }]}
                   >
-                    {recognitionMastery}/10
+                    {recognitionMastery}/5
                   </Text>
                 </View>
                 <ProgressBar
-                  progress={recognitionMastery / 10}
+                  progress={recognitionMastery / 5}
                   color={colors.primary}
                   style={styles.progressBar}
                 />
@@ -135,11 +135,11 @@ export const WordProgressCard: React.FC<WordProgressCardProps> = ({
                   <Text
                     style={[styles.masteryValue, { color: colors.tertiary }]}
                   >
-                    {usageMastery}/10
+                    {usageMastery}/5
                   </Text>
                 </View>
                 <ProgressBar
-                  progress={usageMastery / 10}
+                  progress={usageMastery / 5}
                   color={colors.tertiary}
                   style={styles.progressBar}
                 />
@@ -248,7 +248,6 @@ const styles = StyleSheet.create({
   },
   cardWrapper: {
     borderRadius: 12,
-    overflow: "hidden",
   },
   card: {
     borderRadius: 12,

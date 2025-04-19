@@ -1,82 +1,7 @@
-from pydantic import EmailStr, BaseModel, Field, ConfigDict
-from typing import Optional, List
+from pydantic import EmailStr, BaseModel, ConfigDict
+from typing import Optional
 from datetime import datetime
 from .base import BaseEntity, CamelModel
-
-
-class User(BaseEntity):
-    id: int
-    clerk_id: str
-    username: str
-    email: EmailStr
-    first_name: Optional[str] = None
-    last_name: Optional[str] = None
-    profile_picture_url: Optional[str] = None
-    bio: Optional[str] = None
-
-    model_config = ConfigDict(from_attributes=True)
-
-
-class UserCreate(BaseModel):
-    email: EmailStr
-    username: str
-    clerk_id: str
-    first_name: Optional[str] = None
-    last_name: Optional[str] = None
-    profile_picture_url: Optional[str] = None
-    bio: Optional[str] = None
-    time_zone: Optional[str] = "America/Los_Angeles"
-    theme: Optional[str] = "dark"
-
-
-class UserRegister(CamelModel):
-    username: str
-    email: EmailStr
-    clerk_id: str
-    first_name: Optional[str] = None
-    last_name: Optional[str] = None
-
-
-class UserLogin(CamelModel):
-    email: str
-    password: str
-
-
-class UserLoginResponse(CamelModel):
-    token: str
-    refresh_token: str
-    user: User
-
-
-class UserUpdate(CamelModel):
-    username: Optional[str] = None
-    email: Optional[EmailStr] = None
-    first_name: Optional[str] = None
-    last_name: Optional[str] = None
-    profile_picture_url: Optional[str] = None
-    bio: Optional[str] = None
-
-
-class LoginRequest(CamelModel):
-    username: str
-    password: str
-
-
-class RefreshTokenRequest(CamelModel):
-    refresh_token: str
-
-
-# User Lists
-
-
-class UserList(BaseEntity):
-    user_id: int
-    list_id: int
-
-
-class UserListCreate(CamelModel):
-    list_id: int
-
 
 # User Stats
 
@@ -141,6 +66,81 @@ class UserPreferencesUpdate(CamelModel):
     notifications_enabled: Optional[bool] = None
     time_zone: Optional[str] = None
     theme: Optional[str] = None
+
+
+class User(BaseEntity):
+    id: int
+    clerk_id: str
+    username: str
+    email: EmailStr
+    first_name: Optional[str] = None
+    last_name: Optional[str] = None
+    profile_picture_url: Optional[str] = None
+    bio: Optional[str] = None
+    user_stats: Optional[FullUserStats] = None
+    preferences: Optional[UserPreferences] = None
+    model_config = ConfigDict(from_attributes=True)
+
+
+class UserCreate(BaseModel):
+    email: EmailStr
+    username: str
+    clerk_id: str
+    first_name: Optional[str] = None
+    last_name: Optional[str] = None
+    profile_picture_url: Optional[str] = None
+    bio: Optional[str] = None
+    time_zone: Optional[str] = "America/Los_Angeles"
+    theme: Optional[str] = "dark"
+
+
+class UserRegister(CamelModel):
+    username: str
+    email: EmailStr
+    clerk_id: str
+    first_name: Optional[str] = None
+    last_name: Optional[str] = None
+
+
+class UserLogin(CamelModel):
+    email: str
+    password: str
+
+
+class UserLoginResponse(CamelModel):
+    token: str
+    refresh_token: str
+    user: User
+
+
+class UserUpdate(CamelModel):
+    username: Optional[str] = None
+    email: Optional[EmailStr] = None
+    first_name: Optional[str] = None
+    last_name: Optional[str] = None
+    profile_picture_url: Optional[str] = None
+    bio: Optional[str] = None
+
+
+class LoginRequest(CamelModel):
+    username: str
+    password: str
+
+
+class RefreshTokenRequest(CamelModel):
+    refresh_token: str
+
+
+# User Lists
+
+
+class UserList(BaseEntity):
+    user_id: int
+    list_id: int
+
+
+class UserListCreate(CamelModel):
+    list_id: int
 
 
 # User Progress

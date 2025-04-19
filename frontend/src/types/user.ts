@@ -10,7 +10,7 @@ export type User = BaseEntity & {
   clerkId?: string;
   profilePictureUrl?: string;
   preferences?: UserPreferences;
-  stats?: UserStats;
+  userStats?: FullUserStats;
 };
 
 export type UserPreferences = BaseEntity & {
@@ -21,6 +21,31 @@ export type UserPreferences = BaseEntity & {
   notificationType: NotificationType;
   theme: Theme;
   profileBackgroundColorIndex: number;
+};
+
+export type DailyProgress = BaseEntity & {
+  wordsPracticed: number;
+  totalWordsGoal: number;
+  practiceTime: number;
+  practiceTimeGoal: number;
+};
+
+export type LearningInsights = BaseEntity & {
+  wordsMastered: number;
+  accuracy: number;
+};
+
+export type FullUserStats = BaseEntity & {
+  totalWordsLearned: number;
+  currentStreak: number;
+  longestStreak: number;
+  totalPracticeTime: number;
+  averageAccuracy: number;
+  dailyProgress: DailyProgress;
+  learningInsights: LearningInsights;
+  diamonds: number;
+  streak: number;
+  lastActive: Date;
 };
 
 export type UserStats = BaseEntity & {

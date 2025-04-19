@@ -1,6 +1,7 @@
 import React, { Component, ErrorInfo } from "react";
 import { View, Text, TouchableOpacity, StyleSheet } from "react-native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import { APP_ERRORS_KEY, APP_STORAGE_KEY } from "@/constants";
 
 interface Props {
   children: React.ReactNode;
@@ -22,22 +23,18 @@ class ErrorBoundary extends Component<Props, State> {
   }
 
   componentDidCatch(error: Error, errorInfo: ErrorInfo) {
-    // Log error to console
     console.error("ErrorBoundary caught an error:", error, errorInfo);
 
-    // Save error to AsyncStorage for debugging
     this.logErrorToStorage(error, errorInfo);
   }
 
   logErrorToStorage = async (error: Error, errorInfo: ErrorInfo) => {
     try {
-      // Get existing errors
-      const existingErrorsString = await AsyncStorage.getItem("app_errors");
+      const existingErrorsString = await AsyncStorage.getItem(APP_ERRORS_KEY);
       const existingErrors = existingErrorsString
         ? JSON.parse(existingErrorsString)
         : [];
 
-      // Add new error with timestamp
       const newError = {
         message: error.message,
         stack: error.stack,
@@ -45,9 +42,9 @@ class ErrorBoundary extends Component<Props, State> {
         timestamp: new Date().toISOString(),
       };
 
-      // Save only last 10 errors to prevent storage issues
+      // only last 10 errors to prevent storage issues
       const updatedErrors = [newError, ...existingErrors].slice(0, 10);
-      await AsyncStorage.setItem("app_errors", JSON.stringify(updatedErrors));
+      await AsyncStorage.setItem(APP_ERRORS_KEY, JSON.stringify(updatedErrors));
     } catch (e) {
       console.error("Failed to log error to storage:", e);
     }
@@ -59,8 +56,8 @@ class ErrorBoundary extends Component<Props, State> {
 
   clearApp = async () => {
     try {
-      // Clear only app data, not error logs
-      await AsyncStorage.removeItem("app-storage");
+      // do not error logs
+      await AsyncStorage.removeItem(APP_STORAGE_KEY);
       this.setState({ hasError: false, error: null });
     } catch (e) {
       console.error("Failed to clear app data:", e);

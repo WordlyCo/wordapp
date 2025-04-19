@@ -8,7 +8,7 @@ import { useStore } from "@/src/stores/store";
 type IconName = keyof typeof Ionicons.glyphMap;
 const StickyHeader = ({ title, icon }: { title?: string; icon?: IconName }) => {
   const { colors } = useTheme();
-  const userStats = useStore((state) => state.userStats);
+  const userStats = useStore((state) => state.user?.userStats);
 
   return (
     <View>
@@ -30,7 +30,7 @@ const StickyHeader = ({ title, icon }: { title?: string; icon?: IconName }) => {
           <View style={styles.rightContainer}>
             <View style={styles.statItem}>
               <Text style={[styles.statValue, { color: colors.onSurface }]}>
-                {userStats.diamonds.toLocaleString()}
+                {userStats?.diamonds.toLocaleString()}
               </Text>
               <MaterialCommunityIcons
                 name="diamond"
@@ -40,7 +40,7 @@ const StickyHeader = ({ title, icon }: { title?: string; icon?: IconName }) => {
             </View>
             <View style={styles.statItem}>
               <Text style={[styles.statValue, { color: colors.onSurface }]}>
-                {userStats.streak}
+                {userStats?.streak}
               </Text>
               <MaterialCommunityIcons
                 name="lightning-bolt"
