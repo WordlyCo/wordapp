@@ -13,7 +13,6 @@ export default function PracticeLayout() {
   useEffect(() => {
     const fetchQuiz = async () => {
       await fetchDailyQuiz();
-      console.log("RAN THIS THING");
     };
     fetchQuiz();
     setQuizStats({ ...quizStats, startTime: Date.now() });
@@ -36,5 +35,3 @@ export default function PracticeLayout() {
     </SafeAreaView>
   );
 }
-
- 

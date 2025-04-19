@@ -57,126 +57,134 @@ const ProfileScreen = () => {
       >
         <View style={styles.cardContainer}>
           <Card style={styles.card}>
-            {/* Profile Background */}
-            <View
-              style={[
-                styles.profileBackground,
-                {
-                  backgroundColor:
-                    PROFILE_BACKGROUND_COLORS[profileBackgroundColorIndex],
-                },
-              ]}
-            >
-              <View style={styles.profileHeader}>
-                <View style={{ flex: 1 }} />
-                <IconButton
-                  icon="cog"
-                  size={24}
-                  iconColor="white"
-                  onPress={() =>
-                    router.push("/(protected)/(tabs)/profile/Settings")
-                  }
-                  style={styles.settingsButton}
-                />
-              </View>
-            </View>
-
-            <View style={styles.profileCard}>
+            <View style={styles.cardWrapper}>
+              {/* Profile Background */}
               <View
                 style={[
-                  styles.avatarContainer,
+                  styles.profileBackground,
                   {
-                    backgroundColor: colors.onBackground,
-                    marginTop: -60,
+                    backgroundColor:
+                      PROFILE_BACKGROUND_COLORS[profileBackgroundColorIndex],
                   },
                 ]}
               >
-                {user?.profilePictureUrl ? (
-                  <Image
-                    source={{ uri: user.profilePictureUrl }}
-                    style={styles.avatar}
+                <View style={styles.profileHeader}>
+                  <View style={{ flex: 1 }} />
+                  <IconButton
+                    icon="cog"
+                    size={24}
+                    iconColor="white"
+                    onPress={() =>
+                      router.push("/(protected)/(tabs)/profile/Settings")
+                    }
+                    style={styles.settingsButton}
                   />
-                ) : (
-                  <View style={styles.avatarPlaceholder}>
-                    <MaterialCommunityIcons
-                      name="account"
-                      size={80}
-                      color={colors.primary}
-                    />
-                  </View>
-                )}
-              </View>
-
-              <Text style={[styles.userName, { color: colors.onSurface }]}>
-                {user?.firstName} {user?.lastName}
-              </Text>
-              <Text
-                style={[styles.userTitle, { color: colors.onSurfaceVariant }]}
-              >
-                @{user?.username}
-              </Text>
-              <Text
-                style={[
-                  styles.userLocation,
-                  { color: colors.onSurfaceVariant },
-                ]}
-              >
-                {user?.email}
-              </Text>
-
-              {/* User Stats */}
-              <View style={styles.statsContainer}>
-                <View style={styles.statItem}>
-                  <Text style={[styles.statNumber, { color: colors.primary }]}>
-                    0
-                  </Text>
-                  <Text
-                    style={[
-                      styles.statLabel,
-                      { color: colors.onSurfaceVariant },
-                    ]}
-                  >
-                    Followers
-                  </Text>
-                </View>
-                <View style={styles.statItem}>
-                  <Text style={[styles.statNumber, { color: colors.primary }]}>
-                    0
-                  </Text>
-                  <Text
-                    style={[
-                      styles.statLabel,
-                      { color: colors.onSurfaceVariant },
-                    ]}
-                  >
-                    Following
-                  </Text>
                 </View>
               </View>
 
-              {/* Action Buttons */}
-              <View style={styles.actionContainer}>
-                <Button
-                  mode="contained"
-                  icon="pencil"
+              <View style={styles.profileCard}>
+                <View
                   style={[
-                    styles.actionButton,
-                    { backgroundColor: colors.primary },
+                    styles.avatarContainer,
+                    {
+                      backgroundColor: colors.onBackground,
+                      marginTop: -60,
+                    },
                   ]}
-                  labelStyle={styles.actionButtonLabel}
-                  onPress={() =>
-                    router.push("/(protected)/(tabs)/profile/AccountSettings")
-                  }
                 >
-                  Edit Profile
-                </Button>
+                  {user?.profilePictureUrl ? (
+                    <Image
+                      source={{ uri: user.profilePictureUrl }}
+                      style={styles.avatar}
+                    />
+                  ) : (
+                    <View style={styles.avatarPlaceholder}>
+                      <MaterialCommunityIcons
+                        name="account"
+                        size={80}
+                        color={colors.primary}
+                      />
+                    </View>
+                  )}
+                </View>
+
+                <Text style={[styles.userName, { color: colors.onSurface }]}>
+                  {user?.firstName} {user?.lastName}
+                </Text>
+                <Text
+                  style={[styles.userTitle, { color: colors.onSurfaceVariant }]}
+                >
+                  @{user?.username}
+                </Text>
+                <Text
+                  style={[
+                    styles.userLocation,
+                    { color: colors.onSurfaceVariant },
+                  ]}
+                >
+                  {user?.email}
+                </Text>
+
+                {/* User Stats */}
+                <View style={styles.statsContainer}>
+                  <View style={styles.statItem}>
+                    <Text
+                      style={[styles.statNumber, { color: colors.primary }]}
+                    >
+                      0
+                    </Text>
+                    <Text
+                      style={[
+                        styles.statLabel,
+                        { color: colors.onSurfaceVariant },
+                      ]}
+                    >
+                      Followers
+                    </Text>
+                  </View>
+                  <View style={styles.statItem}>
+                    <Text
+                      style={[styles.statNumber, { color: colors.primary }]}
+                    >
+                      0
+                    </Text>
+                    <Text
+                      style={[
+                        styles.statLabel,
+                        { color: colors.onSurfaceVariant },
+                      ]}
+                    >
+                      Following
+                    </Text>
+                  </View>
+                </View>
+
+                {/* Action Buttons */}
+                <View style={styles.actionContainer}>
+                  <Button
+                    mode="contained"
+                    icon="pencil"
+                    style={[
+                      styles.actionButton,
+                      { backgroundColor: colors.primary },
+                    ]}
+                    labelStyle={styles.actionButtonLabel}
+                    onPress={() =>
+                      router.push("/(protected)/(tabs)/profile/AccountSettings")
+                    }
+                  >
+                    Edit Profile
+                  </Button>
+                </View>
+                <LearningInsights
+                  colors={colors}
+                  streak={userStats?.streak ?? 0}
+                  wordsMastered={
+                    userStats?.learningInsights?.wordsMastered ?? 0
+                  }
+                  accuracy={userStats?.learningInsights?.accuracy ?? 0}
+                />
               </View>
-              <LearningInsights
-                colors={colors}
-                streak={userStats?.streak ?? 0}
-                wordsMastered={userStats?.learningInsights?.wordsMastered ?? 0}
-                accuracy={userStats?.learningInsights?.accuracy ?? 0}
-              />
             </View>
           </Card>
         </View>
@@ -194,7 +202,6 @@ const styles = StyleSheet.create({
     paddingHorizontal: 10,
     paddingVertical: 10,
     borderRadius: 15,
-    overflow: "hidden",
   },
   profileBackground: {
     height: 150,
@@ -308,6 +315,10 @@ const styles = StyleSheet.create({
   },
   card: {},
   cardContainer: {
+    borderRadius: 15,
+    overflow: "hidden",
+  },
+  cardWrapper: {
     borderRadius: 15,
     overflow: "hidden",
   },

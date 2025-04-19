@@ -36,33 +36,6 @@ const getDifficultyColor = (difficulty: string, colors: any) => {
   }
 };
 
-const getCategoryIcon = (
-  category: string
-): keyof typeof MaterialCommunityIcons.glyphMap => {
-  switch (category.toLowerCase()) {
-    case "education":
-      return "school";
-    case "business":
-      return "briefcase";
-    case "medical":
-      return "medical-bag";
-    case "technology":
-      return "laptop";
-    case "literature":
-      return "book-open-page-variant";
-    case "legal":
-      return "scale-balance";
-    case "general":
-      return "comment-text-outline";
-    case "academic":
-      return "school";
-    case "creative":
-      return "brush";
-    default:
-      return "book-open-variant";
-  }
-};
-
 const getSpacing = (hasImage: boolean) => {
   return {
     descriptionMargin: hasImage ? 20 : 10,
@@ -114,7 +87,6 @@ export default function ListDetailsScreen() {
     selectedList?.difficultyLevel || "",
     colors
   );
-  const categoryIcon = getCategoryIcon(selectedList?.imageUrl || "");
 
   if (!listId) {
     return (
@@ -132,7 +104,7 @@ export default function ListDetailsScreen() {
         </View>
       ) : (
         <>
-          <StickyHeader />
+          <StickyHeader title={"List Details"} icon={"book"} />
 
           <ScrollView
             style={styles.scrollView}
@@ -142,12 +114,6 @@ export default function ListDetailsScreen() {
             {/* Word List Header */}
             <View style={styles.headerSection}>
               <View style={styles.titleRow}>
-                <MaterialCommunityIcons
-                  name={categoryIcon}
-                  size={32}
-                  color={colors.primary}
-                  style={styles.headerIcon}
-                />
                 <Text style={[styles.title, { color: colors.onSurface }]}>
                   {selectedList?.name}
                 </Text>
@@ -429,7 +395,7 @@ const styles = StyleSheet.create({
   titleRow: {
     flexDirection: "row",
     alignItems: "center",
-    marginBottom: 10,
+    marginVertical: 20,
   },
   headerIcon: {
     marginRight: 10,

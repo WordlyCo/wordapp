@@ -5,49 +5,52 @@ import useTheme from "@/src/hooks/useTheme";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useStore } from "@/src/stores/store";
 
-const StickyHeader = () => {
+type IconName = keyof typeof Ionicons.glyphMap;
+const StickyHeader = ({ title, icon }: { title?: string; icon?: IconName }) => {
   const { colors } = useTheme();
   const userStats = useStore((state) => state.userStats);
 
   return (
     <View>
-      <SafeAreaView
-        style={[styles.safeAreaView, { backgroundColor: colors.surface }]}
-        edges={["top"]}
-      />
-      <View
-        style={[styles.headerContainer, { backgroundColor: colors.surface }]}
-      >
-        <View style={styles.leftContainer}>
-          <Ionicons name="book-outline" size={24} color={colors.primary} />
-          <Text style={[styles.title, { color: colors.onSurface }]}>
-            WordBird
-          </Text>
-        </View>
+      <SafeAreaView style={{ backgroundColor: colors.surface }} edges={["top"]}>
+        <View
+          style={[styles.headerContainer, { backgroundColor: colors.surface }]}
+        >
+          <View style={styles.leftContainer}>
+            <Ionicons
+              name={icon || "book-outline"}
+              size={24}
+              color={colors.primary}
+            />
+            <Text style={[styles.title, { color: colors.onSurface }]}>
+              {title || "WordBird"}
+            </Text>
+          </View>
 
-        <View style={styles.rightContainer}>
-          <View style={styles.statItem}>
-            <Text style={[styles.statValue, { color: colors.onSurface }]}>
-              {userStats.diamonds.toLocaleString()}
-            </Text>
-            <MaterialCommunityIcons
-              name="diamond"
-              size={20}
-              color={colors.info}
-            />
-          </View>
-          <View style={styles.statItem}>
-            <Text style={[styles.statValue, { color: colors.onSurface }]}>
-              {userStats.streak}
-            </Text>
-            <MaterialCommunityIcons
-              name="lightning-bolt"
-              size={20}
-              color={colors.streak}
-            />
+          <View style={styles.rightContainer}>
+            <View style={styles.statItem}>
+              <Text style={[styles.statValue, { color: colors.onSurface }]}>
+                {userStats.diamonds.toLocaleString()}
+              </Text>
+              <MaterialCommunityIcons
+                name="diamond"
+                size={20}
+                color={colors.info}
+              />
+            </View>
+            <View style={styles.statItem}>
+              <Text style={[styles.statValue, { color: colors.onSurface }]}>
+                {userStats.streak}
+              </Text>
+              <MaterialCommunityIcons
+                name="lightning-bolt"
+                size={20}
+                color={colors.streak}
+              />
+            </View>
           </View>
         </View>
-      </View>
+      </SafeAreaView>
     </View>
   );
 };
@@ -83,9 +86,6 @@ const styles = StyleSheet.create({
   statValue: {
     fontSize: 16,
     marginRight: 5,
-  },
-  safeAreaView: {
-    flex: 1,
   },
 });
 

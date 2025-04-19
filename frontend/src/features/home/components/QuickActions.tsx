@@ -1,10 +1,10 @@
-import React from 'react';
-import { View, StyleSheet, Dimensions } from 'react-native';
-import { Text, Button, Surface } from 'react-native-paper';
-import { useRouter } from 'expo-router';
-import Animated, { FadeInDown, FadeInUp } from 'react-native-reanimated';
+import React from "react";
+import { View, StyleSheet, Dimensions } from "react-native";
+import { Text, Button, Surface } from "react-native-paper";
+import { useRouter } from "expo-router";
+import Animated, { FadeInDown, FadeInUp } from "react-native-reanimated";
 
-const { width } = Dimensions.get('window');
+const { width } = Dimensions.get("window");
 
 interface QuickAction {
   id: string;
@@ -33,13 +33,13 @@ const QUICK_ACTIONS: QuickAction[] = [
     icon: "brain",
     route: "/(protected)/quiz",
     lightColor: {
-      background: "#6366f1", 
-      text: "#ffffff"
+      background: "#6366f1",
+      text: "#ffffff",
     },
     darkColor: {
-      background: "#818cf8", 
-      text: "#ffffff"
-    }
+      background: "#818cf8",
+      text: "#ffffff",
+    },
   },
   {
     id: "new-words",
@@ -47,13 +47,13 @@ const QUICK_ACTIONS: QuickAction[] = [
     icon: "plus-circle",
     route: "/(protected)/(tabs)/store",
     lightColor: {
-      background: "#10b981", 
-      text: "#ffffff"
+      background: "#10b981",
+      text: "#ffffff",
     },
     darkColor: {
-      background: "#34d399", 
-      text: "#ffffff"
-    }
+      background: "#34d399",
+      text: "#ffffff",
+    },
   },
   {
     id: "review",
@@ -61,13 +61,13 @@ const QUICK_ACTIONS: QuickAction[] = [
     icon: "refresh",
     route: "/(protected)/review",
     lightColor: {
-      background: "#f59e0b", 
-      text: "#ffffff" 
+      background: "#f59e0b",
+      text: "#ffffff",
     },
     darkColor: {
-      background: "#fbbf24", 
-      text: "#ffffff"
-    }
+      background: "#fbbf24",
+      text: "#ffffff",
+    },
   },
   {
     id: "stats",
@@ -75,13 +75,13 @@ const QUICK_ACTIONS: QuickAction[] = [
     icon: "chart-line",
     route: "/(protected)/(tabs)/progress",
     lightColor: {
-      background: "#ec4899", 
-      text: "#ffffff"
+      background: "#ec4899",
+      text: "#ffffff",
     },
     darkColor: {
-      background: "#f472b6", 
-      text: "#ffffff"
-    }
+      background: "#f472b6",
+      text: "#ffffff",
+    },
   },
 ];
 
@@ -97,63 +97,67 @@ const QuickActions: React.FC<QuickActionsProps> = ({ colors, isDarkMode }) => {
   };
 
   return (
-    <Animated.View
-      entering={FadeInDown.delay(200).duration(600).springify()}
-      style={styles.quickActionsContainer}
-    >
-      <Text style={[styles.sectionTitle, { color: colors.onSurface }]}>
-        Quick Actions
-      </Text>
-      <View style={styles.quickActionsGrid}>
-        {QUICK_ACTIONS.map((action, index) => (
-          <Animated.View
-            key={action.id}
-            entering={FadeInUp.delay(300 + index * 100)
-              .duration(600)
-              .springify()}
-          >
-            <Surface
-              style={[
-                styles.quickActionCard,
-                {
-                  backgroundColor: isDarkMode 
-                    ? action.darkColor.background 
-                    : action.lightColor.background,
-                  elevation: 4,
-                  shadowColor: isDarkMode ? 'rgba(0,0,0,0.5)' : 'rgba(0,0,0,0.2)',
-                },
-              ]}
-              elevation={2}
-            >
-              <View style={styles.quickActionWrapper}>
-                <Button
-                  mode="contained"
-                  onPress={() => navigateTo(action.route)}
-                  style={[
-                    styles.quickActionButton,
-                    {
-                      backgroundColor: 'transparent',
-                    },
-                  ]}
-                  icon={action.icon}
-                  contentStyle={styles.quickActionContent}
-                  labelStyle={[
-                    styles.quickActionLabel,
-                    { 
-                      color: isDarkMode 
-                        ? action.darkColor.text 
-                        : action.lightColor.text 
-                    }
-                  ]}
-                >
-                  {action.title}
-                </Button>
-              </View>
-            </Surface>
-          </Animated.View>
-        ))}
-      </View>
-    </Animated.View>
+    <View style={styles.quickActionsContainer}>
+      <Animated.View entering={FadeInDown.delay(200).duration(600).springify()}>
+        <Text style={[styles.sectionTitle, { color: colors.onSurface }]}>
+          Quick Actions
+        </Text>
+        <View style={styles.quickActionsGrid}>
+          {QUICK_ACTIONS.map((action, index) => (
+            <View key={action.id}>
+              <Animated.View
+                entering={FadeInUp.delay(300 + index * 100)
+                  .duration(600)
+                  .springify()}
+              >
+                <View style={styles.quickActionWrapperOuter}>
+                  <Surface
+                    style={[
+                      styles.quickActionCard,
+                      {
+                        backgroundColor: isDarkMode
+                          ? action.darkColor.background
+                          : action.lightColor.background,
+                        elevation: 4,
+                        shadowColor: isDarkMode
+                          ? "rgba(0,0,0,0.5)"
+                          : "rgba(0,0,0,0.2)",
+                      },
+                    ]}
+                    elevation={2}
+                  >
+                    <View style={styles.quickActionWrapper}>
+                      <Button
+                        mode="contained"
+                        onPress={() => navigateTo(action.route)}
+                        style={[
+                          styles.quickActionButton,
+                          {
+                            backgroundColor: "transparent",
+                          },
+                        ]}
+                        icon={action.icon}
+                        contentStyle={styles.quickActionContent}
+                        labelStyle={[
+                          styles.quickActionLabel,
+                          {
+                            color: isDarkMode
+                              ? action.darkColor.text
+                              : action.lightColor.text,
+                          },
+                        ]}
+                      >
+                        {action.title}
+                      </Button>
+                    </View>
+                  </Surface>
+                </View>
+              </Animated.View>
+            </View>
+          ))}
+        </View>
+      </Animated.View>
+    </View>
   );
 };
 
@@ -172,15 +176,17 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     flexWrap: "wrap",
     gap: 12,
-    justifyContent: 'space-between',
+    justifyContent: "space-between",
   },
   quickActionCard: {
     width: (width - 44) / 2,
     borderRadius: 16,
-    overflow: 'hidden',
+  },
+  quickActionWrapperOuter: {
+    borderRadius: 16,
+    overflow: "hidden",
   },
   quickActionWrapper: {
-    overflow: "hidden",
     borderRadius: 16,
   },
   quickActionButton: {
@@ -189,14 +195,14 @@ const styles = StyleSheet.create({
   },
   quickActionContent: {
     height: 100,
-    justifyContent: 'center',
-    alignItems: 'center',
+    justifyContent: "center",
+    alignItems: "center",
   },
   quickActionLabel: {
     fontSize: 16,
-    fontWeight: '600',
+    fontWeight: "600",
     marginTop: 12,
-  }
+  },
 });
 
-export default QuickActions; 
+export default QuickActions;

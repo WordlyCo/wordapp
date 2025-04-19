@@ -9,6 +9,67 @@ export function shuffleArray<T>(arr: T[]): T[] {
   return newArr;
 }
 
+export const getPartOfSpeechColor = (pos: string, defaultColor: string) => {
+  switch (pos.toLowerCase()) {
+    case "noun":
+      return "#4285F4"; // Blue
+    case "verb":
+      return "#EA4335"; // Red
+    case "adjective":
+      return "#FBBC05"; // Yellow
+    case "adverb":
+      return "#34A853"; // Green
+    case "pronoun":
+      return "#8E44AD"; // Purple
+    case "preposition":
+      return "#F39C12"; // Orange
+    case "conjunction":
+      return "#1ABC9C"; // Teal
+    case "interjection":
+      return "#E74C3C"; // Bright Red
+    case "determiner":
+      return "#3498DB"; // Light Blue
+    default:
+      return defaultColor; // Default theme color
+  }
+};
+
+export const getColorWithOpacity = (color: string, opacity: number) => {
+  // Convert opacity to a value between 0 and 1
+  const alpha = opacity / 100;
+
+  // If color is already in rgba format, we need to parse it
+  if (color.startsWith("rgba")) {
+    const rgbaMatch = color.match(/rgba\((\d+),\s*(\d+),\s*(\d+),\s*[\d.]+\)/);
+    if (rgbaMatch) {
+      return `rgba(${rgbaMatch[1]}, ${rgbaMatch[2]}, ${rgbaMatch[3]}, ${alpha})`;
+    }
+  }
+
+  // If color is in hex format
+  if (color.startsWith("#")) {
+    // Convert hex to RGB
+    let r = 0,
+      g = 0,
+      b = 0;
+    if (color.length === 4) {
+      // #RGB format
+      r = parseInt(color[1] + color[1], 16);
+      g = parseInt(color[2] + color[2], 16);
+      b = parseInt(color[3] + color[3], 16);
+    } else if (color.length === 7) {
+      // #RRGGBB format
+      r = parseInt(color.substring(1, 3), 16);
+      g = parseInt(color.substring(3, 5), 16);
+      b = parseInt(color.substring(5, 7), 16);
+    }
+
+    return `rgba(${r}, ${g}, ${b}, ${alpha})`;
+  }
+
+  return color;
+};
+
 /**
  * List of common timezones for user selection
  */

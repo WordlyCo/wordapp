@@ -1,10 +1,5 @@
 import React, { useEffect, useState } from "react";
-import {
-  View,
-  StyleSheet,
-  TouchableOpacity,
-  StatusBar,
-} from "react-native";
+import { View, StyleSheet, TouchableOpacity, StatusBar } from "react-native";
 import {
   Text,
   Searchbar,
@@ -168,6 +163,21 @@ export default function StoreScreen() {
     return pageNumbers;
   };
 
+  const renderListItem = (list: any, index: number) => (
+    <View key={list.id}>
+      <Animated.View
+        entering={FadeInUp.delay(200 + index * 100)
+          .duration(600)
+          .springify()}
+      >
+        <WordListCard
+          list={list}
+          onPress={() => router.push(`/(protected)/list/${list.id}`)}
+        />
+      </Animated.View>
+    </View>
+  );
+
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>
       <StatusBar barStyle="dark-content" />
@@ -179,52 +189,57 @@ export default function StoreScreen() {
           </View>
         ) : (
           <>
-            <Animated.View
-              entering={FadeInDown.duration(700).springify()}
-              style={[styles.searchBarContainer, headerAnimatedStyle]}
-            >
-              <Surface
-                style={[
-                  styles.searchSurface,
-                  { backgroundColor: colors.surfaceVariant },
-                ]}
-              >
-                <View style={styles.searchWrapper}>
-                  <Searchbar
-                    placeholder="Search word lists..."
-                    onChangeText={handleSearch}
-                    value={searchQuery}
-                    style={[
-                      styles.searchBar,
-                      {
-                        backgroundColor: colors.surfaceVariant,
-                        borderColor: colors.outline,
-                      },
-                    ]}
-                    elevation={0}
-                    inputStyle={{ color: colors.onSurface }}
-                    placeholderTextColor={colors.onSurfaceVariant}
-                    icon={() => (
-                      <MaterialCommunityIcons
-                        name="magnify"
-                        size={24}
-                        color={colors.onSurfaceVariant}
-                      />
-                    )}
-                    clearIcon={() =>
-                      searchQuery ? (
-                        <TouchableOpacity onPress={() => handleSearch("")}>
-                          <MaterialCommunityIcons
-                            name="close"
-                            size={24}
-                            color={colors.primary}
+            <Animated.View style={headerAnimatedStyle}>
+              <View style={styles.searchContainer}>
+                <Animated.View entering={FadeInDown.duration(700).springify()}>
+                  <View style={styles.searchOverflowWrapper}>
+                    <Surface
+                      style={[
+                        styles.searchSurface,
+                        { backgroundColor: colors.surfaceVariant },
+                      ]}
+                    >
+                      <View style={styles.cardWrapper}>
+                        <View style={styles.searchWrapper}>
+                          <Searchbar
+                            placeholder="Search word lists..."
+                            onChangeText={handleSearch}
+                            value={searchQuery}
+                            style={[
+                              styles.searchBar,
+                              {
+                                backgroundColor: colors.surfaceVariant,
+                                borderColor: colors.outline,
+                              },
+                            ]}
+                            elevation={0}
+                            inputStyle={{ color: colors.onSurface }}
+                            placeholderTextColor={colors.onSurfaceVariant}
+                            icon={() => (
+                              <MaterialCommunityIcons
+                                name="magnify"
+                                size={24}
+                                color={colors.onSurfaceVariant}
+                              />
+                            )}
+                            clearIcon={() => (
+                              <TouchableOpacity
+                                onPress={() => handleSearch("")}
+                              >
+                                <MaterialCommunityIcons
+                                  name="close"
+                                  size={24}
+                                  color={colors.primary}
+                                />
+                              </TouchableOpacity>
+                            )}
                           />
-                        </TouchableOpacity>
-                      ) : null
-                    }
-                  />
-                </View>
-              </Surface>
+                        </View>
+                      </View>
+                    </Surface>
+                  </View>
+                </Animated.View>
+              </View>
             </Animated.View>
 
             <Animated.ScrollView
@@ -241,72 +256,52 @@ export default function StoreScreen() {
             >
               <View style={styles.contentContainer}>
                 {viewMode === "browse" ? (
-                  <Animated.View
-                    entering={FadeInDown.duration(800).springify()}
-                    style={styles.browseContainer}
-                  >
-                    <View style={styles.recommendedContainer}>
-                      <View style={styles.recommendedLists}>
-                        {wordLists.map((list, index) => (
-                          <Animated.View
-                            key={list.id}
-                            entering={FadeInUp.delay(200 + index * 100)
-                              .duration(600)
-                              .springify()}
-                          >
-                            <WordListCard
-                              list={list}
-                              onPress={() =>
-                                router.push(`/(protected)/list/${list.id}`)
-                              }
-                            />
-                          </Animated.View>
-                        ))}
-                      </View>
-                    </View>
-                  </Animated.View>
-                ) : (
-                  <Animated.View
-                    entering={FadeInDown.duration(800).springify()}
-                    style={styles.searchResultsContainer}
-                  >
-                    <Text
-                      style={[
-                        styles.searchResultsText,
-                        { color: colors.onSurfaceVariant },
-                      ]}
+                  <View style={styles.browseContainer}>
+                    <Animated.View
+                      entering={FadeInDown.duration(800).springify()}
                     >
-                      {wordLists.length === 0
-                        ? "No results found"
-                        : `${wordLists.length} results found`}
-                    </Text>
-                    <View style={styles.searchResults}>
-                      {wordLists.map((list, index) => (
-                        <Animated.View
-                          key={list.id}
-                          entering={FadeInUp.delay(200 + index * 100)
-                            .duration(600)
-                            .springify()}
-                        >
-                          <WordListCard
-                            list={list}
-                            onPress={() =>
-                              router.push(`/(protected)/list/${list.id}`)
-                            }
-                          />
-                        </Animated.View>
-                      ))}
-                    </View>
-                  </Animated.View>
+                      <View style={styles.recommendedContainer}>
+                        <View style={styles.recommendedLists}>
+                          {wordLists.map((list, index) =>
+                            renderListItem(list, index)
+                          )}
+                        </View>
+                      </View>
+                    </Animated.View>
+                  </View>
+                ) : (
+                  <View style={styles.searchResultsContainer}>
+                    <Animated.View
+                      entering={FadeInDown.duration(800).springify()}
+                    >
+                      <Text
+                        style={[
+                          styles.searchResultsText,
+                          { color: colors.onSurfaceVariant },
+                        ]}
+                      >
+                        {wordLists.length === 0
+                          ? "No results found"
+                          : `${wordLists.length} results found`}
+                      </Text>
+                      <View style={styles.searchResults}>
+                        {wordLists.map((list, index) =>
+                          renderListItem(list, index)
+                        )}
+                      </View>
+                    </Animated.View>
+                  </View>
                 )}
 
-                {/* Pagination Controls */}
-                <Animated.View
-                  entering={FadeInDown.duration(900).springify()}
-                  style={styles.paginationContainer}
-                >
-                  {renderPaginationControls()}
-                </Animated.View>
+                <View style={styles.paginationContainer}>
+                  <Animated.View
+                    entering={FadeInDown.duration(900).springify()}
+                  >
+                    <View style={{ flexDirection: "row" }}>
+                      {renderPaginationControls()}
+                    </View>
+                  </Animated.View>
+                </View>
               </View>
             </Animated.ScrollView>
           </>
@@ -315,7 +310,7 @@ export default function StoreScreen() {
     </View>
   );
 }
- 
+
 const styles = StyleSheet.create({
   container: {
     flex: 1,
@@ -325,7 +320,7 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     alignItems: "center",
   },
-  searchBarContainer: {
+  searchContainer: {
     marginTop: 16,
     marginBottom: 16,
     paddingHorizontal: 16,
@@ -391,5 +386,13 @@ const styles = StyleSheet.create({
   },
   paginationButtonDisabled: {
     opacity: 0.5,
+  },
+  cardWrapper: {
+    overflow: "hidden",
+    borderRadius: 16,
+  },
+  searchOverflowWrapper: {
+    borderRadius: 12,
+    overflow: "hidden",
   },
 });

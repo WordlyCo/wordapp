@@ -101,130 +101,140 @@ const SummaryScreen = () => {
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>
       <Animated.View style={[styles.contentContainer, { opacity: fadeAnim }]}>
-        <Card
-          style={[styles.summaryCard, { backgroundColor: colors.surface }]}
-          elevation={4}
-        >
-          <View style={styles.confettiContainer}>
-            <IconButton
-              icon="party-popper"
-              size={32}
-              iconColor={colors.secondary}
-            />
-          </View>
+        <View style={styles.cardWrapper}>
+          <Card
+            style={[styles.summaryCard, { backgroundColor: colors.surface }]}
+            elevation={4}
+          >
+            <View style={styles.confettiContainer}>
+              <IconButton
+                icon="party-popper"
+                size={32}
+                iconColor={colors.secondary}
+              />
+            </View>
 
-          <Card.Content style={styles.cardContent}>
-            <Text
-              variant="headlineMedium"
-              style={[styles.summaryTitle, { color: colors.onSurface }]}
-            >
-              Quiz Complete!
-            </Text>
-
-            <View style={styles.scoreCircleContainer}>
-              <View
-                style={[
-                  styles.scoreCircle,
-                  {
-                    borderColor:
-                      scorePercentage > 70 ? colors.primary : colors.secondary,
-                  },
-                ]}
+            <Card.Content style={styles.cardContent}>
+              <Text
+                variant="headlineMedium"
+                style={[styles.summaryTitle, { color: colors.onSurface }]}
               >
-                <Text style={[styles.scoreText, { color: colors.onSurface }]}>
-                  {score}/{numberOfWords}
-                </Text>
-                <Text
+                Quiz Complete!
+              </Text>
+
+              <View style={styles.scoreCircleContainer}>
+                <View
                   style={[
-                    styles.scoreLabel,
-                    { color: colors.onSurfaceVariant },
+                    styles.scoreCircle,
+                    {
+                      borderColor:
+                        scorePercentage > 70
+                          ? colors.primary
+                          : colors.secondary,
+                    },
                   ]}
                 >
-                  Score
-                </Text>
+                  <Text style={[styles.scoreText, { color: colors.onSurface }]}>
+                    {score}/{numberOfWords}
+                  </Text>
+                  <Text
+                    style={[
+                      styles.scoreLabel,
+                      { color: colors.onSurfaceVariant },
+                    ]}
+                  >
+                    Score
+                  </Text>
+                </View>
               </View>
-            </View>
 
-            <View style={styles.statsContainer}>
-              <View style={styles.statItem}>
-                <IconButton
-                  icon="clock-outline"
-                  size={28}
-                  iconColor={colors.primary}
-                  style={styles.statIcon}
-                />
-                <Text
-                  variant="titleMedium"
-                  style={{ color: colors.onSurfaceVariant }}
+              <View style={styles.statsContainer}>
+                <View style={styles.statItem}>
+                  <IconButton
+                    icon="clock-outline"
+                    size={28}
+                    iconColor={colors.primary}
+                    style={styles.statIcon}
+                  />
+                  <Text
+                    variant="titleMedium"
+                    style={{ color: colors.onSurfaceVariant }}
+                  >
+                    Time
+                  </Text>
+                  <Text
+                    variant="headlineSmall"
+                    style={{ color: colors.primary }}
+                  >
+                    {Math.round(totalTime)}s
+                  </Text>
+                </View>
+
+                <View style={styles.statItem}>
+                  <IconButton
+                    icon="diamond"
+                    size={28}
+                    iconColor={colors.info}
+                    style={styles.statIcon}
+                  />
+                  <Text
+                    variant="titleMedium"
+                    style={{ color: colors.onSurfaceVariant }}
+                  >
+                    Diamonds
+                  </Text>
+                  <Text variant="headlineSmall" style={{ color: colors.info }}>
+                    +{diamondsEarned}
+                  </Text>
+                </View>
+
+                <View style={styles.statItem}>
+                  <IconButton
+                    icon="lightning-bolt"
+                    size={28}
+                    iconColor={colors.streak}
+                    style={styles.statIcon}
+                  />
+                  <Text
+                    variant="titleMedium"
+                    style={{ color: colors.onSurfaceVariant }}
+                  >
+                    Streak
+                  </Text>
+                  <Text
+                    variant="headlineSmall"
+                    style={{ color: colors.streak }}
+                  >
+                    {userStats.streak}
+                  </Text>
+                </View>
+              </View>
+
+              <View style={styles.actionButtons}>
+                <Button
+                  mode="contained"
+                  onPress={playAgain}
+                  style={[styles.button, styles.primaryButton]}
+                  contentStyle={styles.buttonContent}
+                  icon="replay"
                 >
-                  Time
-                </Text>
-                <Text variant="headlineSmall" style={{ color: colors.primary }}>
-                  {Math.round(totalTime)}s
-                </Text>
-              </View>
+                  Play Again
+                </Button>
 
-              <View style={styles.statItem}>
-                <IconButton
-                  icon="diamond"
-                  size={28}
-                  iconColor={colors.info}
-                  style={styles.statIcon}
-                />
-                <Text
-                  variant="titleMedium"
-                  style={{ color: colors.onSurfaceVariant }}
+                <Button
+                  mode="outlined"
+                  onPress={goHome}
+                  style={[styles.button, { borderColor: colors.outline }]}
+                  contentStyle={styles.buttonContent}
+                  icon="home"
+                  textColor={colors.primary}
                 >
-                  Diamonds
-                </Text>
-                <Text variant="headlineSmall" style={{ color: colors.info }}>
-                  +{diamondsEarned}
-                </Text>
+                  Home
+                </Button>
               </View>
-
-              <View style={styles.statItem}>
-                <IconButton
-                  icon="lightning-bolt"
-                  size={28}
-                  iconColor={colors.streak}
-                  style={styles.statIcon}
-                />
-                <Text
-                  variant="titleMedium"
-                  style={{ color: colors.onSurfaceVariant }}
-                >
-                  Streak
-                </Text>
-                <Text variant="headlineSmall" style={{ color: colors.streak }}>
-                  {userStats.streak}
-                </Text>
-              </View>
-            </View>
-
-            <View style={styles.actionButtons}>
-              <Button
-                mode="contained"
-                onPress={playAgain}
-                style={[styles.button, styles.primaryButton]}
-                contentStyle={styles.buttonContent}
-                icon="replay"
-              >
-                Play Again
-              </Button>
-
-              <Button
-                mode="outlined"
-                onPress={goHome}
-                style={[styles.button, { borderColor: colors.outline }]}
-                contentStyle={styles.buttonContent}
-                icon="home"
-                textColor={colors.primary}
-              >
-                Home
-              </Button>
-            </View>
-          </Card.Content>
-        </Card>
+            </Card.Content>
+          </Card>
+        </View>
       </Animated.View>
     </View>
   );
@@ -243,7 +253,6 @@ const styles = StyleSheet.create({
   summaryCard: {
     width: "100%",
     borderRadius: 16,
-    overflow: "hidden",
     elevation: 4,
     shadowColor: "#000",
     shadowOffset: { width: 0, height: 2 },
@@ -313,6 +322,10 @@ const styles = StyleSheet.create({
   },
   buttonContent: {
     paddingVertical: 8,
+  },
+  cardWrapper: {
+    overflow: "hidden",
+    borderRadius: 16,
   },
 });
 

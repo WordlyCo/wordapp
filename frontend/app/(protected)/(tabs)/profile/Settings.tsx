@@ -1,7 +1,8 @@
 import React from "react";
 import { View, StyleSheet, ScrollView, Alert } from "react-native";
-import { Text } from "react-native-paper";
 import { useRouter } from "expo-router";
+
+import Toast from "react-native-toast-message";
 
 import useTheme from "@/src/hooks/useTheme";
 import { useAuth } from "@/src/contexts/AuthContext";
@@ -94,6 +95,13 @@ const SettingsScreen = () => {
             icon="dev-to"
             title="Diagnostics"
             titleColor={colors.onSurface}
+            onPress={() => {
+              Toast.show({
+                text1: "Long press to view diagnostics",
+                type: "info",
+                position: "bottom",
+              });
+            }}
             onLongPress={() => {
               router.push("/diagnostics" as any);
             }}

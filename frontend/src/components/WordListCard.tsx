@@ -18,6 +18,17 @@ const getDifficultyColor = (difficulty: string, colors: any) => {
   }
 };
 
+const getCategoryIcon = (
+  category: string
+): keyof typeof MaterialCommunityIcons.glyphMap => {
+  const validIcons = Object.keys(MaterialCommunityIcons.glyphMap);
+  if (validIcons.includes(category)) {
+    return category as keyof typeof MaterialCommunityIcons.glyphMap;
+  }
+
+  return "book-open-page-variant";
+};
+
 export const WordListCard = ({
   list,
   onPress,
@@ -28,6 +39,8 @@ export const WordListCard = ({
   const { colors } = useTheme();
   const difficultyColor = getDifficultyColor(list.difficultyLevel, colors);
 
+  const categoryIcon = getCategoryIcon(list.imageUrl || "");
+
   return (
     <Card style={styles.card} onPress={onPress}>
       <Card.Title
@@ -35,7 +48,7 @@ export const WordListCard = ({
         titleStyle={styles.cardTitle}
         left={(props) => (
           <MaterialCommunityIcons
-            name={list.iconName as keyof typeof MaterialCommunityIcons.glyphMap}
+            name={categoryIcon}
             size={24}
             color={colors.primary}
           />

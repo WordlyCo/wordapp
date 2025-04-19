@@ -88,7 +88,6 @@ const FeedbackScreen = () => {
     const word = quizWords.find((w, index) => index === currentIndex);
     if (word) {
       setCurrentWord(word);
-      console.log("Current word updated in feedback:", word);
     } else {
       console.error("Word not found for currentIndex:", currentIndex);
     }
@@ -101,8 +100,6 @@ const FeedbackScreen = () => {
     currentWord.difficultyLevel,
     colors
   );
-
-  console.log("Quiz Stats:", quizStats);
 
   const handleNext = async () => {
     const isLastQuestion = currentIndex === quizWords.length - 1;
@@ -126,267 +123,289 @@ const FeedbackScreen = () => {
   return (
     <ScrollView style={[styles.container]}>
       <View style={{ paddingBottom: 80 }}>
-        <Card
-          style={[
-            styles.feedbackCard,
-            {
-              backgroundColor: colors.surface,
-              borderTopWidth: 0,
-            },
-          ]}
-        >
-          <Card.Content>
-            <View style={styles.feedbackContentContainer}>
-              <View style={styles.feedbackIconContainer}>
-                <View
-                  style={[
-                    styles.iconSurface,
-                    {
-                      backgroundColor: isCorrect
-                        ? "rgba(76, 175, 80, 0.1)"
-                        : "rgba(244, 67, 54, 0.1)",
-                    },
-                  ]}
-                >
-                  <IconButton
-                    icon={isCorrect ? "check-circle" : "close-circle"}
-                    iconColor={isCorrect ? colors.secondary : colors.error}
-                    size={36}
-                  />
+        <View style={styles.cardWrapper}>
+          <Card
+            style={[
+              styles.feedbackCard,
+              {
+                backgroundColor: colors.surface,
+                borderTopWidth: 0,
+              },
+            ]}
+          >
+            <Card.Content>
+              <View style={styles.feedbackContentContainer}>
+                <View style={styles.feedbackIconContainer}>
+                  <View
+                    style={[
+                      styles.iconSurface,
+                      {
+                        backgroundColor: isCorrect
+                          ? "rgba(76, 175, 80, 0.1)"
+                          : "rgba(244, 67, 54, 0.1)",
+                      },
+                    ]}
+                  >
+                    <IconButton
+                      icon={isCorrect ? "check-circle" : "close-circle"}
+                      iconColor={isCorrect ? colors.secondary : colors.error}
+                      size={36}
+                    />
+                  </View>
+                </View>
+                <View style={styles.feedbackTextContainer}>
+                  <Text
+                    variant="headlineSmall"
+                    style={[
+                      styles.feedbackTitle,
+                      { color: isCorrect ? colors.secondary : colors.error },
+                    ]}
+                  >
+                    {isCorrect ? "Excellent!" : "Not Quite"}
+                  </Text>
+                  <Text
+                    variant="bodyMedium"
+                    style={[
+                      styles.feedbackMessage,
+                      { color: colors.onSurface },
+                    ]}
+                  >
+                    {isCorrect
+                      ? "Well done! Keep up the good work."
+                      : `The correct answer is: ${currentWord?.quiz?.correctOptions[0]}`}
+                  </Text>
                 </View>
               </View>
-              <View style={styles.feedbackTextContainer}>
-                <Text
-                  variant="headlineSmall"
-                  style={[
-                    styles.feedbackTitle,
-                    { color: isCorrect ? colors.secondary : colors.error },
-                  ]}
-                >
-                  {isCorrect ? "Excellent!" : "Not Quite"}
-                </Text>
-                <Text
-                  variant="bodyMedium"
-                  style={[styles.feedbackMessage, { color: colors.onSurface }]}
-                >
-                  {isCorrect
-                    ? "Well done! Keep up the good work."
-                    : `The correct answer is: ${currentWord?.quiz?.correctOptions[0]}`}
-                </Text>
-              </View>
-            </View>
-          </Card.Content>
-        </Card>
+            </Card.Content>
+          </Card>
+        </View>
 
         <Card
           style={[styles.wordInfoCard, { backgroundColor: colors.surface }]}
         >
-          <Card.Content style={styles.wordInfoContent}>
-            <View style={styles.wordTitleRow}>
-              <View style={styles.wordHeaderContainer}>
-                <Text variant="headlineSmall" style={styles.wordTitle}>
-                  {currentWord.word}
-                </Text>
-                <View style={styles.difficultyContainer}>
-                  <IconButton
-                    icon={getDifficultyIcon(currentWord.difficultyLevel)}
-                    size={16}
-                    iconColor={difficultyColor}
-                    style={styles.difficultyIcon}
-                  />
-                  <Text
-                    variant="labelSmall"
-                    style={[styles.difficultyText, { color: difficultyColor }]}
-                  >
-                    {getDifficultyLabel(currentWord.difficultyLevel)}
+          <View style={styles.cardWrapper}>
+            <Card.Content style={styles.wordInfoContent}>
+              <View style={styles.wordTitleRow}>
+                <View style={styles.wordHeaderContainer}>
+                  <Text variant="headlineSmall" style={styles.wordTitle}>
+                    {currentWord.word}
                   </Text>
+                  <View style={styles.difficultyContainer}>
+                    <IconButton
+                      icon={getDifficultyIcon(currentWord.difficultyLevel)}
+                      size={16}
+                      iconColor={difficultyColor}
+                      style={styles.difficultyIcon}
+                    />
+                    <Text
+                      variant="labelSmall"
+                      style={[
+                        styles.difficultyText,
+                        { color: difficultyColor },
+                      ]}
+                    >
+                      {getDifficultyLabel(currentWord.difficultyLevel)}
+                    </Text>
+                  </View>
                 </View>
+
+                <Chip
+                  style={[
+                    styles.partOfSpeechChip,
+                    { backgroundColor: "rgba(0, 0, 0, 0.05)" },
+                  ]}
+                  textStyle={{ fontStyle: "italic" }}
+                >
+                  {currentWord.partOfSpeech}
+                </Chip>
               </View>
 
-              <Chip
-                style={[
-                  styles.partOfSpeechChip,
-                  { backgroundColor: "rgba(0, 0, 0, 0.05)" },
-                ]}
-                textStyle={{ fontStyle: "italic" }}
-              >
-                {currentWord.partOfSpeech}
-              </Chip>
-            </View>
-
-            <View style={styles.masteryProgressContainer}>
-              {
-                <View style={styles.simpleMasteryContainer}>
-                  <View style={styles.masteryLevelContainer}>
-                    <Text variant="labelMedium" style={styles.masteryLabel}>
-                      Recognition
-                    </Text>
-                    <View style={styles.levelIndicatorRow}>
-                      {[1, 2, 3, 4, 5].map((level) => (
-                        <View
-                          key={`recognition-${level}`}
-                          style={[
-                            styles.levelDot,
-                            {
-                              backgroundColor:
-                                level <=
-                                (currentWord.wordProgress
-                                  ?.recognitionMasteryScore || 0)
-                                  ? colors.primary
-                                  : withOpacity(colors.primary, 0.2),
-                            },
-                          ]}
-                        />
-                      ))}
-                      <Text
-                        variant="titleSmall"
-                        style={{ color: colors.primary, marginLeft: 8 }}
-                      >
-                        {currentWord.wordProgress?.recognitionMasteryScore || 0}
-                        /5
+              <View style={styles.masteryProgressContainer}>
+                {
+                  <View style={styles.simpleMasteryContainer}>
+                    <View style={styles.masteryLevelContainer}>
+                      <Text variant="labelMedium" style={styles.masteryLabel}>
+                        Recognition
                       </Text>
+                      <View style={styles.levelIndicatorRow}>
+                        {[1, 2, 3, 4, 5].map((level) => (
+                          <View
+                            key={`recognition-${level}`}
+                            style={[
+                              styles.levelDot,
+                              {
+                                backgroundColor:
+                                  level <=
+                                  (currentWord.wordProgress
+                                    ?.recognitionMasteryScore || 0)
+                                    ? colors.primary
+                                    : withOpacity(colors.primary, 0.2),
+                              },
+                            ]}
+                          />
+                        ))}
+                        <Text
+                          variant="titleSmall"
+                          style={{ color: colors.primary, marginLeft: 8 }}
+                        >
+                          {currentWord.wordProgress?.recognitionMasteryScore ||
+                            0}
+                          /5
+                        </Text>
+                      </View>
+                    </View>
+
+                    <View style={styles.masteryLevelContainer}>
+                      <Text variant="labelMedium" style={styles.masteryLabel}>
+                        Usage
+                      </Text>
+                      <View style={styles.levelIndicatorRow}>
+                        {[1, 2, 3, 4, 5].map((level) => (
+                          <View
+                            key={`usage-${level}`}
+                            style={[
+                              styles.levelDot,
+                              {
+                                backgroundColor:
+                                  level <=
+                                  (currentWord.wordProgress
+                                    ?.usageMasteryScore || 0)
+                                    ? colors.secondary
+                                    : withOpacity(colors.secondary, 0.2),
+                              },
+                            ]}
+                          />
+                        ))}
+                        <Text
+                          variant="titleSmall"
+                          style={{ color: colors.secondary, marginLeft: 8 }}
+                        >
+                          {currentWord.wordProgress?.usageMasteryScore || 0}/5
+                        </Text>
+                      </View>
                     </View>
                   </View>
+                }
+              </View>
 
-                  <View style={styles.masteryLevelContainer}>
-                    <Text variant="labelMedium" style={styles.masteryLabel}>
-                      Usage
-                    </Text>
-                    <View style={styles.levelIndicatorRow}>
-                      {[1, 2, 3, 4, 5].map((level) => (
-                        <View
-                          key={`usage-${level}`}
-                          style={[
-                            styles.levelDot,
-                            {
-                              backgroundColor:
-                                level <=
-                                (currentWord.wordProgress?.usageMasteryScore ||
-                                  0)
-                                  ? colors.secondary
-                                  : withOpacity(colors.secondary, 0.2),
-                            },
-                          ]}
-                        />
-                      ))}
-                      <Text
-                        variant="titleSmall"
-                        style={{ color: colors.secondary, marginLeft: 8 }}
-                      >
-                        {currentWord.wordProgress?.usageMasteryScore || 0}/5
-                      </Text>
-                    </View>
-                  </View>
-                </View>
-              }
-            </View>
+              <Divider style={styles.divider} />
 
-            <Divider style={styles.divider} />
-
-            <Text variant="titleMedium" style={styles.sectionTitle}>
-              Definition
-            </Text>
-            <View
-              style={[
-                styles.definitionContainer,
-                { backgroundColor: withOpacity(colors.onSurface, 0.05) },
-              ]}
-            >
-              <Text variant="bodyMedium" style={styles.definitionText}>
-                {currentWord.definition}
+              <Text variant="titleMedium" style={styles.sectionTitle}>
+                Definition
               </Text>
-            </View>
-
-            {currentWord.examples && currentWord.examples.length > 0 && (
-              <View style={styles.section}>
-                <Text variant="titleMedium" style={styles.sectionTitle}>
-                  Examples
+              <View
+                style={[
+                  styles.definitionContainer,
+                  { backgroundColor: withOpacity(colors.onSurface, 0.05) },
+                ]}
+              >
+                <Text variant="bodyMedium" style={styles.definitionText}>
+                  {currentWord.definition}
                 </Text>
-                {currentWord.examples.slice(0, 2).map((example, index) => (
+              </View>
+
+              {currentWord.examples && currentWord.examples.length > 0 && (
+                <View style={styles.section}>
+                  <Text variant="titleMedium" style={styles.sectionTitle}>
+                    Examples
+                  </Text>
+                  {currentWord.examples.slice(0, 2).map((example, index) => (
+                    <View
+                      key={index}
+                      style={[
+                        styles.exampleSurface,
+                        {
+                          backgroundColor: withOpacity(colors.onSurface, 0.05),
+                        },
+                      ]}
+                    >
+                      <Text variant="bodyMedium" style={styles.exampleText}>
+                        "{example}"
+                      </Text>
+                    </View>
+                  ))}
+                </View>
+              )}
+
+              <View style={styles.wordRelationshipsContainer}>
+                {currentWord.synonyms && currentWord.synonyms.length > 0 && (
+                  <View style={[styles.section, styles.halfSection]}>
+                    <Text variant="titleMedium" style={styles.sectionTitle}>
+                      Synonyms
+                    </Text>
+                    <View style={styles.pillsContainer}>
+                      {currentWord.synonyms
+                        .slice(0, 5)
+                        .map((synonym, index) => (
+                          <Chip
+                            key={index}
+                            style={[
+                              styles.wordPill,
+                              {
+                                backgroundColor: withOpacity(
+                                  colors.secondary,
+                                  0.15
+                                ),
+                              },
+                            ]}
+                            textStyle={{ color: colors.secondary }}
+                          >
+                            {synonym}
+                          </Chip>
+                        ))}
+                    </View>
+                  </View>
+                )}
+
+                {currentWord.antonyms && currentWord.antonyms.length > 0 && (
+                  <View style={[styles.section, styles.halfSection]}>
+                    <Text variant="titleMedium" style={styles.sectionTitle}>
+                      Antonyms
+                    </Text>
+                    <View style={styles.pillsContainer}>
+                      {currentWord.antonyms
+                        .slice(0, 5)
+                        .map((antonym, index) => (
+                          <Chip
+                            key={index}
+                            style={[
+                              styles.wordPill,
+                              {
+                                backgroundColor: withOpacity(
+                                  colors.error,
+                                  0.15
+                                ),
+                              },
+                            ]}
+                            textStyle={{ color: colors.error }}
+                          >
+                            {antonym}
+                          </Chip>
+                        ))}
+                    </View>
+                  </View>
+                )}
+              </View>
+
+              {currentWord.etymology && (
+                <View style={styles.section}>
+                  <Text variant="titleMedium" style={styles.sectionTitle}>
+                    Etymology
+                  </Text>
                   <View
-                    key={index}
                     style={[
-                      styles.exampleSurface,
+                      styles.etymologySurface,
                       { backgroundColor: withOpacity(colors.onSurface, 0.05) },
                     ]}
                   >
-                    <Text variant="bodyMedium" style={styles.exampleText}>
-                      "{example}"
+                    <Text variant="bodyMedium" style={styles.etymologyText}>
+                      {currentWord.etymology}
                     </Text>
                   </View>
-                ))}
-              </View>
-            )}
-
-            <View style={styles.wordRelationshipsContainer}>
-              {currentWord.synonyms && currentWord.synonyms.length > 0 && (
-                <View style={[styles.section, styles.halfSection]}>
-                  <Text variant="titleMedium" style={styles.sectionTitle}>
-                    Synonyms
-                  </Text>
-                  <View style={styles.pillsContainer}>
-                    {currentWord.synonyms.slice(0, 5).map((synonym, index) => (
-                      <Chip
-                        key={index}
-                        style={[
-                          styles.wordPill,
-                          {
-                            backgroundColor: withOpacity(
-                              colors.secondary,
-                              0.15
-                            ),
-                          },
-                        ]}
-                        textStyle={{ color: colors.secondary }}
-                      >
-                        {synonym}
-                      </Chip>
-                    ))}
-                  </View>
                 </View>
               )}
-
-              {currentWord.antonyms && currentWord.antonyms.length > 0 && (
-                <View style={[styles.section, styles.halfSection]}>
-                  <Text variant="titleMedium" style={styles.sectionTitle}>
-                    Antonyms
-                  </Text>
-                  <View style={styles.pillsContainer}>
-                    {currentWord.antonyms.slice(0, 5).map((antonym, index) => (
-                      <Chip
-                        key={index}
-                        style={[
-                          styles.wordPill,
-                          { backgroundColor: withOpacity(colors.error, 0.15) },
-                        ]}
-                        textStyle={{ color: colors.error }}
-                      >
-                        {antonym}
-                      </Chip>
-                    ))}
-                  </View>
-                </View>
-              )}
-            </View>
-
-            {currentWord.etymology && (
-              <View style={styles.section}>
-                <Text variant="titleMedium" style={styles.sectionTitle}>
-                  Etymology
-                </Text>
-                <View
-                  style={[
-                    styles.etymologySurface,
-                    { backgroundColor: withOpacity(colors.onSurface, 0.05) },
-                  ]}
-                >
-                  <Text variant="bodyMedium" style={styles.etymologyText}>
-                    {currentWord.etymology}
-                  </Text>
-                </View>
-              </View>
-            )}
-          </Card.Content>
+            </Card.Content>
+          </View>
         </Card>
 
         {isCorrect && (
@@ -459,7 +478,6 @@ const styles = StyleSheet.create({
     width: "100%",
     borderRadius: 12,
     marginBottom: 12,
-    overflow: "hidden",
     elevation: 4,
   },
   wordInfoCard: {
@@ -467,20 +485,17 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     marginBottom: 12,
     elevation: 4,
-    overflow: "hidden",
   },
   progressCard: {
     width: "100%",
     borderRadius: 12,
     marginBottom: 12,
     elevation: 4,
-    overflow: "hidden",
   },
   practiceCard: {
     width: "100%",
     borderRadius: 12,
     marginBottom: 12,
-    overflow: "hidden",
     elevation: 4,
   },
   actionsCard: {
@@ -734,5 +749,9 @@ const styles = StyleSheet.create({
   partOfSpeechChip: {
     height: 28,
     marginLeft: 8,
+  },
+  cardWrapper: {
+    overflow: "hidden",
+    borderRadius: 12,
   },
 });
