@@ -396,8 +396,6 @@ export const createGameSlice: StateCreator<GameSlice> = (set, get) => ({
         return;
       }
 
-      console.log("Daily quiz:", payload);
-
       set({ quizWords: payload });
     } catch (error) {
       console.error("Error fetching daily quiz:", error);
@@ -447,7 +445,6 @@ export const createGameSlice: StateCreator<GameSlice> = (set, get) => ({
       const message = data.message;
       const payload = data.payload;
 
-      console.log("User stats:", payload);
       if (!success) {
         console.error("Failed to fetch user stats:", message);
         return;

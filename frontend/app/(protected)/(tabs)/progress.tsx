@@ -1,512 +1,597 @@
-import React, { useState } from "react";
-import { View, StyleSheet, ScrollView } from "react-native";
+import React, { useState, useEffect } from "react";
+import { View, StyleSheet, TouchableOpacity } from "react-native";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
 import {
   Text,
-  Card,
-  Divider,
-  ProgressBar,
-  SegmentedButtons,
+  ActivityIndicator,
+  Searchbar,
+  Surface,
   IconButton,
 } from "react-native-paper";
+import Animated, {
+  FadeInDown,
+  useAnimatedScrollHandler,
+  useAnimatedStyle,
+  useSharedValue,
+  interpolate,
+  Extrapolate,
+} from "react-native-reanimated";
 import useTheme from "@/src/hooks/useTheme";
+import { authFetch } from "@/lib/api";
+import { WordProgressCard } from "@/src/features/progress/WordProgressCard";
+
+type SortOption =
+  | "mastery_asc"
+  | "mastery_desc"
+  | "difficulty_asc"
+  | "difficulty_desc";
 
 export default function ProgressScreen() {
   const { colors } = useTheme();
-  const [activeTab, setActiveTab] = useState("global");
+  const [words, setWords] = useState<any[]>([]);
+  const [page, setPage] = useState(1);
+  const [perPage] = useState(10);
+  const [totalPages, setTotalPages] = useState(1);
+  const [isLoading, setIsLoading] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [sortBy, setSortBy] = useState<SortOption>("mastery_desc");
+  const [showFilterOptions, setShowFilterOptions] = useState(false);
 
-  const userStats = {
-    wordsLearned: 124,
-    wordsToReview: 42,
-    totalWords: 500,
-    streak: 7,
-    daysActive: 18,
-    minutesLearned: 452,
-    completedSets: 15,
-    progress: {
-      daily: 70,
-      weekly: 85,
-      monthly: 62,
+  const scrollY = useSharedValue(0);
+  const headerHeight = 150; // Height of search + filter section
+
+  useEffect(() => {
+    fetchWordProgress();
+  }, [page, sortBy]);
+
+  const scrollHandler = useAnimatedScrollHandler({
+    onScroll: (event) => {
+      scrollY.value = event.contentOffset.y;
     },
-    recentActivities: [
-      {
-        id: "1",
-        type: "quiz",
-        date: "2023-08-15",
-        score: "8/10",
-        title: "Business Terminology Quiz",
-      },
-      {
-        id: "2",
-        type: "flashcards",
-        date: "2023-08-14",
-        score: "Completed",
-        title: "Legal Terms Flashcards",
-      },
-      {
-        id: "3",
-        type: "matching",
-        date: "2023-08-13",
-        score: "95%",
-        title: "Technology Terms Matching",
-      },
-    ],
+  });
+
+  const headerAnimatedStyle = useAnimatedStyle(() => {
+    const opacity = interpolate(
+      scrollY.value,
+      [0, headerHeight / 2],
+      [1, 0],
+      Extrapolate.CLAMP
+    );
+
+    const translateY = interpolate(
+      scrollY.value,
+      [0, headerHeight],
+      [0, -headerHeight / 3],
+      Extrapolate.CLAMP
+    );
+
+    return {
+      opacity,
+      transform: [{ translateY }],
+      zIndex: 100,
+      position: "absolute",
+      top: 0,
+      left: 0,
+      right: 0,
+    };
+  });
+
+  const fetchWordProgress = async () => {
+    setIsLoading(true);
+    try {
+      const response = await authFetch(
+        `/users/progress/words?page=${page}&per_page=${perPage}`
+      );
+      const data = await response.json();
+
+      if (data.success) {
+        setWords(data.payload.items);
+        setTotalPages(data.payload.pageInfo.totalPages);
+      } else {
+        console.error("Failed to fetch word progress:", data.message);
+      }
+    } catch (error) {
+      console.error("Error fetching word progress:", error);
+    } finally {
+      setIsLoading(false);
+    }
   };
 
-  const getActivityIcon = (type: string) => {
-    switch (type) {
-      case "quiz":
-        return "help-circle-outline";
-      case "flashcards":
-        return "cards-outline";
-      case "matching":
-        return "puzzle-outline";
+  const sortedWords = () => {
+    if (!words) return [];
+
+    const filtered = searchQuery
+      ? words.filter(
+          (word) =>
+            word.word.toLowerCase().includes(searchQuery.toLowerCase()) ||
+            word.definition.toLowerCase().includes(searchQuery.toLowerCase())
+        )
+      : words;
+
+    return [...filtered].sort((a, b) => {
+      switch (sortBy) {
+        case "mastery_asc":
+          return (
+            (a.wordProgress?.recognitionMasteryScore || 0) -
+            (b.wordProgress?.recognitionMasteryScore || 0)
+          );
+        case "mastery_desc":
+          return (
+            (b.wordProgress?.recognitionMasteryScore || 0) -
+            (a.wordProgress?.recognitionMasteryScore || 0)
+          );
+        case "difficulty_asc":
+          return (
+            difficultyValue(a.difficultyLevel) -
+            difficultyValue(b.difficultyLevel)
+          );
+        case "difficulty_desc":
+          return (
+            difficultyValue(b.difficultyLevel) -
+            difficultyValue(a.difficultyLevel)
+          );
+        default:
+          return 0;
+      }
+    });
+  };
+
+  const difficultyValue = (level: string) => {
+    switch (level) {
+      case "basic":
+        return 1;
+      case "intermediate":
+        return 2;
+      case "advanced":
+        return 3;
       default:
-        return "book-open-variant";
+        return 0;
     }
+  };
+
+  const handleSearch = (query: string) => {
+    setSearchQuery(query);
+  };
+
+  const getSortLabel = (sort: SortOption): string => {
+    switch (sort) {
+      case "mastery_desc":
+        return "Sort: Mastered";
+      case "mastery_asc":
+        return "Sort: Needs Work";
+      case "difficulty_asc":
+        return "Sort: Easy First";
+      case "difficulty_desc":
+        return "Sort: Hard First";
+      default:
+        return "Sort";
+    }
+  };
+
+  const renderWordCard = ({ item, index }: { item: any; index: number }) => {
+    return <WordProgressCard item={item} index={index} colors={colors} />;
   };
 
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>
-      <ScrollView contentContainerStyle={styles.scrollContent}>
-        <Card style={[styles.card, { backgroundColor: colors.surface }]}>
-          <Card.Content style={styles.cardContent}>
-            <Text style={styles.comingSoonText}>Coming Soon!</Text>
-            <MaterialCommunityIcons
-              name="timer-sand"
-              size={24}
-              color={colors.primary}
-            />
-          </Card.Content>
-        </Card>
-      </ScrollView>
+      <Animated.View style={headerAnimatedStyle}>
+        <View style={styles.headerContainer}>
+          <View style={styles.searchContainer}>
+            <View style={styles.searchOverflowWrapper}>
+              <Surface
+                style={[
+                  styles.searchSurface,
+                  { backgroundColor: colors.surfaceVariant },
+                ]}
+              >
+                <View style={styles.searchWrapper}>
+                  <Searchbar
+                    placeholder="Search words..."
+                    onChangeText={handleSearch}
+                    value={searchQuery}
+                    style={[
+                      styles.searchBar,
+                      {
+                        backgroundColor: colors.surfaceVariant,
+                        borderColor: colors.outline,
+                      },
+                    ]}
+                    elevation={0}
+                    inputStyle={{ color: colors.onSurface }}
+                    placeholderTextColor={colors.onSurfaceVariant}
+                    icon={() => (
+                      <MaterialCommunityIcons
+                        name="magnify"
+                        size={24}
+                        color={colors.onSurfaceVariant}
+                      />
+                    )}
+                    clearIcon={() => (
+                      <TouchableOpacity onPress={() => handleSearch("")}>
+                        <MaterialCommunityIcons
+                          name="close"
+                          size={24}
+                          color={colors.primary}
+                        />
+                      </TouchableOpacity>
+                    )}
+                  />
+                </View>
+              </Surface>
+            </View>
+          </View>
+
+          <View style={styles.filterContainer}>
+            <TouchableOpacity
+              style={[
+                styles.filterButton,
+                { backgroundColor: colors.surfaceVariant },
+              ]}
+              onPress={() => setShowFilterOptions(!showFilterOptions)}
+            >
+              <MaterialCommunityIcons
+                name="filter-variant"
+                size={20}
+                color={colors.onSurface}
+              />
+              <Text
+                style={[styles.filterButtonText, { color: colors.onSurface }]}
+              >
+                {getSortLabel(sortBy)}
+              </Text>
+              <MaterialCommunityIcons
+                name={showFilterOptions ? "chevron-up" : "chevron-down"}
+                size={20}
+                color={colors.primary}
+              />
+            </TouchableOpacity>
+
+            {showFilterOptions && (
+              <Animated.View
+                entering={FadeInDown.springify()}
+                style={[
+                  styles.filterOptions,
+                  { backgroundColor: colors.surfaceVariant },
+                ]}
+              >
+                {[
+                  {
+                    value: "mastery_asc",
+                    label: "Needs Work",
+                    icon: "arrow-up" as const,
+                  },
+                  {
+                    value: "mastery_desc",
+                    label: "Mastered",
+                    icon: "arrow-down" as const,
+                  },
+                  {
+                    value: "difficulty_asc",
+                    label: "Easy First",
+                    icon: "sort-ascending" as const,
+                  },
+                  {
+                    value: "difficulty_desc",
+                    label: "Hard First",
+                    icon: "sort-descending" as const,
+                  },
+                ].map((option) => (
+                  <TouchableOpacity
+                    key={option.value}
+                    style={[
+                      styles.filterOption,
+                      sortBy === option.value && {
+                        backgroundColor: colors.primaryContainer,
+                      },
+                    ]}
+                    onPress={() => {
+                      setSortBy(option.value as SortOption);
+                      setShowFilterOptions(false);
+                    }}
+                  >
+                    <MaterialCommunityIcons
+                      name={option.icon}
+                      size={20}
+                      color={
+                        sortBy === option.value
+                          ? colors.onSurface
+                          : colors.onSurfaceVariant
+                      }
+                    />
+                    <Text
+                      style={[
+                        styles.filterOptionText,
+                        {
+                          color:
+                            sortBy === option.value
+                              ? colors.onSurface
+                              : colors.onSurfaceVariant,
+                        },
+                      ]}
+                    >
+                      {option.label}
+                    </Text>
+                    {sortBy === option.value && (
+                      <MaterialCommunityIcons
+                        name="check"
+                        size={20}
+                        color={colors.onSurface}
+                      />
+                    )}
+                  </TouchableOpacity>
+                ))}
+              </Animated.View>
+            )}
+          </View>
+        </View>
+      </Animated.View>
+
+      {isLoading ? (
+        <View style={styles.loadingContainer}>
+          <ActivityIndicator size="large" color={colors.primary} />
+        </View>
+      ) : sortedWords().length > 0 ? (
+        <Animated.FlatList
+          data={sortedWords()}
+          renderItem={renderWordCard}
+          keyExtractor={(item) => item.id.toString()}
+          contentContainerStyle={[
+            styles.listContainer,
+            { paddingTop: headerHeight },
+          ]}
+          showsVerticalScrollIndicator={false}
+          initialNumToRender={5}
+          maxToRenderPerBatch={10}
+          windowSize={5}
+          onScroll={scrollHandler}
+          scrollEventThrottle={16}
+          ListFooterComponent={
+            <View style={styles.paginationContainer}>
+              <IconButton
+                icon="chevron-left"
+                mode="contained"
+                onPress={() => setPage(Math.max(1, page - 1))}
+                disabled={page === 1}
+                containerColor={colors.primaryContainer}
+                iconColor={colors.primary}
+              />
+              <Text
+                style={[styles.paginationText, { color: colors.onBackground }]}
+              >
+                Page {page} of {totalPages}
+              </Text>
+              <IconButton
+                icon="chevron-right"
+                mode="contained"
+                onPress={() => setPage(Math.min(totalPages, page + 1))}
+                disabled={page === totalPages}
+                containerColor={colors.primaryContainer}
+                iconColor={colors.primary}
+              />
+            </View>
+          }
+        />
+      ) : (
+        <View style={[styles.emptyContainer, { paddingTop: headerHeight }]}>
+          <MaterialCommunityIcons
+            name="book-open-variant"
+            size={64}
+            color={colors.onSurfaceVariant}
+          />
+          <Text style={[styles.emptyText, { color: colors.onSurfaceVariant }]}>
+            No words found
+          </Text>
+          <Text
+            style={[styles.emptySubtext, { color: colors.onSurfaceVariant }]}
+          >
+            Add words to your lists to start tracking progress
+          </Text>
+        </View>
+      )}
     </View>
   );
 }
-
-// export default function ProgressScreen() {
-//   const { colors } = useTheme();
-//   const [activeTab, setActiveTab] = useState("global");
-
-//   const userStats = {
-//     wordsLearned: 124,
-//     wordsToReview: 42,
-//     totalWords: 500,
-//     streak: 7,
-//     daysActive: 18,
-//     minutesLearned: 452,
-//     completedSets: 15,
-//     progress: {
-//       daily: 70,
-//       weekly: 85,
-//       monthly: 62,
-//     },
-//     recentActivities: [
-//       {
-//         id: "1",
-//         type: "quiz",
-//         date: "2023-08-15",
-//         score: "8/10",
-//         title: "Business Terminology Quiz",
-//       },
-//       {
-//         id: "2",
-//         type: "flashcards",
-//         date: "2023-08-14",
-//         score: "Completed",
-//         title: "Legal Terms Flashcards",
-//       },
-//       {
-//         id: "3",
-//         type: "matching",
-//         date: "2023-08-13",
-//         score: "95%",
-//         title: "Technology Terms Matching",
-//       },
-//     ],
-//   };
-
-//   const getActivityIcon = (type: string) => {
-//     switch (type) {
-//       case "quiz":
-//         return "help-circle-outline";
-//       case "flashcards":
-//         return "cards-outline";
-//       case "matching":
-//         return "puzzle-outline";
-//       default:
-//         return "book-open-variant";
-//     }
-//   };
-
-//   return (
-//     <View style={[styles.container, { backgroundColor: colors.background }]}>
-//       <ScrollView contentContainerStyle={styles.scrollContent}>
-//         <Card style={[styles.card, { backgroundColor: colors.surface }]}>
-//           <Card.Content style={styles.statsCardContent}>
-//             <Text style={[styles.cardTitle, { color: colors.onSurface }]}>
-//               Your Learning Stats
-//             </Text>
-
-//             <View style={styles.statsGrid}>
-//               <View style={styles.statItem}>
-//                 <MaterialCommunityIcons
-//                   name="book-open-variant"
-//                   size={24}
-//                   color={colors.primary}
-//                 />
-//                 <Text style={[styles.statValue, { color: colors.primary }]}>
-//                   {userStats.wordsLearned}
-//                 </Text>
-//                 <Text
-//                   style={[styles.statLabel, { color: colors.onSurfaceVariant }]}
-//                 >
-//                   Words Learned
-//                 </Text>
-//               </View>
-
-//               <View style={styles.statItem}>
-//                 <MaterialCommunityIcons
-//                   name="cached"
-//                   size={24}
-//                   color={colors.secondary}
-//                 />
-//                 <Text style={[styles.statValue, { color: colors.secondary }]}>
-//                   {userStats.wordsToReview}
-//                 </Text>
-//                 <Text
-//                   style={[styles.statLabel, { color: colors.onSurfaceVariant }]}
-//                 >
-//                   To Review
-//                 </Text>
-//               </View>
-
-//               <View style={styles.statItem}>
-//                 <MaterialCommunityIcons
-//                   name="fire"
-//                   size={24}
-//                   color={colors.streak}
-//                 />
-//                 <Text style={[styles.statValue, { color: colors.streak }]}>
-//                   {userStats.streak}
-//                 </Text>
-//                 <Text
-//                   style={[styles.statLabel, { color: colors.onSurfaceVariant }]}
-//                 >
-//                   Day Streak
-//                 </Text>
-//               </View>
-
-//               <View style={styles.statItem}>
-//                 <MaterialCommunityIcons
-//                   name="clock-outline"
-//                   size={24}
-//                   color={colors.timer}
-//                 />
-//                 <Text style={[styles.statValue, { color: colors.timer }]}>
-//                   {userStats.minutesLearned}
-//                 </Text>
-//                 <Text
-//                   style={[styles.statLabel, { color: colors.onSurfaceVariant }]}
-//                 >
-//                   Minutes
-//                 </Text>
-//               </View>
-//             </View>
-//           </Card.Content>
-//         </Card>
-
-//         {/* Progress Bars */}
-//         <Card style={[styles.card, { backgroundColor: colors.surface }]}>
-//           <Card.Content>
-//             <Text style={[styles.cardTitle, { color: colors.onSurface }]}>
-//               Progress Overview
-//             </Text>
-
-//             <View style={styles.progressSection}>
-//               <View style={styles.progressRow}>
-//                 <Text
-//                   style={[
-//                     styles.progressLabel,
-//                     { color: colors.onSurfaceVariant },
-//                   ]}
-//                 >
-//                   Daily Goal
-//                 </Text>
-//                 <Text
-//                   style={[styles.progressPercent, { color: colors.primary }]}
-//                 >
-//                   {userStats.progress.daily}%
-//                 </Text>
-//               </View>
-//               <ProgressBar
-//                 progress={userStats.progress.daily / 100}
-//                 color={colors.primary}
-//                 style={styles.progressBar}
-//               />
-//             </View>
-
-//             <View style={styles.progressSection}>
-//               <View style={styles.progressRow}>
-//                 <Text
-//                   style={[
-//                     styles.progressLabel,
-//                     { color: colors.onSurfaceVariant },
-//                   ]}
-//                 >
-//                   Weekly Goal
-//                 </Text>
-//                 <Text
-//                   style={[styles.progressPercent, { color: colors.secondary }]}
-//                 >
-//                   {userStats.progress.weekly}%
-//                 </Text>
-//               </View>
-//               <ProgressBar
-//                 progress={userStats.progress.weekly / 100}
-//                 color={colors.secondary}
-//                 style={styles.progressBar}
-//               />
-//             </View>
-
-//             <View style={styles.progressSection}>
-//               <View style={styles.progressRow}>
-//                 <Text
-//                   style={[
-//                     styles.progressLabel,
-//                     { color: colors.onSurfaceVariant },
-//                   ]}
-//                 >
-//                   Monthly Goal
-//                 </Text>
-//                 <Text
-//                   style={[styles.progressPercent, { color: colors.tertiary }]}
-//                 >
-//                   {userStats.progress.monthly}%
-//                 </Text>
-//               </View>
-//               <ProgressBar
-//                 progress={userStats.progress.monthly / 100}
-//                 color={colors.tertiary}
-//                 style={styles.progressBar}
-//               />
-//             </View>
-//           </Card.Content>
-//         </Card>
-
-//         {/* Recent Activities */}
-//         <Card style={[styles.card, { backgroundColor: colors.surface }]}>
-//           <Card.Content>
-//             <Text style={[styles.cardTitle, { color: colors.onSurface }]}>
-//               Recent Activities
-//             </Text>
-
-//             {userStats.recentActivities.map((activity, index) => (
-//               <React.Fragment key={activity.id}>
-//                 <View style={styles.activityItem}>
-//                   <MaterialCommunityIcons
-//                     name={getActivityIcon(activity.type)}
-//                     size={24}
-//                     color={colors.primary}
-//                     style={styles.activityIcon}
-//                   />
-//                   <View style={styles.activityDetails}>
-//                     <Text
-//                       style={[
-//                         styles.activityTitle,
-//                         { color: colors.onSurface },
-//                       ]}
-//                     >
-//                       {activity.title}
-//                     </Text>
-//                     <Text
-//                       style={[
-//                         styles.activityDate,
-//                         { color: colors.onSurfaceVariant },
-//                       ]}
-//                     >
-//                       {activity.date}
-//                     </Text>
-//                   </View>
-//                   <View style={styles.activityScore}>
-//                     <Text style={[styles.scoreText, { color: colors.primary }]}>
-//                       {activity.score}
-//                     </Text>
-//                   </View>
-//                 </View>
-//                 {index < userStats.recentActivities.length - 1 && (
-//                   <Divider style={styles.activityDivider} />
-//                 )}
-//               </React.Fragment>
-//             ))}
-//           </Card.Content>
-//         </Card>
-
-//         {/* Leaderboard Card */}
-//         <Card style={[styles.card, { backgroundColor: colors.surface }]}>
-//           <Card.Content>
-//             <View style={styles.leaderboardHeader}>
-//               <Text style={[styles.cardTitle, { color: colors.onSurface }]}>
-//                 Leaderboard
-//               </Text>
-//               <IconButton
-//                 icon="trophy"
-//                 mode="contained"
-//                 containerColor={colors.primaryContainer}
-//                 iconColor={colors.primary}
-//                 size={20}
-//               />
-//             </View>
-
-//             <SegmentedButtons
-//               value={activeTab}
-//               onValueChange={setActiveTab}
-//               buttons={[
-//                 { value: "global", label: "Global" },
-//                 { value: "friends", label: "Friends" },
-//               ]}
-//               style={styles.segmentedButtons}
-//             />
-// {/*
-//             <View style={styles.leaderboardList}>
-//               {(activeTab === "global"
-//                 ? globalLeaderboard
-//                 : friendsLeaderboard
-//               ).map((entry, index) => (
-//                 <LeaderboardEntry
-//                   key={entry.id}
-//                   entry={entry}
-//                   rank={index + 1}
-//                 />
-//               ))}
-//             </View> */}
-//           </Card.Content>
-//         </Card>
-//       </ScrollView>
-//     </View>
-//   );
-// }
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
   },
   headerContainer: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 10,
+    paddingHorizontal: 16,
+    gap: 16,
+    paddingBottom: 16,
+    paddingTop: 16,
   },
-  headerText: {
-    fontSize: 20,
-    fontWeight: "bold",
+  searchContainer: {},
+  searchOverflowWrapper: {
+    borderRadius: 12,
+    overflow: "hidden",
   },
-  scrollContent: {
-    padding: 16,
-    paddingBottom: 30,
-  },
-  card: {
-    marginBottom: 16,
+  searchSurface: {
     borderRadius: 12,
   },
-  cardTitle: {
-    fontSize: 18,
-    fontWeight: "bold",
-    marginBottom: 16,
+  cardWrapper: {
+    borderRadius: 16,
   },
-  statsCardContent: {
-    padding: 4,
+  searchWrapper: {
+    borderRadius: 12,
   },
-  statsGrid: {
+  searchBar: {
+    borderWidth: 0,
+    borderRadius: 12,
+    elevation: 0,
+  },
+  filterContainer: {
+    position: "relative",
+    marginBottom: 8,
+    zIndex: 10,
+  },
+  filterButton: {
     flexDirection: "row",
-    flexWrap: "wrap",
-    justifyContent: "space-between",
-  },
-  statItem: {
     alignItems: "center",
-    width: "25%",
+    justifyContent: "center",
+    padding: 12,
+    borderRadius: 12,
+    gap: 8,
+  },
+  filterButtonText: {
+    fontSize: 16,
+    fontWeight: "600",
+    flex: 1,
+  },
+  filterOptions: {
+    position: "absolute",
+    top: "100%",
+    left: 0,
+    right: 0,
+    borderRadius: 12,
+    marginTop: 8,
+    padding: 8,
+    elevation: 4,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    zIndex: 20,
+  },
+  filterOption: {
+    flexDirection: "row",
+    alignItems: "center",
+    padding: 12,
+    borderRadius: 8,
+    marginVertical: 2,
+    gap: 12,
+  },
+  filterOptionText: {
+    fontSize: 16,
+    fontWeight: "500",
+    flex: 1,
+  },
+  listContainer: {
+    paddingHorizontal: 16,
+    marginTop: 10,
+    paddingBottom: 20,
+    gap: 12,
+  },
+  wordCard: {
+    marginBottom: 12,
+    borderRadius: 12,
+  },
+  wordCardWrapper: {
+    overflow: "hidden",
+    borderRadius: 12,
+  },
+  wordCardContent: {
+    paddingHorizontal: 18,
+    paddingVertical: 16,
+  },
+  wordHeader: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
     marginBottom: 12,
   },
-  statValue: {
+  wordTitleContainer: {
+    flex: 1,
+    flexDirection: "row",
+    alignItems: "center",
+    flexWrap: "wrap",
+    gap: 10,
+  },
+  wordTitle: {
     fontSize: 20,
     fontWeight: "bold",
-    marginTop: 4,
   },
-  statLabel: {
+  wordTypeBadge: {
+    paddingHorizontal: 10,
+    paddingVertical: 2,
+    borderRadius: 12,
+    alignSelf: "flex-start",
+  },
+  wordType: {
     fontSize: 12,
-    textAlign: "center",
+    fontWeight: "600",
+  },
+  pronounceButton: {
+    margin: 0,
+    borderRadius: 20,
+  },
+  definitionContainer: {
+    borderRadius: 8,
+    padding: 12,
+    marginBottom: 12,
+  },
+  definition: {
+    fontSize: 14,
+    marginBottom: 12,
   },
   progressSection: {
-    marginBottom: 16,
+    marginBottom: 8,
+    gap: 8,
   },
   progressRow: {
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
-    marginBottom: 6,
   },
   progressLabel: {
-    fontSize: 14,
+    fontSize: 13,
   },
   progressPercent: {
-    fontSize: 14,
+    fontSize: 13,
     fontWeight: "bold",
   },
   progressBar: {
-    height: 8,
-    borderRadius: 4,
+    height: 6,
+    borderRadius: 3,
+    marginBottom: 4,
   },
-  activityItem: {
-    flexDirection: "row",
-    alignItems: "center",
-    paddingVertical: 12,
-  },
-  activityIcon: {
-    marginRight: 12,
-  },
-  activityDetails: {
-    flex: 1,
-  },
-  activityTitle: {
-    fontSize: 15,
-    fontWeight: "500",
-  },
-  activityDate: {
-    fontSize: 13,
-    marginTop: 2,
-  },
-  activityScore: {
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    borderRadius: 12,
-  },
-  scoreText: {
-    fontSize: 14,
-    fontWeight: "bold",
-  },
-  activityDivider: {
-    marginVertical: 4,
-  },
-  leaderboardHeader: {
+  statsContainer: {
     flexDirection: "row",
     justifyContent: "space-between",
+    marginTop: 8,
+    paddingTop: 8,
+    borderTopWidth: 1,
+    borderTopColor: "#00000010",
+  },
+  statItem: {
+    flexDirection: "row",
     alignItems: "center",
-    marginBottom: 16,
+    gap: 4,
   },
-  segmentedButtons: {
-    marginBottom: 16,
+  statText: {
+    fontSize: 12,
   },
-  leaderboardList: {
+  paginationContainer: {
+    flexDirection: "row",
+    justifyContent: "center",
+    alignItems: "center",
+    paddingVertical: 16,
     gap: 8,
   },
-  cardContent: {
-    alignItems: "center",
-    justifyContent: "center",
-    gap: 20,
-    padding: 16,
-    marginVertical: 16,
+  paginationText: {
+    fontSize: 14,
+    fontWeight: "500",
   },
-  comingSoonText: {
-    fontSize: 20,
+  loadingContainer: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  emptyContainer: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+    paddingHorizontal: 32,
+  },
+  emptyText: {
+    fontSize: 18,
     fontWeight: "bold",
+    marginTop: 16,
+  },
+  emptySubtext: {
+    fontSize: 14,
+    textAlign: "center",
+    marginTop: 8,
   },
 });

@@ -5,7 +5,7 @@ import { useStore } from "@/src/stores/store";
 export default function AuthLayout() {
   const { isSignedIn } = useAuth();
   const hasOnboarded = useStore((state) => state.hasOnboarded);
-  
+
   if (isSignedIn && hasOnboarded) {
     return <Redirect href={"/(protected)/(tabs)/home"} />;
   }
@@ -13,7 +13,7 @@ export default function AuthLayout() {
   return (
     <Stack screenOptions={{ headerShown: false }}>
       <Stack.Screen name="index" />
-      <Stack.Screen name="sign-up" />
+      <Stack.Screen name="onboarding" />
     </Stack>
   );
 }

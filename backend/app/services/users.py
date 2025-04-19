@@ -1,4 +1,5 @@
 import asyncpg
+from app.models.base import PaginatedPayload, PageInfo
 from app.models.user import (
     UserCreate,
     UserUpdate,
@@ -11,6 +12,7 @@ from app.models.user import (
     LearningInsights,
     UserListAlreadyExistsError,
 )
+from app.models.word import Word
 from app.config.db import get_pool
 from fastapi import Depends
 from app.models.user import User, UserList
@@ -400,6 +402,102 @@ class UserService:
 
         except Exception as e:
             raise Exception(f"Error updating word progress: {str(e)}")
+
+    async def get_word_progress(
+        self, user_id: int, page: int = 1, per_page: int = 10
+    ) -> PaginatedPayload[Word]:
+        offset = (page - 1) * per_page
+
+        query = """
+            SELECT 
+                wp.recognition_mastery_score, 
+                wp.usage_mastery_score, 
+                wp.practice_count, 
+                wp.success_count, 
+                wp.number_of_times_to_practice, 
+                wp.created_at as wp_created_at, 
+                wp.updated_at as wp_updated_at,
+                w.id,
+                w.word,
+                w.definition,
+                w.part_of_speech,
+                w.difficulty_level,
+                w.etymology,
+                w.usage_notes,
+                w.audio_url,
+                w.image_url,
+                w.examples,
+                w.synonyms,
+                w.antonyms,
+                w.tags,
+                w.created_at as w_created_at,
+                w.updated_at as w_updated_at
+            FROM word_progress wp
+            JOIN words w ON wp.word_id = w.id
+            WHERE wp.user_id = $1
+            ORDER BY wp.updated_at DESC
+            LIMIT $2 OFFSET $3
+        """
+
+        count_query = """
+            SELECT COUNT(*) as total
+            FROM word_progress
+            WHERE user_id = $1
+        """
+
+        try:
+            async with self.pool.acquire() as conn:
+                total_count = await conn.fetchval(count_query, user_id)
+                records = await conn.fetch(query, user_id, per_page, offset)
+
+                items = []
+                for record in records:
+                    progress = WordProgress(
+                        user_id=user_id,
+                        word_id=record["id"],
+                        recognition_mastery_score=record["recognition_mastery_score"],
+                        usage_mastery_score=record["usage_mastery_score"],
+                        practice_count=record["practice_count"],
+                        success_count=record["success_count"],
+                        number_of_times_to_practice=record[
+                            "number_of_times_to_practice"
+                        ],
+                        created_at=record["wp_created_at"],
+                        updated_at=record["wp_updated_at"],
+                    )
+                    word = Word(
+                        id=record["id"],
+                        word=record["word"],
+                        definition=record["definition"],
+                        part_of_speech=record["part_of_speech"],
+                        difficulty_level=record["difficulty_level"],
+                        word_progress=progress,
+                        etymology=record["etymology"],
+                        usage_notes=record["usage_notes"],
+                        audio_url=record["audio_url"],
+                        image_url=record["image_url"],
+                        examples=record["examples"],
+                        synonyms=record["synonyms"],
+                        antonyms=record["antonyms"],
+                        tags=record["tags"],
+                        created_at=record["w_created_at"],
+                        updated_at=record["w_updated_at"],
+                    )
+                    items.append(word)
+
+                total_pages = (total_count + per_page - 1) // per_page
+                page_info = PageInfo(
+                    page=page,
+                    per_page=per_page,
+                    total_items=total_count,
+                    total_pages=total_pages,
+                    has_previous_page=page > 1,
+                    has_next_page=page < total_pages,
+                )
+
+                return PaginatedPayload(items=items, page_info=page_info)
+        except Exception as e:
+            raise Exception(f"Error retrieving word progress: {str(e)}")
 
     async def get_user_stats(self, user_id: int) -> FullUserStats:
         stats_query = """

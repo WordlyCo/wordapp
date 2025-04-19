@@ -145,8 +145,6 @@ const QuestionScreen: React.FC = () => {
     );
   }
 
-  console.log("WORD", JSON.stringify(currentWord, null, 2));
-
   const handleAnswer = async (answer: string) => {
     const isCorrect = !!currentWord?.quiz?.correctOptions.includes(answer);
 
@@ -200,8 +198,12 @@ const QuestionScreen: React.FC = () => {
         ? (currentWord.wordProgress?.usageMasteryScore || 0) + 1
         : currentWord.wordProgress?.usageMasteryScore || 0,
       numberOfTimesToPractice:
-        (currentWord.wordProgress?.numberOfTimesToPractice || 0) + 1,
+        currentWord.wordProgress?.numberOfTimesToPractice || 0,
     };
+
+    if (isCorrect && wordProgressUpdate.numberOfTimesToPractice > 0) {
+      wordProgressUpdate.numberOfTimesToPractice -= 1;
+    }
 
     await updateWordProgress(wordProgressUpdate);
 
@@ -235,74 +237,81 @@ const QuestionScreen: React.FC = () => {
         contentContainerStyle={{ flexGrow: 1 }}
         showsVerticalScrollIndicator={false}
       >
-        <Animated.View
-          style={[
-            styles.questionContainer,
-            {
+        <View style={styles.questionContainer}>
+          <Animated.View
+            style={{
               opacity: fadeAnim,
               transform: [{ translateY: slideAnim }],
-            },
-          ]}
-        >
-          <Card
-            style={[
-              styles.card,
-              {
-                backgroundColor: colors.surface,
-                shadowColor: colors.primary,
-              },
-            ]}
-            elevation={4}
+            }}
           >
-            <View style={styles.questionIconContainer}>
-              <IconButton
-                icon="help-circle"
-                iconColor={colors.primary}
-                size={28}
-              />
-            </View>
-            <Card.Content style={styles.questionContent}>
-              <Text style={[styles.questionLabel, { color: colors.primary }]}>
-                Question:
-              </Text>
-              <Text style={[styles.questionText, { color: colors.onSurface }]}>
-                {currentWord.quiz?.question}
-              </Text>
-            </Card.Content>
-          </Card>
+            <Card
+              style={[
+                styles.card,
+                {
+                  backgroundColor: colors.surface,
+                  shadowColor: colors.primary,
+                },
+              ]}
+              elevation={4}
+            >
+              <View style={styles.cardWrapper}>
+                <View style={styles.questionIconContainer}>
+                  <IconButton
+                    icon="help-circle"
+                    iconColor={colors.primary}
+                    size={28}
+                  />
+                </View>
+                <Card.Content style={styles.questionContent}>
+                  <Text
+                    style={[styles.questionLabel, { color: colors.primary }]}
+                  >
+                    Question:
+                  </Text>
+                  <Text
+                    style={[styles.questionText, { color: colors.onSurface }]}
+                  >
+                    {currentWord.quiz?.question}
+                  </Text>
+                </Card.Content>
+              </View>
+            </Card>
 
-          <View style={styles.optionsContainer}>
-            {randomizedOptions.map((option: string, index: number) => (
-              <Animated.View
-                key={index}
-                style={{
-                  opacity: fadeAnim,
-                  transform: [
-                    {
-                      translateY: Animated.multiply(
-                        slideAnim,
-                        new Animated.Value(1 + index * 0.3)
-                      ),
-                    },
-                  ],
-                }}
-              >
-                <OptionButton
-                  onPress={() => handleAnswer(option)}
-                  disabled={false}
-                  isCorrect={
-                    currentWord.quiz?.correctOptions.includes(option) || false
-                  }
-                  isSelected={selectedAnswer === option}
-                  showAnswer={false}
-                  colors={colors}
-                >
-                  {option}
-                </OptionButton>
-              </Animated.View>
-            ))}
-          </View>
-        </Animated.View>
+            <View style={styles.optionsContainer}>
+              {randomizedOptions.map((option: string, index: number) => (
+                <View key={index}>
+                  <Animated.View
+                    style={{
+                      opacity: fadeAnim,
+                      transform: [
+                        {
+                          translateY: Animated.multiply(
+                            slideAnim,
+                            new Animated.Value(1 + index * 0.3)
+                          ),
+                        },
+                      ],
+                    }}
+                  >
+                    <OptionButton
+                      onPress={() => handleAnswer(option)}
+                      disabled={false}
+                      isCorrect={
+                        currentWord.quiz?.correctOptions.includes(option) ||
+                        false
+                      }
+                      isSelected={selectedAnswer === option}
+                      showAnswer={false}
+                      colors={colors}
+                    >
+                      {option}
+                    </OptionButton>
+                  </Animated.View>
+                </View>
+              ))}
+            </View>
+          </Animated.View>
+        </View>
       </ScrollView>
     </View>
   );
@@ -347,7 +356,6 @@ const styles = StyleSheet.create({
   },
   card: {
     borderRadius: 16,
-    overflow: "hidden",
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.1,
     shadowRadius: 8,
@@ -396,6 +404,10 @@ const styles = StyleSheet.create({
     textAlign: "center",
     marginVertical: 10,
     lineHeight: 32,
+  },
+  cardWrapper: {
+    overflow: "hidden",
+    borderRadius: 16,
   },
 });
 

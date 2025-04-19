@@ -79,89 +79,90 @@ export default function BankScreen() {
       <StatusBar barStyle="dark-content" />
 
       <Animated.View style={headerAnimatedStyle}>
-        <Animated.View
-          entering={FadeInDown.duration(700).springify()}
-          style={styles.searchContainer}
-        >
-          <Surface
-            style={[
-              styles.searchSurface,
-              { backgroundColor: colors.surfaceVariant },
-            ]}
-          >
-            <View style={styles.searchWrapper}>
-              <Searchbar
-                placeholder="Search your word lists..."
-                onChangeText={setSearchQuery}
-                value={searchQuery}
-                style={[
-                  styles.searchBar,
-                  {
-                    backgroundColor: colors.surfaceVariant,
-                    borderColor: colors.outline,
-                  },
-                ]}
-                elevation={0}
-                inputStyle={{ color: colors.onSurface }}
-                placeholderTextColor={colors.onSurfaceVariant}
-                icon={() => (
-                  <MaterialCommunityIcons
-                    name="magnify"
-                    size={24}
-                    color={colors.onSurfaceVariant}
-                  />
-                )}
-                clearIcon={() => (
-                  <TouchableOpacity onPress={() => setSearchQuery("")}>
+        <View style={styles.searchContainer}>
+          <Animated.View entering={FadeInDown.duration(700).springify()}>
+            <Surface
+              style={[
+                styles.searchSurface,
+                { backgroundColor: colors.surfaceVariant },
+              ]}
+            >
+              <View style={styles.searchWrapper}>
+                <Searchbar
+                  placeholder="Search your word lists..."
+                  onChangeText={setSearchQuery}
+                  value={searchQuery}
+                  style={[
+                    styles.searchBar,
+                    {
+                      backgroundColor: colors.surfaceVariant,
+                      borderColor: colors.outline,
+                    },
+                  ]}
+                  elevation={0}
+                  inputStyle={{ color: colors.onSurface }}
+                  placeholderTextColor={colors.onSurfaceVariant}
+                  icon={() => (
                     <MaterialCommunityIcons
-                      name="close"
+                      name="magnify"
                       size={24}
-                      color={colors.primary}
+                      color={colors.onSurfaceVariant}
                     />
-                  </TouchableOpacity>
-                )}
-              />
-            </View>
-          </Surface>
-        </Animated.View>
+                  )}
+                  clearIcon={() => (
+                    <TouchableOpacity onPress={() => setSearchQuery("")}>
+                      <MaterialCommunityIcons
+                        name="close"
+                        size={24}
+                        color={colors.primary}
+                      />
+                    </TouchableOpacity>
+                  )}
+                />
+              </View>
+            </Surface>
+          </Animated.View>
+        </View>
 
-        <Animated.View entering={FadeInDown.duration(800).springify()}>
-          <ScrollView
-            horizontal
-            showsHorizontalScrollIndicator={false}
-            contentContainerStyle={styles.filtersContainer}
-          >
-            {FILTERS.map((filter) => (
-              <Chip
-                key={filter.id}
-                selected={activeFilter === filter.id}
-                onPress={() => setActiveFilter(filter.id)}
-                style={[
-                  styles.filterChip,
-                  {
-                    backgroundColor:
-                      activeFilter === filter.id
-                        ? colors.primary
-                        : colors.surfaceVariant,
-                    borderColor: colors.primary,
-                    borderWidth: activeFilter === filter.id ? 0 : 1,
-                  },
-                ]}
-                textStyle={[
-                  styles.chipText,
-                  {
-                    color:
-                      activeFilter === filter.id
-                        ? colors.onPrimary
-                        : colors.primary,
-                  },
-                ]}
-              >
-                {filter.label}
-              </Chip>
-            ))}
-          </ScrollView>
-        </Animated.View>
+        <View>
+          <Animated.View entering={FadeInDown.duration(800).springify()}>
+            <ScrollView
+              horizontal
+              showsHorizontalScrollIndicator={false}
+              contentContainerStyle={styles.filtersContainer}
+            >
+              {FILTERS.map((filter) => (
+                <Chip
+                  key={filter.id}
+                  selected={activeFilter === filter.id}
+                  onPress={() => setActiveFilter(filter.id)}
+                  style={[
+                    styles.filterChip,
+                    {
+                      backgroundColor:
+                        activeFilter === filter.id
+                          ? colors.primary
+                          : colors.surfaceVariant,
+                      borderColor: colors.primary,
+                      borderWidth: activeFilter === filter.id ? 0 : 1,
+                    },
+                  ]}
+                  textStyle={[
+                    styles.chipText,
+                    {
+                      color:
+                        activeFilter === filter.id
+                          ? colors.onPrimary
+                          : colors.primary,
+                    },
+                  ]}
+                >
+                  {filter.label}
+                </Chip>
+              ))}
+            </ScrollView>
+          </Animated.View>
+        </View>
       </Animated.View>
 
       {userLists.length > 0 ? (
@@ -176,18 +177,20 @@ export default function BankScreen() {
           scrollEventThrottle={16}
           ItemSeparatorComponent={() => <View style={styles.separator} />}
           renderItem={({ item, index }) => (
-            <Animated.View
-              entering={FadeInUp.delay(200 + index * 100)
-                .duration(600)
-                .springify()}
-            >
-              <WordListCard
-                list={item}
-                onPress={() => {
-                  router.push(`/(protected)/list/${item.id}`);
-                }}
-              />
-            </Animated.View>
+            <View>
+              <Animated.View
+                entering={FadeInUp.delay(200 + index * 100)
+                  .duration(600)
+                  .springify()}
+              >
+                <WordListCard
+                  list={item}
+                  onPress={() => {
+                    router.push(`/(protected)/list/${item.id}`);
+                  }}
+                />
+              </Animated.View>
+            </View>
           )}
         />
       ) : (
@@ -259,5 +262,9 @@ const styles = StyleSheet.create({
   noListsText: {
     fontSize: 16,
     textAlign: "center",
+  },
+  scrollView: {
+    flex: 1,
+    borderRadius: 15,
   },
 });

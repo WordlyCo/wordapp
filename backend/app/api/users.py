@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, Query
 from typing import List, Optional
 from app.middleware.auth import get_current_user
 from app.models.list import WordList
@@ -13,7 +13,8 @@ from app.models.user import (
     FullUserStats,
     UserListAlreadyExistsError,
 )
-from app.models.base import Response
+from app.models.word import Word
+from app.models.base import Response, PaginatedPayload
 from app.services.users import (
     get_user_service,
     UserService,
@@ -181,6 +182,42 @@ async def update_word_progress(
         return Response(
             success=False,
             message="Could not update word progress due to an internal error",
+            error_code=SERVER_ERROR,
+        )
+
+
+@router.get("/progress/words")
+async def get_word_progress(
+    page: int = Query(1, ge=1, description="Page number to retrieve"),
+    per_page: int = Query(10, ge=1, le=100, description="Number of items per page"),
+    user_service: UserService = Depends(get_user_service),
+    current_user: Optional[User] = Depends(get_current_user),
+) -> Response[PaginatedPayload[Word]]:
+    try:
+        if current_user is None:
+            return Response(
+                success=False,
+                message="Authentication required",
+                error_code=SERVER_ERROR,
+            )
+
+        paginated_progress = await user_service.get_word_progress(
+            current_user.id, page=page, per_page=per_page
+        )
+
+        return Response(
+            success=True,
+            message="Word progress retrieved successfully",
+            payload=paginated_progress,
+        )
+    except Exception as e:
+        print(f"Error retrieving word progress: {e}")
+        import traceback
+
+        print(traceback.format_exc())
+        return Response(
+            success=False,
+            message="Could not retrieve word progress due to an internal error",
             error_code=SERVER_ERROR,
         )
 
