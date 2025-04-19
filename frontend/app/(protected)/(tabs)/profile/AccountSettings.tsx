@@ -26,14 +26,14 @@ import { MaterialCommunityIcons } from "@expo/vector-icons";
 const AccountSettingsScreen = () => {
   const { colors } = useTheme();
   const updatePreferences = useStore((state) => state.updatePreferences);
-  const preferences = useStore((state) => state.preferences);
+  const preferences = useStore((state) => state.user?.preferences);
   const { user, isLoaded } = useUser();
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
   const [username, setUsername] = useState("johndoe");
   const [email, setEmail] = useState("john.doe@example.com");
   const [profileImage, setProfileImage] = useState<string | null>(null);
-  const [error, setError] = useState<string | null>(null);
+  const [, setError] = useState<string | null>(null);
   const [bio, setBio] = useState("");
   const [revealEmail, setRevealEmail] = useState(false);
 

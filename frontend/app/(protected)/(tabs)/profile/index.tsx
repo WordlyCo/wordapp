@@ -11,7 +11,6 @@ import useTheme from "@/src/hooks/useTheme";
 import { useStore } from "@/src/stores/store";
 import { PROFILE_BACKGROUND_COLORS } from "@/constants/profileColors";
 import { useRouter } from "expo-router";
-import { MaterialCommunityIcons } from "@expo/vector-icons";
 import { LearningInsights } from "@/src/features/home/components";
 
 const ProfileScreen = () => {
@@ -20,7 +19,7 @@ const ProfileScreen = () => {
   const router = useRouter();
   const { colors } = useTheme();
   const [refreshing, setRefreshing] = useState(false);
-  const userStats = useStore((state) => state.userStats);
+  const userStats = useStore((state) => state.user?.userStats);
 
   useEffect(() => {
     fetchUserData();
@@ -44,7 +43,7 @@ const ProfileScreen = () => {
   };
 
   const profileBackgroundColorIndex = useStore(
-    (state) => state.preferences?.profileBackgroundColorIndex ?? 0
+    (state) => state.user?.preferences?.profileBackgroundColorIndex ?? 0
   );
 
   return (
@@ -87,25 +86,15 @@ const ProfileScreen = () => {
                   style={[
                     styles.avatarContainer,
                     {
-                      backgroundColor: colors.onBackground,
+                      backgroundColor: "white",
                       marginTop: -60,
                     },
                   ]}
                 >
-                  {user?.profilePictureUrl ? (
-                    <Image
-                      source={{ uri: user.profilePictureUrl }}
-                      style={styles.avatar}
-                    />
-                  ) : (
-                    <View style={styles.avatarPlaceholder}>
-                      <MaterialCommunityIcons
-                        name="account"
-                        size={80}
-                        color={colors.primary}
-                      />
-                    </View>
-                  )}
+                  <Image
+                    source={{ uri: user?.profilePictureUrl }}
+                    style={styles.avatar}
+                  />
                 </View>
 
                 <Text style={[styles.userName, { color: colors.onSurface }]}>
@@ -229,7 +218,12 @@ const styles = StyleSheet.create({
   avatarContainer: {
     marginBottom: 15,
     borderRadius: 100,
-    padding: 4,
+    padding: 3,
+    shadowColor: "black",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.25,
+    shadowRadius: 3.84,
+    elevation: 5,
   },
   avatar: {
     width: 120,
@@ -313,14 +307,15 @@ const styles = StyleSheet.create({
     width: "100%",
     minHeight: 300,
   },
-  card: {},
   cardContainer: {
     borderRadius: 15,
-    overflow: "hidden",
   },
   cardWrapper: {
     borderRadius: 15,
     overflow: "hidden",
+  },
+  card: {
+    paddingBottom: 10,
   },
 });
 

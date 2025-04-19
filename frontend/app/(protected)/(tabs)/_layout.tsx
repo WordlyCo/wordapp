@@ -6,12 +6,10 @@ import useTheme from "@/src/hooks/useTheme";
 import { useTheme as usePaperTheme } from "react-native-paper";
 import Animated, { FadeInDown } from "react-native-reanimated";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { useStore } from "@/src/stores/store";
 
 export default function AppLayout() {
   const { colors } = useTheme();
   const { dark } = usePaperTheme();
-  const diamonds = useStore((state) => state.userStats.diamonds);
 
   return (
     <View style={{ flex: 1 }}>

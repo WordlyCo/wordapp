@@ -1,353 +1,57 @@
-import React, { useState } from "react";
-import { View, StyleSheet, ScrollView, Image } from "react-native";
-import {
-  Text,
-  Button,
-  TextInput,
-  SegmentedButtons,
-  IconButton,
-} from "react-native-paper";
-import { SafeAreaView } from "react-native-safe-area-context";
+import * as WebBrowser from "expo-web-browser";
+import React from "react";
+import { View, StyleSheet, Image } from "react-native";
+import { Text, Button } from "react-native-paper";
 import useTheme from "@/src/hooks/useTheme";
-import { useSignIn, useSignUp } from "@clerk/clerk-expo";
-import { useRouter } from "expo-router";
+import { useAuthNavigation } from "@/src/features/auth/navigation";
 
-type AuthMode = "login" | "register";
+WebBrowser.maybeCompleteAuthSession();
 
-export default function AuthScreen() {
-  const router = useRouter();
-  const {
-    signIn,
-    setActive: setSignInActive,
-    isLoaded: isSignInLoaded,
-  } = useSignIn();
-  const {
-    signUp,
-    setActive: setSignUpActive,
-    isLoaded: isSignUpLoaded,
-  } = useSignUp();
-
-  const [mode, setMode] = useState<AuthMode>("login");
-  const [email, setEmail] = useState<string>("");
-  const [password, setPassword] = useState<string>("");
-  const [confirmPassword, setConfirmPassword] = useState<string>("");
-  const [username, setUsername] = useState<string>("");
-  const [pendingVerification, setPendingVerification] = useState(false);
-  const [verificationCode, setVerificationCode] = useState("");
-  const [authError, setAuthError] = useState<string | null>(null);
+export default function WelcomeScreen() {
+  const { goToLogin } = useAuthNavigation();
   const { colors } = useTheme();
 
-  const validateEmail = (email: string) => {
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    return emailRegex.test(email);
-  };
-
-  const validatePassword = (password: string) => {
-    const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])/;
-    return passwordRegex.test(password);
-  };
-
-  const handleLogin = async () => {
-    if (!isSignInLoaded) return;
-
-    if (!email || !password) {
-      setAuthError("Please fill in all required fields.");
-      return;
-    }
-
-    if (!validateEmail(email)) {
-      setAuthError("Please enter a valid email address.");
-      return;
-    }
-
-    try {
-      const signInAttempt = await signIn.create({
-        identifier: email,
-        password,
-      });
-
-      if (signInAttempt.status === "complete") {
-        await setSignInActive({ session: signInAttempt.createdSessionId });
-        router.replace("/");
-      } else {
-        setAuthError("Sign-in failed. Please try again.");
-      }
-    } catch (error) {
-      setAuthError(
-        "Login Failed: " +
-          (error instanceof Error ? error.message : String(error))
-      );
-    }
-  };
-
-  const handleRegister = async () => {
-    if (!isSignUpLoaded) return;
-
-    if (!email || !password || !username) {
-      setAuthError("Please fill in all required fields.");
-      return;
-    }
-
-    if (!validateEmail(email)) {
-      setAuthError("Please enter a valid email address.");
-      return;
-    }
-
-    if (!validatePassword(password)) {
-      setAuthError(
-        "Password must be at least 8 characters long and contain at least one uppercase letter."
-      );
-      return;
-    }
-
-    if (password !== confirmPassword) {
-      setAuthError("Passwords do not match.");
-      return;
-    }
-
-    try {
-      await signUp.create({
-        emailAddress: email,
-        password,
-        username,
-      });
-
-      await signUp.prepareEmailAddressVerification({ strategy: "email_code" });
-
-      setPendingVerification(true);
-    } catch (error) {
-      setAuthError(
-        "Registration Failed: " +
-          (error instanceof Error ? error.message : String(error))
-      );
-    }
-  };
-
-  const handleVerification = async () => {
-    if (!isSignUpLoaded) return;
-
-    try {
-      const signUpAttempt = await signUp.attemptEmailAddressVerification({
-        code: verificationCode,
-      });
-
-      if (signUpAttempt.status === "complete") {
-        await setSignUpActive({ session: signUpAttempt.createdSessionId });
-        router.replace("/(auth)/onboarding");
-      } else {
-        setAuthError("Verification failed. Please try again.");
-      }
-    } catch (error) {
-      setAuthError(
-        "Verification Failed: " +
-          (error instanceof Error ? error.message : String(error))
-      );
-    }
-  };
-
-  const handleSubmit = async () => {
-    if (mode === "login") {
-      await handleLogin();
-    } else {
-      await handleRegister();
-    }
-  };
-
-  const clearFields = () => {
-    setEmail("");
-    setPassword("");
-    setConfirmPassword("");
-    setUsername("");
-    setVerificationCode("");
-    setPendingVerification(false);
-    setAuthError(null);
-  };
-
-  if (pendingVerification) {
-    return (
-      <SafeAreaView
-        style={[styles.container, { backgroundColor: colors.background }]}
-        edges={["top"]}
-      >
-        <ScrollView contentContainerStyle={styles.scrollViewContainer}>
-          <View style={styles.headerContainer}>
-            <Text variant="headlineLarge" style={styles.title}>
-              Verify Your Email
-            </Text>
-            <Text
-              variant="bodyMedium"
-              style={{ textAlign: "center", marginTop: 10 }}
-            >
-              Please enter the verification code sent to your email
-            </Text>
-
-            <Image
-              style={styles.image}
-              source={require("@/assets/images/CandyCueDarkishBlue.png")}
-              resizeMode="contain"
-            />
-          </View>
-
-          {authError && (
-            <View style={styles.errorContainer}>
-              <Text variant="bodyMedium" style={styles.errorText}>
-                {authError}
-              </Text>
-              <IconButton
-                icon="close"
-                size={20}
-                onPress={() => setAuthError(null)}
-              />
-            </View>
-          )}
-
-          <View style={styles.formContainer}>
-            <TextInput
-              mode="outlined"
-              label="Verification Code"
-              value={verificationCode}
-              onChangeText={setVerificationCode}
-              keyboardType="number-pad"
-              style={styles.input}
-            />
-
-            <Button
-              icon="check"
-              mode="contained"
-              onPress={handleVerification}
-              style={styles.submitButton}
-              contentStyle={styles.buttonContent}
-            >
-              Verify Email
-            </Button>
-
-            <Button
-              mode="text"
-              onPress={() => setPendingVerification(false)}
-              style={{ marginTop: 10 }}
-            >
-              Back to Sign Up
-            </Button>
-          </View>
-        </ScrollView>
-      </SafeAreaView>
-    );
-  }
-
   return (
-    <SafeAreaView
-      style={[styles.container, { backgroundColor: colors.background }]}
-      edges={["top"]}
-    >
-      <ScrollView contentContainerStyle={styles.scrollViewContainer}>
-        <View style={styles.headerContainer}>
-          <Text variant="headlineLarge" style={styles.title}>
-            Welcome to WordBird!
-          </Text>
+    <View style={[styles.container, { backgroundColor: colors.background }]}>
+      <View style={styles.content}>
+        <Text variant="displaySmall" style={styles.title}>
+          Welcome to Word App
+        </Text>
 
-          <Image
-            style={styles.image}
-            source={require("@/assets/images/CandyCueDarkishBlue.png")}
-            resizeMode="contain"
-          />
-        </View>
+        <Text variant="bodyLarge" style={styles.subtitle}>
+          Learn new words. Track your progress. Become a vocabulary master.
+        </Text>
 
-        <SegmentedButtons
-          value={mode}
-          onValueChange={(value) => {
-            setMode(value as AuthMode);
-            clearFields();
-          }}
-          buttons={[
-            {
-              value: "login",
-              label: "Login",
-              style: { borderRadius: 5 },
-            },
-            {
-              value: "register",
-              label: "Register",
-              style: { borderRadius: 5 },
-            },
-          ]}
-          style={[styles.segmentedButtons, { backgroundColor: colors.surface }]}
-          theme={{
-            colors: {
-              secondaryContainer: colors.primary,
-              onSecondaryContainer: colors.onPrimary,
-            },
-          }}
+        <Image
+          style={styles.image}
+          source={require("@/assets/images/CandyCueDarkishBlue.png")}
+          resizeMode="contain"
         />
 
-        {authError && (
-          <View style={styles.errorContainer}>
-            <Text variant="bodyMedium" style={styles.errorText}>
-              {authError}
-            </Text>
-            <IconButton
-              icon="close"
-              size={20}
-              onPress={() => setAuthError(null)}
-            />
-          </View>
-        )}
+        <Text variant="bodyMedium" style={styles.description}>
+          Join thousands of learners expanding their vocabulary every day with
+          fun, bite-sized exercises.
+        </Text>
 
-        <View style={styles.formContainer}>
-          {mode === "register" && (
-            <TextInput
-              mode="outlined"
-              label="Username"
-              value={username}
-              onChangeText={setUsername}
-              autoCapitalize="none"
-              style={styles.input}
-            />
-          )}
-
-          <TextInput
-            mode="outlined"
-            label="Email"
-            value={email}
-            onChangeText={setEmail}
-            autoCapitalize="none"
-            keyboardType="email-address"
-            style={styles.input}
-          />
-
-          <TextInput
-            mode="outlined"
-            label="Password"
-            secureTextEntry
-            value={password}
-            onChangeText={setPassword}
-            autoCapitalize="none"
-            style={styles.input}
-          />
-
-          {mode === "register" && (
-            <TextInput
-              mode="outlined"
-              label="Confirm Password"
-              secureTextEntry
-              value={confirmPassword}
-              onChangeText={setConfirmPassword}
-              autoCapitalize="none"
-              style={styles.input}
-            />
-          )}
-
+        <View style={styles.buttonContainer}>
           <Button
-            icon={mode === "login" ? "login" : "account-plus"}
             mode="contained"
-            onPress={handleSubmit}
-            style={styles.submitButton}
+            onPress={goToLogin}
+            style={styles.button}
             contentStyle={styles.buttonContent}
           >
-            {mode === "login" ? "Login" : "Create Account"}
+            Get Started
           </Button>
+
+          <View style={styles.loginContainer}>
+            <Text variant="bodyMedium">Already have an account?</Text>
+            <Button mode="text" onPress={goToLogin}>
+              Log in
+            </Button>
+          </View>
         </View>
-      </ScrollView>
-    </SafeAreaView>
+      </View>
+    </View>
   );
 }
 
@@ -356,51 +60,45 @@ const styles = StyleSheet.create({
     flex: 1,
     padding: 24,
   },
-  scrollViewContainer: {
-    flexGrow: 1,
-    gap: 15,
-  },
-  headerContainer: {
+  content: {
+    flex: 1,
+    justifyContent: "center",
     alignItems: "center",
+    gap: 20,
   },
   title: {
     textAlign: "center",
     fontWeight: "200",
   },
+  subtitle: {
+    textAlign: "center",
+    opacity: 0.8,
+    marginBottom: 10,
+  },
   image: {
     width: "100%",
-    height: 150,
+    height: 180,
     marginVertical: 20,
   },
-  segmentedButtons: {
-    marginBottom: 8,
+  description: {
+    textAlign: "center",
+    marginHorizontal: 10,
+    marginBottom: 20,
   },
-  formContainer: {
-    gap: 12,
+  buttonContainer: {
+    width: "100%",
+    gap: 10,
+    marginTop: 20,
   },
-  input: {
+  button: {
     width: "100%",
   },
-  submitButton: {
-    marginTop: 8,
-  },
   buttonContent: {
-    height: 48,
+    height: 50,
   },
-  errorText: {
-    textAlign: "center",
-    fontWeight: "bold",
-    fontSize: 16,
-  },
-  errorContainer: {
+  loginContainer: {
     flexDirection: "row",
-    alignItems: "center",
     justifyContent: "center",
-    marginBottom: 10,
-    borderWidth: 1,
-    borderColor: "rgb(255 13 93)",
-    borderRadius: 5,
-    paddingVertical: 10,
-    paddingHorizontal: 30,
+    alignItems: "center",
   },
 });

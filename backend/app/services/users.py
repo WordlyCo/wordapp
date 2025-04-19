@@ -15,7 +15,7 @@ from app.models.user import (
 from app.models.word import Word
 from app.config.db import get_pool
 from fastapi import Depends
-from app.models.user import User, UserList
+from app.models.user import User, UserList, UserPreferences
 from app.services.lists import ListService, get_list_service
 from app.models.list import WordList
 from typing import List
@@ -72,11 +72,20 @@ class UserService:
 
     async def get_user_by_id(self, user_id: int) -> User:
         query = "SELECT * FROM users WHERE id = $1"
+        preferences_query = "SELECT * FROM user_preferences WHERE user_id = $1"
         try:
             user_record = await self.pool.fetchrow(query, user_id)
             if user_record is None:
                 raise UserNotFoundError(f"User with ID {user_id} not found")
-            return User(**user_record)
+            preferences_record = await self.pool.fetchrow(preferences_query, user_id)
+            if preferences_record is None:
+                raise UserNotFoundError(f"User preferences with ID {user_id} not found")
+            full_user_stats = await self.get_user_stats(user_id)
+            return User(
+                **user_record,
+                preferences=UserPreferences(**preferences_record),
+                user_stats=full_user_stats,
+            )
         except Exception as e:
             if isinstance(e, UserNotFoundError):
                 raise e
@@ -253,9 +262,11 @@ class UserService:
                 usage_mastery_score, 
                 practice_count, 
                 number_of_times_to_practice, 
-                success_count
+                success_count,
+                created_at,
+                updated_at
             )
-            VALUES ($1, $2, $3, $4, $5, $6, $7)
+            VALUES ($1, $2, $3, $4, $5, $6, $7, CURRENT_TIMESTAMP - INTERVAL '30 days', CURRENT_TIMESTAMP - INTERVAL '30 days')
         """
 
         check_stats_query = """
@@ -520,7 +531,9 @@ class UserService:
         today_practiced_query = """
             SELECT COUNT(*) 
             FROM word_progress 
-            WHERE user_id = $1 AND DATE(updated_at) = CURRENT_DATE
+            WHERE user_id = $1 
+              AND DATE(updated_at) = CURRENT_DATE
+              AND practice_count > 0
         """
 
         today_time_query = """
@@ -713,22 +726,26 @@ class UserService:
 
             last_activity = await self.pool.fetchrow(last_activity_query, user_id)
 
-            if last_activity["last_active"]:
-                last_active_utc = last_activity["last_active"].replace(tzinfo=pytz.UTC)
-                last_active_date = last_active_utc.astimezone(tz).date()
-            else:
-                last_active_date = current_date
-
             current_streak = stats_record["current_streak"]
             longest_streak = stats_record["longest_streak"]
 
-            # If last active was yesterday in user's timezone, increment streak
-            if last_active_date == current_date - timedelta(days=1):
-                current_streak += 1
-            # If last active was before yesterday, reset streak to 1
-            elif last_active_date < current_date - timedelta(days=1):
+            # Default to current date if no previous activity (new user)
+            if not last_activity or not last_activity["last_active"]:
+                # This is the user's first activity, set streak to 1
                 current_streak = 1
-            # If already active today, do nothing
+            else:
+                last_active_utc = last_activity["last_active"].replace(tzinfo=pytz.UTC)
+                last_active_date = last_active_utc.astimezone(tz).date()
+
+                # If last active was today, maintain current streak but ensure it's at least 1
+                if last_active_date == current_date:
+                    current_streak = max(current_streak, 1)
+                # If last active was yesterday, increment streak
+                elif last_active_date == current_date - timedelta(days=1):
+                    current_streak += 1
+                # If last active was before yesterday, reset streak to 1
+                elif last_active_date < current_date - timedelta(days=1):
+                    current_streak = 1
 
             # Update longest streak if needed
             if current_streak > longest_streak:
