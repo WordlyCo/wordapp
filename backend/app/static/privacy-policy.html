@@ -1,0 +1,437 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Privacy Policy - WordApp</title>
+    <link rel="icon" href="/static/images/favicon.png" type="image/png" />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      :root {
+        --purple-main: rgb(100, 96, 205);
+        --purple-light: rgb(177, 175, 237);
+        --purple-dark: rgb(63, 60, 148);
+        --teal-main: rgb(64, 186, 164);
+        --teal-light: rgb(184, 240, 230);
+        --teal-dark: rgb(38, 134, 115);
+        --amber-main: rgb(255, 177, 66);
+        --amber-light: rgb(255, 224, 130);
+        --amber-dark: rgb(204, 128, 2);
+        --coral-main: rgb(255, 107, 107);
+        --coral-light: rgb(255, 184, 184);
+        --coral-dark: rgb(204, 82, 82);
+        --softBlue-main: rgb(125, 145, 235);
+        --softBlue-light: rgb(184, 204, 255);
+        --softBlue-dark: rgb(74, 92, 155);
+        --green-main: rgb(64, 186, 88);
+        --green-light: rgb(184, 240, 196);
+        --green-dark: rgb(38, 134, 55);
+        --neutral-50: rgb(249, 250, 251);
+        --neutral-100: rgb(243, 244, 246);
+        --neutral-200: rgb(229, 231, 235);
+        --neutral-800: rgb(31, 41, 55);
+        --neutral-900: rgb(17, 24, 39);
+      }
+
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+        font-family: "Inter", sans-serif;
+      }
+
+      body {
+        color: var(--neutral-800);
+        line-height: 1.6;
+        background-color: var(--neutral-50);
+      }
+
+      header {
+        position: relative;
+        background-color: var(--purple-main);
+        color: white;
+        padding: 4rem 0;
+        text-align: center;
+        overflow: hidden;
+      }
+
+      header::before {
+        content: "";
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: linear-gradient(
+          135deg,
+          rgba(100, 96, 205, 0.8) 0%,
+          rgba(63, 60, 148, 0.8) 100%
+        );
+        z-index: 1;
+      }
+
+      header::after {
+        content: "";
+        position: absolute;
+        top: -50%;
+        right: -50%;
+        width: 100%;
+        height: 200%;
+        background: radial-gradient(
+          circle,
+          var(--purple-light) 0%,
+          transparent 60%
+        );
+        opacity: 0.3;
+        z-index: 0;
+        animation: pulse 15s infinite alternate;
+      }
+
+      @keyframes pulse {
+        0% {
+          transform: scale(1);
+          opacity: 0.2;
+        }
+        100% {
+          transform: scale(1.2);
+          opacity: 0.4;
+        }
+      }
+
+      .container {
+        width: 90%;
+        max-width: 1000px;
+        margin: 0 auto;
+        padding: 2rem 1rem;
+        position: relative;
+        z-index: 5;
+      }
+
+      .header-content {
+        position: relative;
+        z-index: 2;
+        justify-content: center;
+        align-items: center;
+        display: flex;
+        flex-direction: column;
+      }
+
+      .divider {
+        margin: 2rem 0;
+      }
+
+      h1 {
+        font-size: 3rem;
+        margin-bottom: 1rem;
+        background: linear-gradient(to right, white, var(--purple-light));
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+        text-fill-color: transparent;
+        display: inline-block;
+      }
+
+      .tagline {
+        font-size: 1.2rem;
+        font-weight: 300;
+      }
+
+      h2 {
+        font-size: 1.8rem;
+        margin: 2.5rem 0 1rem;
+        color: var(--purple-main);
+        position: relative;
+        padding-bottom: 0.5rem;
+      }
+
+      h2::after {
+        content: "";
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        width: 60px;
+        height: 3px;
+        background: linear-gradient(
+          to right,
+          var(--purple-main),
+          var(--softBlue-main)
+        );
+        border-radius: 2px;
+      }
+
+      h3 {
+        font-size: 1.3rem;
+        margin: 1.5rem 0 0.5rem;
+        color: var(--teal-main);
+      }
+
+      p,
+      ul,
+      ol {
+        margin-bottom: 1.5rem;
+        font-size: 1.05rem;
+      }
+
+      ul,
+      ol {
+        margin-left: 2rem;
+      }
+
+      ul li,
+      ol li {
+        margin-bottom: 0.5rem;
+      }
+
+      ul li strong {
+        color: var(--softBlue-dark);
+        font-weight: 600;
+      }
+
+      main {
+        background-color: white;
+        border-radius: 16px;
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.05);
+        margin: 2rem auto;
+        overflow: hidden;
+      }
+
+      section {
+        padding: 0 2rem;
+        margin-bottom: 2rem;
+      }
+
+      section:first-of-type {
+        padding-top: 2rem;
+      }
+
+      section:last-of-type {
+        padding-bottom: 2rem;
+        margin-bottom: 0;
+      }
+
+      footer {
+        background-color: var(--purple-dark);
+        color: white;
+        text-align: center;
+        padding: 3rem 0;
+        position: relative;
+      }
+
+      footer::before {
+        content: "";
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 5px;
+        background: linear-gradient(
+          to right,
+          var(--purple-main),
+          var(--softBlue-main),
+          var(--teal-main),
+          var(--amber-main),
+          var(--coral-main)
+        );
+      }
+
+      footer a {
+        color: white;
+        text-decoration: underline;
+        transition: color 0.3s ease;
+      }
+
+      footer a:hover {
+        color: var(--purple-light);
+      }
+
+      .app-icon {
+        width: 60px;
+        height: 60px;
+        border-radius: 12px;
+        margin-bottom: 1rem;
+        box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+      }
+
+      .back-link {
+        display: inline-flex;
+        align-items: center;
+        margin: 2rem;
+        color: var(--purple-main);
+        text-decoration: none;
+        font-weight: 500;
+        transition: all 0.3s ease;
+        padding: 0.5rem 1rem;
+        border-radius: 50px;
+        background-color: var(--purple-light);
+        color: var(--purple-dark);
+      }
+
+      .back-link::before {
+        content: "←";
+        margin-right: 0.5rem;
+        font-size: 1.2rem;
+      }
+
+      .back-link:hover {
+        transform: translateX(-5px);
+        background-color: var(--purple-main);
+        color: white;
+      }
+
+      @media (max-width: 768px) {
+        h1 {
+          font-size: 2.2rem;
+        }
+
+        .tagline {
+          font-size: 1rem;
+        }
+
+        h2 {
+          font-size: 1.5rem;
+        }
+
+        section {
+          padding: 0 1.5rem;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <header>
+      <div class="container header-content">
+        <img
+          src="/static/images/icon.png"
+          alt="WordApp Icon"
+          class="app-icon"
+        />
+        <h1>Privacy Policy</h1>
+        <p class="tagline">Last updated: April 2025</p>
+      </div>
+    </header>
+
+    <div class="divider"></div>
+
+    <main class="container">
+      <section>
+        <h2>Introduction</h2>
+        <p>
+          Welcome to WordApp. We respect your privacy and are committed to
+          protecting your personal data. This privacy policy will inform you
+          about how we look after your personal data when you use our
+          application and tell you about your privacy rights and how the law
+          protects you.
+        </p>
+      </section>
+
+      <section>
+        <h2>Information We Collect</h2>
+        <p>We collect and process the following information:</p>
+        <ul>
+          <li>
+            <strong>Account Information:</strong> When you register, we collect
+            your email address and encrypted password.
+          </li>
+          <li>
+            <strong>Usage Data:</strong> We collect information about how you
+            use our application, including words you add to your bank, quiz
+            results, and learning progress.
+          </li>
+          <li>
+            <strong>Sentences:</strong> When you use the sentence checker
+            feature, we process the sentences you submit to provide feedback.
+          </li>
+        </ul>
+      </section>
+
+      <section>
+        <h2>How We Use Your Information</h2>
+        <p>We use your information for the following purposes:</p>
+        <ul>
+          <li>To provide and improve our services</li>
+          <li>To personalize your learning experience</li>
+          <li>To track your progress and adapt the learning content</li>
+          <li>
+            To communicate with you about updates or changes to our service
+          </li>
+        </ul>
+      </section>
+
+      <section>
+        <h2>Data Security</h2>
+        <p>
+          We implement appropriate security measures to protect your personal
+          information. However, no internet transmission is ever completely
+          secure or error-free. We encourage you to take precautions to protect
+          your personal data when using any online service.
+        </p>
+      </section>
+
+      <section>
+        <h2>Your Rights</h2>
+        <p>
+          Depending on your location, you may have certain rights regarding your
+          personal information, including:
+        </p>
+        <ul>
+          <li>The right to access your personal data</li>
+          <li>The right to rectification of your personal data</li>
+          <li>The right to erasure of your personal data</li>
+          <li>The right to restrict processing of your personal data</li>
+          <li>The right to data portability</li>
+        </ul>
+        <p>
+          To exercise these rights, please contact us at the email address
+          provided below.
+        </p>
+      </section>
+
+      <section>
+        <h2>Third-Party Services</h2>
+        <p>
+          We may use third-party services to help us operate our application or
+          administer activities on our behalf. These third parties have access
+          to your personal information only to perform specific tasks on our
+          behalf and are obligated not to disclose or use it for any other
+          purpose.
+        </p>
+      </section>
+
+      <section>
+        <h2>Changes to This Privacy Policy</h2>
+        <p>
+          We may update our Privacy Policy from time to time. We will notify you
+          of any changes by posting the new Privacy Policy on this page and
+          updating the "last updated" date.
+        </p>
+      </section>
+
+      <section>
+        <h2>Contact Us</h2>
+        <p>
+          If you have any questions about this Privacy Policy, please contact us
+          at:
+        </p>
+        <p>Email: khachoyannver@gmail.com</p>
+      </section>
+
+      <a href="/" class="back-link">Back to Home</a>
+    </main>
+
+    <div class="divider"></div>
+
+    <footer>
+      <div class="container">
+        <img
+          src="/static/images/icon.png"
+          alt="WordApp Icon"
+          class="app-icon"
+        />
+        <p>&copy; 2025 WordApp. All rights reserved.</p>
+      </div>
+    </footer>
+  </body>
+</html>

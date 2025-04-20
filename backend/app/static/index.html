@@ -1,0 +1,501 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>WordApp - Learn Words Effectively</title>
+    <link rel="icon" href="/static/images/favicon.png" type="image/png" />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      :root {
+        --purple-main: rgb(100, 96, 205);
+        --purple-light: rgb(177, 175, 237);
+        --purple-dark: rgb(63, 60, 148);
+        --teal-main: rgb(64, 186, 164);
+        --teal-light: rgb(184, 240, 230);
+        --teal-dark: rgb(38, 134, 115);
+        --amber-main: rgb(255, 177, 66);
+        --amber-light: rgb(255, 224, 130);
+        --amber-dark: rgb(204, 128, 2);
+        --coral-main: rgb(255, 107, 107);
+        --coral-light: rgb(255, 184, 184);
+        --coral-dark: rgb(204, 82, 82);
+        --softBlue-main: rgb(125, 145, 235);
+        --softBlue-light: rgb(184, 204, 255);
+        --softBlue-dark: rgb(74, 92, 155);
+        --green-main: rgb(64, 186, 88);
+        --green-light: rgb(184, 240, 196);
+        --green-dark: rgb(38, 134, 55);
+        --neutral-50: rgb(249, 250, 251);
+        --neutral-100: rgb(243, 244, 246);
+        --neutral-200: rgb(229, 231, 235);
+        --neutral-800: rgb(31, 41, 55);
+        --neutral-900: rgb(17, 24, 39);
+      }
+
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+        font-family: "Inter", sans-serif;
+      }
+
+      body {
+        color: var(--neutral-800);
+        line-height: 1.6;
+        overflow-x: hidden;
+        background-color: var(--neutral-50);
+      }
+
+      header {
+        position: relative;
+        background-color: var(--purple-main);
+        color: white;
+        padding: 5rem 0 8rem;
+        text-align: center;
+        overflow: hidden;
+      }
+
+      header::before {
+        content: "";
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: linear-gradient(
+          135deg,
+          rgba(100, 96, 205, 0.8) 0%,
+          rgba(63, 60, 148, 0.8) 100%
+        );
+        z-index: 1;
+      }
+
+      header::after {
+        content: "";
+        position: absolute;
+        top: -50%;
+        right: -50%;
+        width: 100%;
+        height: 200%;
+        background: radial-gradient(
+          circle,
+          var(--purple-light) 0%,
+          transparent 60%
+        );
+        opacity: 0.3;
+        z-index: 0;
+        animation: pulse 15s infinite alternate;
+      }
+
+      @keyframes pulse {
+        0% {
+          transform: scale(1);
+          opacity: 0.2;
+        }
+        100% {
+          transform: scale(1.2);
+          opacity: 0.4;
+        }
+      }
+
+      .container {
+        width: 90%;
+        max-width: 1200px;
+        margin: 0 auto;
+        padding: 2rem 1rem;
+        position: relative;
+        z-index: 5;
+      }
+
+      .header-content {
+        position: relative;
+        z-index: 2;
+      }
+
+      h1 {
+        font-size: 3.5rem;
+        margin-bottom: 1rem;
+        background: linear-gradient(to right, white, var(--purple-light));
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+        text-fill-color: transparent;
+        display: inline-block;
+      }
+
+      .tagline {
+        font-size: 1.5rem;
+        margin-bottom: 2rem;
+        font-weight: 300;
+      }
+
+      h2 {
+        font-size: 2.2rem;
+        margin: 2rem 0 1rem;
+        color: var(--purple-main);
+      }
+
+      p {
+        margin-bottom: 1.5rem;
+        font-size: 1.1rem;
+      }
+
+      .app-showcase {
+        margin-top: -5rem;
+        position: relative;
+        z-index: 10;
+        text-align: center;
+      }
+
+      .app-showcase img {
+        max-width: 300px;
+        border-radius: 16px;
+        box-shadow: 0 15px 30px rgba(0, 0, 0, 0.2);
+        border: 5px solid white;
+        transform: rotate(-3deg);
+        transition: transform 0.3s ease;
+      }
+
+      .app-showcase img:hover {
+        transform: rotate(0deg) scale(1.05);
+      }
+
+      .features {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+        gap: 2.5rem;
+        margin: 5rem 0;
+      }
+
+      .feature-card {
+        background-color: white;
+        border-radius: 16px;
+        padding: 2rem;
+        box-shadow: 0 10px 25px rgba(0, 0, 0, 0.05);
+        transition: transform 0.3s ease, box-shadow 0.3s ease;
+        position: relative;
+        overflow: hidden;
+      }
+
+      .feature-card::before {
+        content: "";
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 5px;
+        transform: scaleX(0.7);
+        transition: transform 0.3s ease;
+      }
+
+      .feature-card:nth-child(1)::before {
+        background-color: var(--purple-main);
+      }
+
+      .feature-card:nth-child(2)::before {
+        background-color: var(--amber-main);
+      }
+
+      .feature-card:nth-child(3)::before {
+        background-color: var(--teal-main);
+      }
+
+      .feature-card:hover {
+        transform: translateY(-10px);
+        box-shadow: 0 15px 35px rgba(0, 0, 0, 0.1);
+      }
+
+      .feature-card:hover::before {
+        transform: scaleX(1);
+      }
+
+      .feature-card h3 {
+        color: var(--neutral-900);
+        margin-bottom: 1rem;
+        font-size: 1.5rem;
+        display: flex;
+        align-items: center;
+      }
+
+      .feature-icon {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 50px;
+        height: 50px;
+        border-radius: 12px;
+        margin-right: 1rem;
+      }
+
+      .feature-card:nth-child(1) .feature-icon {
+        background-color: var(--purple-light);
+        color: var(--purple-dark);
+      }
+
+      .feature-card:nth-child(2) .feature-icon {
+        background-color: var(--amber-light);
+        color: var(--amber-dark);
+      }
+
+      .feature-card:nth-child(3) .feature-icon {
+        background-color: var(--teal-light);
+        color: var(--teal-dark);
+      }
+
+      .cta {
+        background: linear-gradient(
+          135deg,
+          var(--softBlue-main) 0%,
+          var(--purple-main) 100%
+        );
+        color: white;
+        text-align: center;
+        padding: 4rem 2rem;
+        margin: 4rem 0;
+        border-radius: 24px;
+        box-shadow: 0 15px 30px rgba(100, 96, 205, 0.2);
+        position: relative;
+        overflow: hidden;
+      }
+
+      .cta::before {
+        content: "";
+        position: absolute;
+        top: -20%;
+        left: -20%;
+        width: 140%;
+        height: 140%;
+        background: radial-gradient(
+          circle,
+          rgba(255, 255, 255, 0.2) 0%,
+          transparent 70%
+        );
+        z-index: 0;
+        animation: float 10s infinite alternate;
+      }
+
+      @keyframes float {
+        0% {
+          transform: translate(0, 0);
+        }
+        100% {
+          transform: translate(5%, 5%);
+        }
+      }
+
+      .cta h2 {
+        color: white;
+        position: relative;
+        z-index: 2;
+        margin-top: 0;
+        font-size: 2.5rem;
+      }
+
+      .cta p {
+        position: relative;
+        z-index: 2;
+        font-size: 1.2rem;
+        margin-bottom: 2rem;
+      }
+
+      .cta-buttons {
+        display: flex;
+        justify-content: center;
+        gap: 1rem;
+        position: relative;
+        z-index: 2;
+        flex-wrap: wrap;
+      }
+
+      .btn {
+        display: inline-block;
+        padding: 1rem 2rem;
+        border-radius: 50px;
+        font-weight: 600;
+        text-decoration: none;
+        transition: all 0.3s ease;
+        font-size: 1.1rem;
+      }
+
+      .btn-primary {
+        background-color: white;
+        color: var(--purple-main);
+        box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+      }
+
+      .btn-primary:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 10px 20px rgba(0, 0, 0, 0.15);
+      }
+
+      .btn-secondary {
+        background-color: transparent;
+        color: white;
+        border: 2px solid rgba(255, 255, 255, 0.5);
+      }
+
+      .btn-secondary:hover {
+        background-color: rgba(255, 255, 255, 0.1);
+        transform: translateY(-3px);
+      }
+
+      footer {
+        background-color: var(--purple-dark);
+        color: white;
+        text-align: center;
+        padding: 3rem 0;
+        position: relative;
+      }
+
+      footer::before {
+        content: "";
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 5px;
+        background: linear-gradient(
+          to right,
+          var(--purple-main),
+          var(--softBlue-main),
+          var(--teal-main),
+          var(--amber-main),
+          var(--coral-main)
+        );
+      }
+
+      footer a {
+        color: white;
+        text-decoration: underline;
+        transition: color 0.3s ease;
+      }
+
+      footer a:hover {
+        color: var(--purple-light);
+      }
+
+      .app-icon {
+        width: 60px;
+        height: 60px;
+        border-radius: 12px;
+        margin-bottom: 1rem;
+        box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+      }
+
+      @media (max-width: 768px) {
+        h1 {
+          font-size: 2.5rem;
+        }
+
+        .tagline {
+          font-size: 1.2rem;
+        }
+
+        .app-showcase img {
+          max-width: 250px;
+        }
+
+        .cta h2 {
+          font-size: 2rem;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <header>
+      <div class="container header-content">
+        <img
+          src="/static/images/icon.png"
+          alt="WordApp Icon"
+          class="app-icon"
+        />
+        <h1>WordApp</h1>
+        <p class="tagline">
+          The smarter way to learn and remember new vocabulary
+        </p>
+      </div>
+    </header>
+
+    <div class="app-showcase container">
+      <img src="/static/images/splash.png" alt="WordApp Screenshot" />
+    </div>
+
+    <main class="container">
+      <section>
+        <h2>About WordApp</h2>
+        <p>
+          WordApp is a powerful vocabulary learning tool designed to help you
+          expand your vocabulary effectively. Whether you're learning a new
+          language, preparing for standardized tests, or simply want to enrich
+          your vocabulary, WordApp has you covered with an intelligent approach
+          to word mastery.
+        </p>
+      </section>
+
+      <section class="features">
+        <div class="feature-card">
+          <h3>
+            <span class="feature-icon">📚</span>
+            Customizable Word Lists
+          </h3>
+          <p>
+            Create and curate your own word lists or choose from our extensive
+            collection. Add words to your personal bank and track your progress
+            as you master each one.
+          </p>
+        </div>
+        <div class="feature-card">
+          <h3>
+            <span class="feature-icon">🎯</span>
+            Interactive Quizzes
+          </h3>
+          <p>
+            Test your knowledge with engaging multiple-choice quizzes that adapt
+            to your learning pace. Our smart algorithm ensures words you
+            struggle with appear more frequently.
+          </p>
+        </div>
+        <div class="feature-card">
+          <h3>
+            <span class="feature-icon">🤖</span>
+            AI-Powered Sentence Checker
+          </h3>
+          <p>
+            Practice using words in context by writing sentences and getting
+            instant feedback from our advanced AI sentence checker. Build
+            confidence in your usage.
+          </p>
+        </div>
+      </section>
+
+      <section class="cta">
+        <h2>Start Expanding Your Vocabulary Today</h2>
+        <p>
+          Join thousands of learners who have improved their vocabulary with
+          WordApp. Download now and begin your journey to better language
+          mastery.
+        </p>
+        <div class="cta-buttons">
+          <a href="#" class="btn btn-primary">Download App</a>
+          <a href="#" class="btn btn-secondary">Learn More</a>
+        </div>
+      </section>
+    </main>
+
+    <footer>
+      <div class="container">
+        <img
+          src="/static/images/icon.png"
+          alt="WordApp Icon"
+          class="app-icon"
+        />
+        <p>&copy; 2025 WordApp. All rights reserved.</p>
+        <p><a href="/privacy-policy">Privacy Policy</a></p>
+      </div>
+    </footer>
+  </body>
+</html>
