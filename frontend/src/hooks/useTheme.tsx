@@ -280,9 +280,9 @@ const useTheme = () => {
   const [theme, setTheme] = useState(
     colorScheme === "light" ? extendedLightTheme : extendedDarkTheme
   );
-  console.log("user", user);
+
   useEffect(() => {
-    if (user?.preferences?.theme) {
+    if (user && user?.preferences?.theme) {
       setTheme(
         user.preferences.theme === "light"
           ? extendedLightTheme

@@ -1,6 +1,7 @@
 import { BaseEntity } from "./base";
-import { DifficultyLevel, NotificationType, SessionType, Theme } from "./enums";
+import { DifficultyLevel, NotificationType, SessionType } from "./enums";
 import { Word } from "./words";
+import { StatusBarStyle } from "expo-status-bar";
 
 export type User = BaseEntity & {
   email: string;
@@ -19,8 +20,9 @@ export type UserPreferences = BaseEntity & {
   difficultyLevel: DifficultyLevel;
   notificationEnabled: boolean;
   notificationType: NotificationType;
-  theme: Theme;
+  theme: StatusBarStyle;
   profileBackgroundColorIndex: number;
+  timeZone: string;
 };
 
 export type DailyProgress = BaseEntity & {

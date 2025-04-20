@@ -113,16 +113,16 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
     const routeUser = async () => {
       try {
-        if (isSignedIn && isAuthenticated && !hasOnboarded) {
+        if (!isSignedIn) {
+          router.replace("/(public)");
+        } else if (isSignedIn && isAuthenticated && !hasOnboarded) {
           router.replace("/(auth)/onboarding");
         } else if (isSignedIn && isAuthenticated) {
           router.replace("/(protected)/(tabs)/home");
-        } else if (!isSignedIn) {
-          router.replace("/(auth)");
         }
       } catch (error) {
         console.error("Routing error:", error);
-        router.replace("/(auth)");
+        router.replace("/(public)");
       }
     };
 

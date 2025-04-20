@@ -1,11 +1,5 @@
 import React, { useState, useEffect } from "react";
-import {
-  View,
-  StyleSheet,
-  ScrollView,
-  TouchableOpacity,
-  StatusBar,
-} from "react-native";
+import { View, StyleSheet, ScrollView, TouchableOpacity } from "react-native";
 import { useRouter } from "expo-router";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
 import { Searchbar, Chip, Surface, Text, Button } from "react-native-paper";
@@ -76,8 +70,6 @@ export default function BankScreen() {
 
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>
-      <StatusBar barStyle="dark-content" />
-
       <Animated.View style={headerAnimatedStyle}>
         <View style={styles.searchContainer}>
           <Animated.View entering={FadeInDown.duration(700).springify()}>

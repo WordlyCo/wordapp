@@ -198,13 +198,46 @@ class UserService:
             WHERE clerk_id = ${param_index}
             RETURNING id, clerk_id, email, username, first_name, last_name, profile_picture_url, bio, created_at, updated_at
         """
+
+        preferences_params = []
+        preferences_set_clauses = []
+        for field, value in update_fields.get("preferences", {}).items():
+            if field in [
+                "theme",
+                "difficulty_level",
+                "daily_word_goal",
+                "notifications_enabled",
+                "time_zone",
+            ]:
+                preferences_set_clauses.append(f"{field} = ${param_index}")
+                preferences_params.append(value)
+                param_index += 1
+
+        preferences_params.append(clerk_id)
+
+        preferences_query = f"""
+            UPDATE user_preferences
+            SET {', '.join(preferences_set_clauses)}, updated_at = CURRENT_TIMESTAMP
+            WHERE user_id = ${param_index}
+            RETURNING user_id, theme, difficulty_level, daily_word_goal, notifications_enabled, time_zone, created_at, updated_at
+        """
+
         try:
             user_record = await self.pool.fetchrow(query, *params)
             if user_record is None:
                 raise UserNotFoundError(
                     f"User with Clerk ID {clerk_id} not found for update"
                 )
-            return User(**user_record)
+            preferences_record = await self.pool.fetchrow(
+                preferences_query, *preferences_params
+            )
+            if preferences_record is None:
+                raise UserNotFoundError(
+                    f"User preferences with Clerk ID {clerk_id} not found for update"
+                )
+            return User(
+                **user_record, preferences=UserPreferences(**preferences_record)
+            )
         except asyncpg.UniqueViolationError as e:
             if "users_email_key" in str(e):
                 raise UserAlreadyExistsError(
@@ -787,6 +820,19 @@ class UserService:
             await self.update_user_streak(user_id)
         except Exception as e:
             raise Exception(f"Error recording practice session: {str(e)}")
+
+    async def update_user_preferences(
+        self, user_id: int, preferences: UserPreferences
+    ) -> UserPreferences:
+        query = """
+            UPDATE user_preferences
+            SET preferences = $2
+            WHERE user_id = $1
+        """
+        try:
+            await self.pool.execute(query, user_id, preferences)
+        except Exception as e:
+            raise Exception(f"Error updating user preferences: {str(e)}")
 
 
 async def get_user_service(

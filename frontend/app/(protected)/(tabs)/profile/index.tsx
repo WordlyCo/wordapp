@@ -12,17 +12,22 @@ import { useStore } from "@/src/stores/store";
 import { PROFILE_BACKGROUND_COLORS } from "@/constants/profileColors";
 import { useRouter } from "expo-router";
 import { LearningInsights } from "@/src/features/home/components";
+import { useUser } from "@clerk/clerk-expo";
 
 const ProfileScreen = () => {
+  const { user: clerkUser } = useUser();
   const user = useStore((state) => state.user);
   const getMe = useStore((state) => state.getMe);
+  const isFetchingUser = useStore((state) => state.isFetchingUser);
   const router = useRouter();
   const { colors } = useTheme();
   const [refreshing, setRefreshing] = useState(false);
   const userStats = useStore((state) => state.user?.userStats);
 
   useEffect(() => {
-    fetchUserData();
+    if (!isFetchingUser) {
+      fetchUserData();
+    }
   }, []);
 
   const fetchUserData = async () => {
@@ -92,7 +97,7 @@ const ProfileScreen = () => {
                   ]}
                 >
                   <Image
-                    source={{ uri: user?.profilePictureUrl }}
+                    source={{ uri: clerkUser?.imageUrl }}
                     style={styles.avatar}
                   />
                 </View>

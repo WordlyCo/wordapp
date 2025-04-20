@@ -1,16 +1,32 @@
 import { Stack } from "expo-router";
 import { SafeAreaView } from "react-native-safe-area-context";
 import useTheme from "@/src/hooks/useTheme";
-import { useColorScheme, View } from "react-native";
-import { StatusBar } from "expo-status-bar";
+import { View } from "react-native";
+import { StatusBar, StatusBarStyle } from "expo-status-bar";
+import { useStore } from "@/src/stores/store";
+import { useEffect } from "react";
 
 export default function ProtectedLayout() {
-  const colorScheme = useColorScheme();
   const { colors } = useTheme();
+  const user = useStore((state) => state.user);
+  const isFetchingUser = useStore((state) => state.isFetchingUser);
+  const fetchMe = useStore((state) => state.getMe);
+
+  useEffect(() => {
+    if (!user && !isFetchingUser) {
+      fetchMe();
+    }
+  }, [user]);
 
   return (
     <View style={{ flex: 1, backgroundColor: colors.surface }}>
-      <StatusBar style={colorScheme === "dark" ? "light" : "dark"} />
+      <StatusBar
+        style={
+          (user?.preferences?.theme as StatusBarStyle) === "dark"
+            ? "light"
+            : "dark"
+        }
+      />
       <SafeAreaView
         edges={["left", "right"]}
         style={{ backgroundColor: colors.surface }}

@@ -21,9 +21,12 @@ export default function HomeScreen() {
 
   const userStats = useStore((state) => state.user?.userStats);
   const fetchUser = useStore((state) => state.getMe);
+  const isFetchingUser = useStore((state) => state.isFetchingUser);
 
   useEffect(() => {
-    fetchUser();
+    if (!isFetchingUser) {
+      fetchUser();
+    }
   }, [fetchUser]);
 
   const scrollHandler = useAnimatedScrollHandler({

@@ -147,7 +147,7 @@ export const createWordAppSlice: StateCreator<WordAppSlice> = (set, get) => {
           isAuthenticated: true,
         });
       } catch (error) {
-        console.log(error);
+        console.log("Failed to get user", error);
         set({
           authError: "Failed to get user",
           user: null,
@@ -167,7 +167,7 @@ export const createWordAppSlice: StateCreator<WordAppSlice> = (set, get) => {
       });
     },
 
-    updatePreferences: (newPreferences: Partial<UserPreferences>) => {
+    updatePreferences: async (newPreferences: Partial<UserPreferences>) => {
       const state = get();
       const currentUser = state.user;
 
