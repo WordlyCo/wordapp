@@ -1,7 +1,7 @@
 import React from "react";
 import { View, StyleSheet, ScrollView, Alert } from "react-native";
 import { useRouter } from "expo-router";
-
+import { useUser } from "@clerk/clerk-expo";
 import Toast from "react-native-toast-message";
 
 import useTheme from "@/src/hooks/useTheme";
@@ -10,13 +10,42 @@ import { useStore } from "@/src/stores/store";
 import {
   SettingSection,
   SettingButton,
+  SettingSwitch,
 } from "@/src/features/profile/components";
 
 const SettingsScreen = () => {
   const router = useRouter();
   const { colors } = useTheme();
   const { logout } = useAuth();
+  const { user } = useUser();
+  const preferences = useStore((state) => state.user?.preferences);
+  const updatePreferences = useStore((state) => state.updatePreferences);
   const setHasOnboarded = useStore((state) => state.setHasOnboarded);
+
+  const handleUpdatePreferences = async () => {
+    try {
+      updatePreferences({
+        theme: preferences?.theme === "dark" ? "light" : "dark",
+      });
+
+      const oldPreferences = Object.assign(
+        {},
+        user?.unsafeMetadata.preferences
+      );
+
+      await user?.update({
+        unsafeMetadata: {
+          ...user.unsafeMetadata,
+          preferences: {
+            ...oldPreferences,
+            theme: preferences?.theme === "dark" ? "light" : "dark",
+          },
+        },
+      });
+    } catch (error) {
+      console.error("Update preferences failed:", error);
+    }
+  };
 
   const handleLogout = async () => {
     try {
@@ -49,13 +78,13 @@ const SettingsScreen = () => {
             iconColor={colors.primary}
           />
           <SettingButton
-            icon="bell"
-            title="Notifications"
+            icon="cog"
+            title="Preferences"
             titleColor={colors.onSurface}
-            onPress={() => {
-              Alert.alert("Coming soon!");
-            }}
             iconColor={colors.primary}
+            onPress={() =>
+              router.push("/(protected)/(tabs)/profile/Preferences")
+            }
           />
           <SettingButton
             icon="lock"
@@ -77,6 +106,21 @@ const SettingsScreen = () => {
               Alert.alert("Coming soon!");
             }}
             iconColor={colors.primary}
+          />
+        </SettingSection>
+
+        <SettingSection title="Appearance" colors={colors}>
+          <SettingSwitch
+            icon={
+              preferences?.theme === "dark"
+                ? "moon-waning-crescent"
+                : "white-balance-sunny"
+            }
+            iconColor={colors.primary}
+            title={preferences?.theme === "dark" ? "Dark" : "Light"}
+            titleColor={colors.onSurface}
+            value={preferences?.theme === "dark"}
+            onValueChange={handleUpdatePreferences}
           />
         </SettingSection>
 

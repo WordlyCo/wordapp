@@ -1,104 +1,271 @@
 import * as WebBrowser from "expo-web-browser";
-import React from "react";
-import { View, StyleSheet, Image } from "react-native";
-import { Text, Button } from "react-native-paper";
+import React, { useState } from "react";
+import {
+  View,
+  StyleSheet,
+  Image,
+  ScrollView,
+  KeyboardAvoidingView,
+  Platform,
+} from "react-native";
+import { Text, Button, TextInput, Divider } from "react-native-paper";
+import { SafeAreaView } from "react-native-safe-area-context";
 import useTheme from "@/src/hooks/useTheme";
+import { useSignIn, useSSO } from "@clerk/clerk-expo";
 import { useAuthNavigation } from "@/src/features/auth/navigation";
+import Toast from "react-native-toast-message";
+
+const googleLogo = require("@/assets/logos/google.png");
 
 WebBrowser.maybeCompleteAuthSession();
 
-export default function WelcomeScreen() {
-  const { goToLogin } = useAuthNavigation();
+export default function LoginScreen() {
+  const { goToRegister } = useAuthNavigation();
+  const {
+    signIn,
+    setActive: setSignInActive,
+    isLoaded: isSignInLoaded,
+  } = useSignIn();
+
+  // Initialize SSO flow hook (no args)
+  const { startSSOFlow } = useSSO();
+
+  const [email, setEmail] = useState<string>("");
+  const [password, setPassword] = useState<string>("");
   const { colors } = useTheme();
 
+  const validateEmail = (email: string) => {
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    return emailRegex.test(email);
+  };
+
+  const handleLogin = async () => {
+    if (!isSignInLoaded) return;
+
+    if (!email || !password) {
+      Toast.show({
+        type: "error",
+        text1: "Missing Information",
+        text2: "Please fill in all required fields.",
+      });
+      return;
+    }
+
+    if (!validateEmail(email)) {
+      Toast.show({
+        type: "error",
+        text1: "Invalid Email",
+        text2: "Please enter a valid email address.",
+      });
+      return;
+    }
+
+    try {
+      const signInAttempt = await signIn.create({
+        identifier: email,
+        password,
+      });
+
+      if (signInAttempt.status === "complete") {
+        await setSignInActive({ session: signInAttempt.createdSessionId });
+        Toast.show({
+          type: "success",
+          text1: "Login Successful",
+          text2: "Welcome back!",
+        });
+      } else {
+        Toast.show({
+          type: "error",
+          text1: "Sign-in Failed",
+          text2: "Please try again.",
+        });
+      }
+    } catch (error) {
+      Toast.show({
+        type: "error",
+        text1: "Login Failed",
+        text2: error instanceof Error ? error.message : String(error),
+      });
+    }
+  };
+
+  const handleOAuthSignIn = async (provider: "google" | "apple") => {
+    try {
+      // start SSO flow for chosen strategy
+      const result = await startSSOFlow({
+        strategy: `oauth_${provider}`,
+      });
+
+      if (result && result.createdSessionId) {
+        await result.setActive?.({ session: result.createdSessionId });
+        Toast.show({
+          type: "success",
+          text1: `${
+            provider.charAt(0).toUpperCase() + provider.slice(1)
+          } Sign-in Successful`,
+          text2: "Welcome back!",
+        });
+      } else {
+        Toast.show({
+          type: "error",
+          text1: `${
+            provider.charAt(0).toUpperCase() + provider.slice(1)
+          } Sign-in Incomplete`,
+        });
+      }
+    } catch (error) {
+      Toast.show({
+        type: "error",
+        text1: `${
+          provider.charAt(0).toUpperCase() + provider.slice(1)
+        } Sign-in Failed`,
+        text2: error instanceof Error ? error.message : String(error),
+      });
+    }
+  };
+
   return (
-    <View style={[styles.container, { backgroundColor: colors.background }]}>
-      <View style={styles.content}>
-        <Text variant="displaySmall" style={styles.title}>
-          Welcome to Word App
-        </Text>
-
-        <Text variant="bodyLarge" style={styles.subtitle}>
-          Learn new words. Track your progress. Become a vocabulary master.
-        </Text>
-
-        <Image
-          style={styles.image}
-          source={require("@/assets/images/CandyCueDarkishBlue.png")}
-          resizeMode="contain"
-        />
-
-        <Text variant="bodyMedium" style={styles.description}>
-          Join thousands of learners expanding their vocabulary every day with
-          fun, bite-sized exercises.
-        </Text>
-
-        <View style={styles.buttonContainer}>
-          <Button
-            mode="contained"
-            onPress={goToLogin}
-            style={styles.button}
-            contentStyle={styles.buttonContent}
-          >
-            Get Started
-          </Button>
-
-          <View style={styles.loginContainer}>
-            <Text variant="bodyMedium">Already have an account?</Text>
-            <Button mode="text" onPress={goToLogin}>
-              Log in
-            </Button>
+    <SafeAreaView
+      style={[styles.container, { backgroundColor: colors.background }]}
+      edges={["top"]}
+    >
+      <KeyboardAvoidingView
+        style={styles.keyboardAvoidingView}
+        behavior={Platform.OS === "ios" ? "padding" : "height"}
+        keyboardVerticalOffset={Platform.OS === "ios" ? 64 : 0}
+      >
+        <ScrollView
+          contentContainerStyle={styles.scrollViewContainer}
+          showsVerticalScrollIndicator={false}
+          bounces={false}
+        >
+          <View style={styles.headerContainer}>
+            <Text variant="headlineLarge" style={styles.title}>
+              Sign In
+            </Text>
+            <Text variant="bodyMedium" style={styles.subtitle}>
+              Sign in to continue your learning journey
+            </Text>
           </View>
-        </View>
-      </View>
-    </View>
+
+          <View style={styles.formContainer}>
+            <TextInput
+              mode="outlined"
+              label="Email"
+              value={email}
+              onChangeText={setEmail}
+              autoCapitalize="none"
+              keyboardType="email-address"
+              style={styles.input}
+            />
+
+            <TextInput
+              mode="outlined"
+              label="Password"
+              secureTextEntry
+              value={password}
+              onChangeText={setPassword}
+              autoCapitalize="none"
+              style={styles.input}
+              right={<TextInput.Icon icon="eye" />}
+            />
+
+            <Button
+              icon="login"
+              mode="contained"
+              onPress={handleLogin}
+              style={styles.submitButton}
+              contentStyle={styles.buttonContent}
+            >
+              Sign In
+            </Button>
+
+            <View style={styles.dividerContainer}>
+              <Divider style={styles.divider} />
+              <Text style={styles.dividerText}>OR</Text>
+              <Divider style={styles.divider} />
+            </View>
+
+            <Button
+              icon={() => (
+                <Image source={googleLogo} style={styles.googleIcon} />
+              )}
+              mode="outlined"
+              onPress={() => handleOAuthSignIn("google")}
+              style={[styles.socialButton, styles.googleButton]}
+              contentStyle={styles.buttonContent}
+              labelStyle={styles.googleText}
+            >
+              Continue with Google
+            </Button>
+
+            {/* <Button
+              icon="apple"
+              mode="outlined"
+              onPress={() => handleOAuthSignIn("apple")}
+              style={[styles.socialButton, styles.appleButton]}
+              contentStyle={styles.buttonContent}
+              labelStyle={styles.appleText}
+              theme={{ colors: { outline: "transparent" } }}
+            >
+              Continue with Apple
+            </Button> */}
+
+            <View style={styles.signupContainer}>
+              <Text variant="bodyMedium">Don't have an account?</Text>
+              <Button mode="text" onPress={goToRegister}>
+                Sign Up
+              </Button>
+            </View>
+          </View>
+        </ScrollView>
+      </KeyboardAvoidingView>
+    </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    padding: 24,
   },
-  content: {
+  keyboardAvoidingView: {
     flex: 1,
-    justifyContent: "center",
+  },
+  scrollViewContainer: {
+    flexGrow: 1,
+    gap: 15,
+    paddingHorizontal: 24,
+    paddingVertical: 20,
+    paddingBottom: 40,
+  },
+  headerContainer: { alignItems: "center" },
+  title: { textAlign: "center", fontWeight: "200" },
+  subtitle: { textAlign: "center", marginTop: 8 },
+  formContainer: { gap: 12 },
+  input: { width: "100%" },
+  submitButton: { marginTop: 8 },
+  socialButton: { marginTop: 8 },
+  googleButton: {
+    backgroundColor: "white",
+    borderColor: "#dadce0",
+    borderWidth: 1,
+  },
+  googleText: { color: "#3c4043", fontWeight: "500" },
+  appleButton: { backgroundColor: "black", borderWidth: 0 },
+  appleText: { color: "white", fontWeight: "500" },
+  buttonContent: { height: 48 },
+  dividerContainer: {
+    flexDirection: "row",
     alignItems: "center",
-    gap: 20,
+    marginVertical: 16,
   },
-  title: {
-    textAlign: "center",
-    fontWeight: "200",
-  },
-  subtitle: {
-    textAlign: "center",
-    opacity: 0.8,
-    marginBottom: 10,
-  },
-  image: {
-    width: "100%",
-    height: 180,
-    marginVertical: 20,
-  },
-  description: {
-    textAlign: "center",
-    marginHorizontal: 10,
-    marginBottom: 20,
-  },
-  buttonContainer: {
-    width: "100%",
-    gap: 10,
-    marginTop: 20,
-  },
-  button: {
-    width: "100%",
-  },
-  buttonContent: {
-    height: 50,
-  },
-  loginContainer: {
+  divider: { flex: 1, height: 1 },
+  dividerText: { marginHorizontal: 8, fontSize: 14 },
+  googleIcon: { width: 20, height: 20 },
+  signupContainer: {
     flexDirection: "row",
     justifyContent: "center",
     alignItems: "center",
+    marginTop: 12,
   },
 });

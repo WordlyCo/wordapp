@@ -13,16 +13,20 @@
     "splash": {
       "image": "./assets/images/splash.png",
       "resizeMode": "contain",
-      "backgroundColor": "#6460CD"
+      "backgroundColor": "#111827"
     },
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "com.nverkhachoyan.wordapp"
+      "bundleIdentifier": "com.nverkhachoyan.wordapp",
+      "infoPlist": {
+        "ITSAppUsesNonExemptEncryption": false
+      }
     },
     "android": {
+      "package": "com.nverkhachoyan.wordapp",
       "adaptiveIcon": {
         "foregroundImage": "./assets/images/adaptive-icon.png",
-        "backgroundColor": "#6460CD"
+        "backgroundColor": "#111827"
       }
     },
     "web": {

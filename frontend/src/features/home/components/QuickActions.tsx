@@ -170,7 +170,7 @@ const styles = StyleSheet.create({
   sectionTitle: {
     fontSize: 18,
     fontWeight: "600",
-    marginBottom: 4,
+    marginBottom: 8,
   },
   quickActionsGrid: {
     flexDirection: "row",

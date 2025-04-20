@@ -1,5 +1,5 @@
 from fastapi import APIRouter, Depends, HTTPException
-from app.models.user import UserCreate, UserUpdate
+from app.models.user import UserCreate, UserUpdate, UserPreferencesUpdate
 from app.services.users import get_user_service, UserService, UserAlreadyExistsError
 import logging
 from pydantic import BaseModel, EmailStr
@@ -104,6 +104,13 @@ async def on_user_updated(
             last_name=data.last_name,
             username=data.username,
             profile_picture_url=data.profile_image_url,
+            preferences=UserPreferencesUpdate(
+                theme=data.preferences.theme,
+                difficulty_level=data.preferences.difficulty_level,
+                daily_word_goal=data.preferences.daily_word_goal,
+                notifications_enabled=data.preferences.notifications_enabled,
+                time_zone=data.preferences.time_zone,
+            ),
         )
 
         await user_service.update_user_by_clerk_id(data.id, user_update)

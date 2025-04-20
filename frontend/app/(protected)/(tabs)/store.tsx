@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { View, StyleSheet, TouchableOpacity, StatusBar } from "react-native";
+import { View, StyleSheet, TouchableOpacity } from "react-native";
 import {
   Text,
   Searchbar,
@@ -180,8 +180,6 @@ export default function StoreScreen() {
 
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>
-      <StatusBar barStyle="dark-content" />
-
       <View style={styles.container}>
         {isFetchingWordLists ? (
           <View style={styles.loadingContainer}>

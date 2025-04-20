@@ -120,6 +120,7 @@ class UserUpdate(CamelModel):
     last_name: Optional[str] = None
     profile_picture_url: Optional[str] = None
     bio: Optional[str] = None
+    preferences: Optional[UserPreferencesUpdate] = None
 
 
 class LoginRequest(CamelModel):

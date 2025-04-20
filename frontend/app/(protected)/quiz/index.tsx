@@ -36,6 +36,7 @@ const QuestionScreen: React.FC = () => {
   const updateStreak = useStore((state) => state.updateStreak);
   const updateAccuracy = useStore((state) => state.updateAccuracy);
   const fetchMe = useStore((state) => state.getMe);
+  const isFetchingUser = useStore((state) => state.isFetchingUser);
 
   const [currentWord, setCurrentWord] = useState<Word | undefined>(undefined);
   const [, setQuizStartTime] = useState<number | null>(null);
@@ -45,7 +46,9 @@ const QuestionScreen: React.FC = () => {
   }, [currentIndex, quizWords]);
 
   useEffect(() => {
-    fetchMe();
+    if (!isFetchingUser) {
+      fetchMe();
+    }
     setQuizStartTime(Date.now());
   }, [fetchMe, setQuizStartTime]);
 

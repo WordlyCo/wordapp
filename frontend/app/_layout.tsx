@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { Slot, SplashScreen } from "expo-router";
+import { Stack, SplashScreen } from "expo-router";
 import { PaperProvider } from "react-native-paper";
 import { SafeAreaProvider } from "react-native-safe-area-context";
 import { ClerkProvider } from "@clerk/clerk-expo";
@@ -108,8 +108,17 @@ export default function RootLayout() {
         <PaperProvider theme={theme}>
           <SafeAreaProvider>
             <AuthProvider>
-              <Slot />
-              <Toast config={toastConfig} position="top" />
+              <Stack
+                screenOptions={{
+                  headerShown: false,
+                }}
+                initialRouteName="index"
+              >
+                <Stack.Screen name="(public)" />
+                <Stack.Screen name="(auth)" />
+                <Stack.Screen name="(protected)" />
+              </Stack>
+              <Toast config={toastConfig} position="bottom" />
             </AuthProvider>
           </SafeAreaProvider>
         </PaperProvider>

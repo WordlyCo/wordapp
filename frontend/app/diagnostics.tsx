@@ -67,7 +67,7 @@ export default function DiagnosticsScreen() {
       setErrors([]);
       Alert.alert("Success", "Error logs cleared");
     } catch (e) {
-      Alert.alert("Error", "Failed to clear error logs");
+      Alert.alert("Error", `Failed to clear error logs: ${e}`);
     }
   };
 

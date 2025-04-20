@@ -1,8 +1,8 @@
 import { useRouter } from "expo-router";
 
 export enum AuthScreens {
-  WELCOME = "(auth)/",
-  LOGIN = "(auth)/login",
+  WELCOME = "(public)/",
+  LOGIN = "(auth)",
   REGISTER = "(auth)/register",
   ONBOARDING = "(auth)/onboarding",
 }

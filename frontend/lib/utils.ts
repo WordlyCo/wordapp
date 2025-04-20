@@ -153,3 +153,12 @@ export const timezones = [
   "Pacific/Midway",
   "UTC",
 ];
+
+export const formatTimezone = (tz: string = ""): string => {
+  if (!tz || !tz.includes("/")) {
+    return tz.replace(/_/g, " ");
+  }
+
+  const [region, city = ""] = tz.split("/");
+  return `(${region}) ${city.replace(/_/g, " ")}`.trim();
+};
