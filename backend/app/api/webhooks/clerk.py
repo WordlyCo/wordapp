@@ -69,7 +69,7 @@ async def on_user_created(
         db_user = UserCreate(
             clerk_id=data.id,
             email=email,
-            username=username,
+            username=username or email,
             first_name=first_name,
             last_name=last_name,
         )

@@ -1,6 +1,8 @@
 from fastapi import FastAPI, Request, status
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import JSONResponse
+from fastapi.responses import JSONResponse, HTMLResponse
+from fastapi.staticfiles import StaticFiles
+from fastapi.templating import Jinja2Templates
 from jose import JWTError
 from app.api.routes import api_router
 from app.config.db import lifespan
@@ -8,8 +10,13 @@ from app.middleware.auth import AuthError, ExpiredTokenError
 from app.config.env import env
 from starlette.middleware.base import BaseHTTPMiddleware
 from starlette.middleware.trustedhost import TrustedHostMiddleware
+import os
 
 app = FastAPI(title="WordApp", lifespan=lifespan)
+
+# Mount static files directory
+static_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), "static")
+app.mount("/static", StaticFiles(directory=static_dir), name="static")
 
 allowed_origins = [
     "https://wordapp.nverk.me",
@@ -103,9 +110,16 @@ async def auth_error_handler(request: Request, exc: AuthError):
     )
 
 
-@app.get("/")
-async def root_redirect():
-    return {"message": "WordApp API is running. Access the API at /api/v1"}
+@app.get("/", response_class=HTMLResponse)
+async def root():
+    with open(os.path.join(static_dir, "index.html"), "r") as f:
+        return HTMLResponse(content=f.read())
+
+
+@app.get("/privacy-policy", response_class=HTMLResponse)
+async def privacy_policy():
+    with open(os.path.join(static_dir, "privacy-policy.html"), "r") as f:
+        return HTMLResponse(content=f.read())
 
 
 app.include_router(api_router, prefix="/api/v1")
