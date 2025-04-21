@@ -30,9 +30,9 @@ class UserStatsUpdate(BaseModel):
 
 class DailyProgress(BaseModel):
     wordsPracticed: int = 0
-    totalWordsGoal: int = 10
+    dailyWordGoal: int = 10
     practiceTime: int = 0
-    practiceTimeGoal: int = 30
+    dailyPracticeTimeGoal: int = 5
 
 
 class LearningInsights(BaseModel):
@@ -54,6 +54,7 @@ class FullUserStats(BaseModel):
 class UserPreferences(BaseEntity):
     user_id: int
     daily_word_goal: int = 10
+    daily_practice_time_goal: int = 5
     difficulty_level: str
     notifications_enabled: bool = True
     time_zone: str = "America/Los_Angeles"
@@ -62,6 +63,7 @@ class UserPreferences(BaseEntity):
 
 class UserPreferencesUpdate(CamelModel):
     daily_word_goal: Optional[int] = None
+    daily_practice_time_goal: Optional[int] = None
     difficulty_level: Optional[str] = None
     notifications_enabled: Optional[bool] = None
     time_zone: Optional[str] = None
@@ -168,6 +170,26 @@ class WordProgressUpdate(CamelModel):
     number_of_times_to_practice: Optional[int] = None
 
 
+class UserListUpdate(CamelModel):
+    is_favorite: Optional[bool] = None
+
+
+class UserListsQueryParams(CamelModel):
+    search_query: Optional[str] = None
+    filter_by: Optional[str] = None
+
+
+class TopFiveUsers(CamelModel):
+    id: int
+    username: str
+    profile_picture_url: Optional[str] = None
+    total_words_learned: int
+    total_practice_time: int
+    total_diamonds: int
+    total_streak: int
+    last_active: Optional[datetime] = None
+
+
 # User Errors
 
 
@@ -180,4 +202,8 @@ class UserAlreadyExistsError(Exception):
 
 
 class UserListAlreadyExistsError(Exception):
+    pass
+
+
+class UserListNotFoundError(Exception):
     pass

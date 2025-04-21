@@ -13,6 +13,7 @@ export type WordList = BaseEntity & {
   words: Word[];
   wordCount: number;
   inUsersBank: boolean;
+  isFavorite: boolean;
 };
 
 export type WordListCategory = BaseEntity & {

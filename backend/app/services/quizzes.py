@@ -80,7 +80,7 @@ class QuizService:
             END,
             -- Then by recency (less recently practiced first)
             wp.updated_at ASC
-        LIMIT 10;  
+        LIMIT $2;  
         """
 
         query_words = """
@@ -103,8 +103,23 @@ class QuizService:
         WHERE user_id = $1 AND word_id = ANY($2)
         """
 
+        daily_word_goal_query = """
+        SELECT daily_word_goal FROM user_preferences WHERE user_id = $1
+        """
+
         try:
-            word_records = await self.pool.fetch(query_word_ids, user_id)
+            daily_word_goal_record = await self.pool.fetchrow(
+                daily_word_goal_query, user_id
+            )
+            daily_word_goal = (
+                daily_word_goal_record["daily_word_goal"]
+                if daily_word_goal_record
+                else 5
+            )
+
+            word_records = await self.pool.fetch(
+                query_word_ids, user_id, daily_word_goal
+            )
 
             word_ids = [record["id"] for record in word_records]
 

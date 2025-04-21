@@ -104,7 +104,7 @@ export default function ListDetailsScreen() {
         </View>
       ) : (
         <>
-          <StickyHeader title={"List Details"} icon={"book"} />
+          <StickyHeader title={"List Details"} />
 
           <ScrollView
             style={styles.scrollView}

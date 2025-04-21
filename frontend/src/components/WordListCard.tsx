@@ -32,14 +32,46 @@ const getCategoryIcon = (
 export const WordListCard = ({
   list,
   onPress,
+  shouldShowFavoriteButton = false,
+  shouldShowAddToListButton = false,
+  onFavoritePress,
+  onAddToListPress,
 }: {
   list: WordList;
   onPress: () => void;
+  onFavoritePress?: () => void;
+  shouldShowFavoriteButton?: boolean;
+  shouldShowAddToListButton?: boolean;
+  onAddToListPress?: () => void;
 }) => {
   const { colors } = useTheme();
   const difficultyColor = getDifficultyColor(list.difficultyLevel, colors);
 
   const categoryIcon = getCategoryIcon(list.imageUrl || "");
+
+  const renderButton = () => {
+    if (shouldShowAddToListButton) {
+      return (
+        <IconButton
+          icon={list.inUsersBank ? "check" : "plus"}
+          iconColor={colors.onSurfaceVariant}
+          onPress={onAddToListPress}
+          size={20}
+        />
+      );
+    }
+
+    if (shouldShowFavoriteButton) {
+      return (
+        <IconButton
+          icon={list.isFavorite ? "heart" : "heart-outline"}
+          iconColor={colors.onSurfaceVariant}
+          onPress={onFavoritePress}
+          size={20}
+        />
+      );
+    }
+  };
 
   return (
     <Card style={styles.card} onPress={onPress}>
@@ -119,14 +151,7 @@ export const WordListCard = ({
           )}
         </View>
       </Card.Content>
-      <Card.Actions style={styles.cardActions}>
-        <IconButton
-          icon="dots-vertical"
-          iconColor={colors.onSurfaceVariant}
-          onPress={() => {}}
-          size={20}
-        />
-      </Card.Actions>
+      <Card.Actions style={styles.cardActions}>{renderButton()}</Card.Actions>
     </Card>
   );
 };

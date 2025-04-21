@@ -27,11 +27,11 @@ export default function LoginScreen() {
     isLoaded: isSignInLoaded,
   } = useSignIn();
 
-  // Initialize SSO flow hook (no args)
   const { startSSOFlow } = useSSO();
 
   const [email, setEmail] = useState<string>("");
   const [password, setPassword] = useState<string>("");
+  const [hiddenPassword, setHiddenPassword] = useState(true);
   const { colors } = useTheme();
 
   const validateEmail = (email: string) => {
@@ -91,7 +91,6 @@ export default function LoginScreen() {
 
   const handleOAuthSignIn = async (provider: "google" | "apple") => {
     try {
-      // start SSO flow for chosen strategy
       const result = await startSSOFlow({
         strategy: `oauth_${provider}`,
       });
@@ -162,12 +161,17 @@ export default function LoginScreen() {
             <TextInput
               mode="outlined"
               label="Password"
-              secureTextEntry
+              secureTextEntry={hiddenPassword}
               value={password}
               onChangeText={setPassword}
               autoCapitalize="none"
               style={styles.input}
-              right={<TextInput.Icon icon="eye" />}
+              right={
+                <TextInput.Icon
+                  icon="eye"
+                  onPress={() => setHiddenPassword(!hiddenPassword)}
+                />
+              }
             />
 
             <Button

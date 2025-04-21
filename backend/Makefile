@@ -1,15 +1,17 @@
+COMPOSE_FILE = ./deployments/docker-compose.yml
+
 all: build up
 
 clean: rm-container rm-volume
 
 build:
-	docker compose build
+	docker compose -f $(COMPOSE_FILE) build
 
 up:
-	docker compose up -d
+	docker compose -f $(COMPOSE_FILE) up -d
 
 down:
-	docker compose down
+	docker compose -f $(COMPOSE_FILE) down
 
 rm-container: 
 	docker rm -f database

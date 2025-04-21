@@ -1,15 +1,15 @@
 import React from "react";
 import { View, Text, StyleSheet } from "react-native";
-import { Ionicons, MaterialCommunityIcons } from "@expo/vector-icons";
+import { MaterialCommunityIcons } from "@expo/vector-icons";
 import useTheme from "@/src/hooks/useTheme";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useStore } from "@/src/stores/store";
+import { useRouter } from "expo-router";
 
-type IconName = keyof typeof Ionicons.glyphMap;
-const StickyHeader = ({ title, icon }: { title?: string; icon?: IconName }) => {
+const StickyHeader = ({ title }: { title?: string }) => {
   const { colors } = useTheme();
   const userStats = useStore((state) => state.user?.userStats);
-
+  const router = useRouter();
   return (
     <View>
       <SafeAreaView style={{ backgroundColor: colors.surface }} edges={["top"]}>
@@ -17,8 +17,9 @@ const StickyHeader = ({ title, icon }: { title?: string; icon?: IconName }) => {
           style={[styles.headerContainer, { backgroundColor: colors.surface }]}
         >
           <View style={styles.leftContainer}>
-            <Ionicons
-              name={icon || "book-outline"}
+            <MaterialCommunityIcons
+              name="arrow-left"
+              onPress={() => router.back()}
               size={24}
               color={colors.primary}
             />

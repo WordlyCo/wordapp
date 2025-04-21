@@ -4,10 +4,6 @@ from pydantic_settings import BaseSettings
 
 
 class Env(BaseSettings):
-    jwt_secret_key: str = Field(default="supersecretkey", env="JWT_SECRET_KEY")
-    jwt_algorithm: str = Field(default="HS256", env="JWT_ALGORITHM")
-    jwt_expire_minutes: int = Field(default=30, env="JWT_EXPIRE_MINUTES")
-    refresh_token_expire_days: int = Field(default=7, env="REFRESH_TOKEN_EXPIRE_DAYS")
     database_url: Optional[str] = Field(default=None, env="DATABASE_URL")
     env: str = Field(default="development", env="ENV")
     openai_api_key: str = Field(default="", env="OPENAI_API_KEY")
@@ -16,7 +12,8 @@ class Env(BaseSettings):
     )
     clerk_jwks_url: Optional[str] = Field(default=None, env="CLERK_JWKS_URL")
     clerk_issuer: Optional[str] = Field(default=None, env="CLERK_ISSUER")
-    debug_webhooks: bool = Field(default=False, env="DEBUG_WEBHOOKS")
+    allowed_hosts: str = Field(default="", env="ALLOWED_HOSTS")
+    allowed_origins: str = Field(default="", env="ALLOWED_ORIGINS")
 
     class Config:
         env_file = ".env"
@@ -28,6 +25,16 @@ class Env(BaseSettings):
 
     def is_production(self) -> bool:
         return self.env.lower() == "production"
+
+    def get_allowed_hosts(self) -> list[str]:
+        return [host.strip() for host in self.allowed_hosts.split(",") if host.strip()]
+
+    def get_allowed_origins(self) -> list[str]:
+        return [
+            origin.strip()
+            for origin in self.allowed_origins.split(",")
+            if origin.strip()
+        ]
 
 
 env = Env()

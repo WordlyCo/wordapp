@@ -214,6 +214,9 @@ async def get_all_lists(
     list_service: ListService = Depends(get_list_service),
     page: int = Query(1, ge=1, description="Page number to retrieve"),
     per_page: int = Query(10, ge=1, le=100, description="Number of items per page"),
+    search_query: str = Query(
+        None, description="Search query for filtering lists by name or description"
+    ),
     current_user: Optional[User] = Depends(get_current_user),
 ) -> Response[PaginatedPayload[WordList]]:
     """Retrieve a paginated list of all available word lists."""
@@ -226,7 +229,10 @@ async def get_all_lists(
             )
 
         paginated_lists = await list_service.get_all_lists(
-            page=page, per_page=per_page, user_id=current_user.id
+            page=page,
+            per_page=per_page,
+            user_id=current_user.id,
+            search_query=search_query,
         )
         return Response(
             success=True,
