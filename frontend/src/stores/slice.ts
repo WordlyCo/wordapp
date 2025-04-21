@@ -1,10 +1,15 @@
-import { StateCreator } from "zustand";
 import { authFetch, clearCachedToken } from "@/lib/api";
 import { WordListCategory, WordList } from "@/src/types/lists";
 import { Word, WordProgressUpdate } from "@/src/types/words";
-import { UserPreferences, UserStats, User } from "@/src/types/user";
+import {
+  UserPreferences,
+  UserStats,
+  User,
+  TopFiveUsers,
+} from "@/src/types/user";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { HAS_ONBOARDED_KEY } from "@/constants";
+import { StateCreator } from "zustand";
 
 type QuizStats = {
   currentIndex: number;
@@ -22,12 +27,15 @@ export interface WordAppSlice {
   hasOnboarded: boolean;
   authError: string | null;
   isFetchingUser: boolean;
+  topFiveUsers: TopFiveUsers[];
+  isFetchingTopFiveUsers: boolean;
   setAuthError: (error: string) => void;
   updatePreferences: (preferences: Partial<UserPreferences>) => void;
   getMe: () => Promise<void>;
   logout: () => Promise<void>;
   setHasOnboarded: (hasOnboarded: boolean) => void;
   loadOnboardingStatus: () => Promise<void>;
+  fetchTopFiveUsers: () => Promise<void>;
 
   // GENERAL
   isLoading: boolean;
@@ -48,16 +56,31 @@ export interface WordAppSlice {
   };
   userLists: WordList[];
   quizWords: Word[];
+  isFetchingDailyQuiz: boolean;
   quizWordsError: string | null;
   quizStats: QuizStats;
   fetchCategories: () => Promise<void>;
   fetchCategory: (id: string) => Promise<void>;
   fetchList: (id: string) => Promise<void>;
   fetchListsByCategory: (id: string) => Promise<void>;
-  fetchWordLists: (page: number, perPage: number) => Promise<void>;
+  fetchWordLists: (
+    page: number,
+    perPage: number,
+    searchQuery?: string
+  ) => Promise<void>;
   addListToUserLists: (listId: string) => Promise<string | void>;
+  updateListFavoriteStatus: (
+    listId: string,
+    isFavorite: boolean
+  ) => Promise<void>;
   removeListFromUserLists: (listId: string) => Promise<string | void>;
-  fetchUserLists: () => Promise<void>;
+  fetchUserLists: ({
+    searchQuery,
+    filterBy,
+  }: {
+    searchQuery?: string;
+    filterBy?: string | null;
+  }) => Promise<void>;
   fetchDailyQuiz: () => Promise<void>;
   setQuizStats: (newState: QuizStats) => Promise<void>;
   setQuizWords: (newState: Word[]) => Promise<void>;
@@ -66,6 +89,9 @@ export interface WordAppSlice {
   updateStreak: () => void;
   updatePracticeTime: (minutes: number) => void;
   updateAccuracy: (correct: boolean) => void;
+
+  // User lists state
+  isFetchingUserLists: boolean;
 }
 
 export const createWordAppSlice: StateCreator<WordAppSlice> = (set, get) => {
@@ -89,6 +115,8 @@ export const createWordAppSlice: StateCreator<WordAppSlice> = (set, get) => {
     authError: null,
     isAuthenticated: false,
     hasOnboarded: false,
+    topFiveUsers: [],
+    isFetchingTopFiveUsers: false,
 
     // GENERAL
     isLoading: false,
@@ -109,6 +137,7 @@ export const createWordAppSlice: StateCreator<WordAppSlice> = (set, get) => {
     isFetchingListsByCategory: false,
     userLists: [],
     quizWords: [],
+    isFetchingDailyQuiz: false,
     quizWordsError: null,
     quizStats: {
       currentIndex: 0,
@@ -119,6 +148,9 @@ export const createWordAppSlice: StateCreator<WordAppSlice> = (set, get) => {
       totalTime: 0,
       answerResults: {},
     },
+
+    // User lists state
+    isFetchingUserLists: false,
 
     // USER FUNCTIONS
     setAuthError: (error: string) => {
@@ -155,6 +187,23 @@ export const createWordAppSlice: StateCreator<WordAppSlice> = (set, get) => {
         });
       } finally {
         set({ isFetchingUser: false });
+      }
+    },
+
+    fetchTopFiveUsers: async () => {
+      set({ isFetchingTopFiveUsers: true });
+      try {
+        const response = await authFetch("/users/top-five-users");
+        const data = await response.json();
+        if (data.success) {
+          set({ topFiveUsers: data.payload });
+        } else {
+          console.error("Error fetching top five users:", data.message);
+        }
+      } catch (error) {
+        console.error("Error fetching top five users:", error);
+      } finally {
+        set({ isFetchingTopFiveUsers: false });
       }
     },
 
@@ -326,22 +375,40 @@ export const createWordAppSlice: StateCreator<WordAppSlice> = (set, get) => {
       }
     },
 
-    fetchUserLists: async () => {
+    fetchUserLists: async ({
+      searchQuery,
+      filterBy,
+    }: {
+      searchQuery?: string;
+      filterBy?: string | null;
+    }) => {
       try {
-        const response = await authFetch(`/users/lists`);
-        const data = await response.json();
-        const success = data.success;
-        const message = data.message;
-        const payload = data.payload;
+        let queryParams: Record<string, string> = {};
+        if (searchQuery) {
+          queryParams["search_query"] = searchQuery;
+        }
+        if (filterBy) {
+          queryParams["filter_by"] = filterBy;
+        }
+        let url = `/users/lists`;
 
-        if (!success) {
-          console.error("Failed to fetch user lists:", message);
-          return;
+        if (Object.keys(queryParams).length > 0) {
+          url += `?${new URLSearchParams(queryParams).toString()}`;
         }
 
-        set({ userLists: payload });
+        set({ isFetchingUserLists: true });
+        const response = await authFetch(url);
+        const data = await response.json();
+
+        if (data.success) {
+          set({ userLists: data.payload });
+        } else {
+          console.error("Error fetching user lists:", data.message);
+        }
       } catch (error) {
         console.error("Error fetching user lists:", error);
+      } finally {
+        set({ isFetchingUserLists: false });
       }
     },
 
@@ -365,10 +432,48 @@ export const createWordAppSlice: StateCreator<WordAppSlice> = (set, get) => {
           ? { ...state.selectedList, inUsersBank: true }
           : null;
 
-        set({ selectedList: newSelectedList });
-        await get().fetchUserLists();
+        const newWordLists = state.wordLists.map((list) =>
+          list.id === listId ? { ...list, inUsersBank: true } : list
+        );
+
+        set({ selectedList: newSelectedList, wordLists: newWordLists });
+        await get().fetchUserLists({ filterBy: null });
       } catch (error) {
         console.error("Error adding list to user lists:", error);
+      }
+    },
+
+    updateListFavoriteStatus: async (listId: string, isFavorite: boolean) => {
+      const state = get();
+      const userLists = state.userLists;
+
+      try {
+        const response = await authFetch(`/users/lists/${listId}`, {
+          method: "PUT",
+          body: JSON.stringify({ isFavorite }),
+        });
+
+        const data = await response.json();
+        const success = data.success;
+        const message = data.message;
+        const errorCode = data.errorCode;
+
+        if (!success) {
+          console.error("Failed to update list favorite status:", message);
+          return errorCode;
+        }
+
+        if (!userLists) {
+          return;
+        }
+
+        const newUserLists = userLists.map((list) =>
+          list.id === listId ? { ...list, isFavorite } : list
+        );
+
+        set({ userLists: newUserLists });
+      } catch (error) {
+        console.error("Error updating list favorite status:", error);
       }
     },
 
@@ -393,19 +498,28 @@ export const createWordAppSlice: StateCreator<WordAppSlice> = (set, get) => {
           ? { ...state.selectedList, inUsersBank: false }
           : null;
 
-        set({ selectedList: newSelectedList });
-        await get().fetchUserLists();
+        const newWordLists = state.wordLists.map((list) =>
+          list.id === listId ? { ...list, inUsersBank: false } : list
+        );
+
+        set({ selectedList: newSelectedList, wordLists: newWordLists });
+        await get().fetchUserLists({ filterBy: null });
       } catch (error) {
         console.error("Error removing list from user lists:", error);
       }
     },
 
-    fetchWordLists: async (page: number = 1, perPage: number = 10) => {
+    fetchWordLists: async (
+      page: number = 1,
+      perPage: number = 10,
+      searchQuery?: string
+    ) => {
       set({ isFetchingWordLists: true });
       try {
-        const response = await authFetch(
-          `/lists/?page=${page}&per_page=${perPage}`
-        );
+        const url = `/lists/?page=${page}&per_page=${perPage}${
+          searchQuery ? `&search_query=${encodeURIComponent(searchQuery)}` : ""
+        }`;
+        const response = await authFetch(url);
         const data = await response.json();
         const success = data.success;
         const message = data.message;
@@ -520,6 +634,7 @@ export const createWordAppSlice: StateCreator<WordAppSlice> = (set, get) => {
     },
 
     fetchDailyQuiz: async () => {
+      set({ isFetchingDailyQuiz: true });
       set({ quizWordsError: null });
       try {
         const response = await authFetch("/quizzes/daily-quiz");
@@ -536,6 +651,8 @@ export const createWordAppSlice: StateCreator<WordAppSlice> = (set, get) => {
       } catch (error) {
         console.error("Error fetching daily quiz:", error);
         set({ quizWordsError: "Error fetching daily quiz" });
+      } finally {
+        set({ isFetchingDailyQuiz: false });
       }
     },
 

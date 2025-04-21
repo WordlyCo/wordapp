@@ -30,6 +30,8 @@ class UpdatedData(BaseModel):
     last_name: Optional[str] = ""
     username: Optional[str] = ""
     profile_image_url: Optional[str] = ""
+    preferences: Optional[UserPreferencesUpdate] = None
+    unsafe_metadata: dict
 
 
 class DeletedData(BaseModel):
@@ -98,19 +100,28 @@ async def on_user_updated(
 ):
     try:
         data = payload.data
+        unsafe_metadata = data.unsafe_metadata
+
+        preferences = None
+        if unsafe_metadata:
+            preferences = unsafe_metadata.get("preferences")
+
+        if preferences:
+            preferences = UserPreferencesUpdate(
+                theme=preferences.get("theme"),
+                difficulty_level=preferences.get("difficultyLevel"),
+                daily_word_goal=preferences.get("dailyWordGoal"),
+                daily_practice_time_goal=preferences.get("dailyPracticeTimeGoal"),
+                notifications_enabled=preferences.get("notificationsEnabled"),
+                time_zone=preferences.get("timeZone"),
+            )
 
         user_update = UserUpdate(
             first_name=data.first_name,
             last_name=data.last_name,
             username=data.username,
             profile_picture_url=data.profile_image_url,
-            preferences=UserPreferencesUpdate(
-                theme=data.preferences.theme,
-                difficulty_level=data.preferences.difficulty_level,
-                daily_word_goal=data.preferences.daily_word_goal,
-                notifications_enabled=data.preferences.notifications_enabled,
-                time_zone=data.preferences.time_zone,
-            ),
+            preferences=preferences,
         )
 
         await user_service.update_user_by_clerk_id(data.id, user_update)

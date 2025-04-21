@@ -11,6 +11,8 @@ from app.models.user import (
     DailyProgress,
     LearningInsights,
     UserListAlreadyExistsError,
+    UserListNotFoundError,
+    TopFiveUsers,
 )
 from app.models.word import Word
 from app.config.db import get_pool
@@ -18,7 +20,7 @@ from fastapi import Depends
 from app.models.user import User, UserList, UserPreferences
 from app.services.lists import ListService, get_list_service
 from app.models.list import WordList
-from typing import List
+from typing import List, Optional
 from datetime import datetime, timedelta
 import pytz
 
@@ -199,45 +201,100 @@ class UserService:
             RETURNING id, clerk_id, email, username, first_name, last_name, profile_picture_url, bio, created_at, updated_at
         """
 
-        preferences_params = []
-        preferences_set_clauses = []
-        for field, value in update_fields.get("preferences", {}).items():
-            if field in [
-                "theme",
-                "difficulty_level",
-                "daily_word_goal",
-                "notifications_enabled",
-                "time_zone",
-            ]:
-                preferences_set_clauses.append(f"{field} = ${param_index}")
-                preferences_params.append(value)
-                param_index += 1
-
-        preferences_params.append(clerk_id)
-
-        preferences_query = f"""
-            UPDATE user_preferences
-            SET {', '.join(preferences_set_clauses)}, updated_at = CURRENT_TIMESTAMP
-            WHERE user_id = ${param_index}
-            RETURNING user_id, theme, difficulty_level, daily_word_goal, notifications_enabled, time_zone, created_at, updated_at
-        """
-
         try:
             user_record = await self.pool.fetchrow(query, *params)
             if user_record is None:
                 raise UserNotFoundError(
                     f"User with Clerk ID {clerk_id} not found for update"
                 )
-            preferences_record = await self.pool.fetchrow(
-                preferences_query, *preferences_params
-            )
-            if preferences_record is None:
-                raise UserNotFoundError(
-                    f"User preferences with Clerk ID {clerk_id} not found for update"
+
+            if "preferences" in update_fields and update_fields["preferences"]:
+                current_prefs_query = """
+                    SELECT * FROM user_preferences 
+                    WHERE user_id = (SELECT id FROM users WHERE clerk_id = $1)
+                """
+                current_prefs = await self.pool.fetchrow(current_prefs_query, clerk_id)
+                if current_prefs is None:
+                    raise UserNotFoundError(
+                        f"User preferences not found for Clerk ID {clerk_id}"
+                    )
+
+                preference_mapping = {
+                    "daily_word_goal": "daily_word_goal",
+                    "daily_practice_time_goal": "daily_practice_time_goal",
+                    "notifications_enabled": "notifications_enabled",
+                    "theme": "theme",
+                    "time_zone": "time_zone",
+                    "difficulty_level": "difficulty_level",
+                }
+
+                updated_preferences = dict(current_prefs)
+
+                clerk_preferences = update_fields["preferences"]
+                print("Current preferences:", current_prefs)
+                print("Clerk preferences:", clerk_preferences)
+
+                for clerk_field, db_field in preference_mapping.items():
+                    if (
+                        clerk_field in clerk_preferences
+                        and clerk_preferences[clerk_field] is not None
+                    ):
+                        print(
+                            f"Updating {db_field} from {clerk_field}: {clerk_preferences[clerk_field]}"
+                        )
+                        updated_preferences[db_field] = clerk_preferences[clerk_field]
+
+                print("Updated preferences:", updated_preferences)
+
+                preferences_params = []
+                preferences_set_clauses = []
+                pref_param_index = 1
+
+                for field, value in updated_preferences.items():
+                    if field in [
+                        "theme",
+                        "difficulty_level",
+                        "daily_word_goal",
+                        "daily_practice_time_goal",
+                        "notifications_enabled",
+                        "time_zone",
+                    ]:
+                        preferences_set_clauses.append(f"{field} = ${pref_param_index}")
+                        preferences_params.append(value)
+                        pref_param_index += 1
+
+                print("Final update query fields:", preferences_set_clauses)
+                print("Final update query values:", preferences_params)
+
+                preferences_params.append(clerk_id)
+                preferences_query = f"""
+                    UPDATE user_preferences
+                    SET {', '.join(preferences_set_clauses)}, updated_at = CURRENT_TIMESTAMP
+                    WHERE user_id = (SELECT id FROM users WHERE clerk_id = ${pref_param_index})
+                    RETURNING 
+                        user_id, 
+                        theme, 
+                        difficulty_level, 
+                        daily_word_goal, 
+                        daily_practice_time_goal, 
+                        notifications_enabled, 
+                        time_zone, 
+                        created_at, 
+                        updated_at
+                """
+                preferences_record = await self.pool.fetchrow(
+                    preferences_query, *preferences_params
                 )
-            return User(
-                **user_record, preferences=UserPreferences(**preferences_record)
-            )
+                if preferences_record is None:
+                    raise UserNotFoundError(
+                        f"User preferences with Clerk ID {clerk_id} not found for update"
+                    )
+                return User(
+                    **user_record, preferences=UserPreferences(**preferences_record)
+                )
+
+            return User(**user_record)
+
         except asyncpg.UniqueViolationError as e:
             if "users_email_key" in str(e):
                 raise UserAlreadyExistsError(
@@ -349,24 +406,101 @@ class UserService:
         except Exception as e:
             raise Exception(f"Error removing list from user lists: {str(e)}")
 
-    async def get_user_lists(self, user_id: int) -> List[WordList]:
-        query = """
+    async def get_user_lists(
+        self,
+        user_id: int,
+        filter_by: Optional[str] = None,
+        search_query: Optional[str] = None,
+    ) -> List[WordList]:
+        base_query = """
             SELECT list_id
             FROM user_lists
             WHERE user_id = $1
         """
         try:
-            user_list_ids = await self.pool.fetch(query, user_id)
+            user_list_ids = await self.pool.fetch(base_query, user_id)
+
+            if not user_list_ids:
+                return []
 
             user_lists = []
             for record in user_list_ids:
-                user_list = await self.list_service.get_list_by_id(
-                    record["list_id"], user_id
-                )
-                user_lists.append(user_list)
+                try:
+                    user_list = await self.list_service.get_list_by_id(
+                        record["list_id"],
+                        user_id=user_id,
+                    )
+
+                    if search_query and search_query.strip():
+                        search_term = search_query.strip().lower()
+                        list_name = user_list.name.lower() if user_list.name else ""
+                        list_desc = (
+                            user_list.description.lower()
+                            if user_list.description
+                            else ""
+                        )
+
+                        if search_term in list_name or search_term in list_desc:
+                            user_lists.append(user_list)
+                    else:
+                        user_lists.append(user_list)
+                except Exception as e:
+                    print(f"Error fetching list {record['list_id']}: {e}")
+                    continue
+
+            if filter_by == "favorites":
+                user_lists = [
+                    user_list for user_list in user_lists if user_list.is_favorite
+                ]
+
+            if filter_by == "completed":
+                completed = []
+                for lst in user_lists:
+                    total_count = await self.pool.fetchval(
+                        "SELECT COUNT(*) FROM list_words WHERE list_id = $1",
+                        lst.id,
+                    )
+                    done_count = await self.pool.fetchval(
+                        """
+                        SELECT COUNT(*) 
+                        FROM list_words lw
+                        JOIN word_progress wp
+                            ON lw.word_id = wp.word_id
+                        AND wp.user_id = $1
+                        AND wp.recognition_mastery_score >= 5
+                        WHERE lw.list_id = $2
+                        """,
+                        user_id,
+                        lst.id,
+                    )
+                    if done_count >= total_count:
+                        completed.append(lst)
+
+                user_lists = completed
+
+            user_lists.sort(key=lambda x: x.name)
             return user_lists
         except Exception as e:
             raise Exception(f"Error fetching user lists: {str(e)}")
+
+    async def update_list_favorite_status(
+        self, user_id: int, list_id: int, is_favorite: bool
+    ) -> UserList:
+        query = """
+            UPDATE user_lists
+            SET is_favorite = $1
+            WHERE user_id = $2 AND list_id = $3
+            RETURNING *
+        """
+        try:
+            record = await self.pool.fetchrow(query, is_favorite, user_id, list_id)
+            if not record:
+                raise UserListNotFoundError(
+                    f"User list with user_id {user_id} and list_id {list_id} not found"
+                )
+            return UserList(**record)
+        except Exception as e:
+            raise Exception(f"Error updating list favorite status: {str(e)}")
 
     async def update_word_progress(
         self, user_id: int, progress_data: WordProgressUpdate
@@ -575,6 +709,12 @@ class UserService:
             WHERE user_id = $1 AND DATE(created_at) = CURRENT_DATE
         """
 
+        preferences_query = """
+            SELECT daily_word_goal, daily_practice_time_goal
+            FROM user_preferences
+            WHERE user_id = $1
+        """
+
         try:
             stats_record = await self.pool.fetchrow(stats_query, user_id)
             if not stats_record:
@@ -607,15 +747,25 @@ class UserService:
             except:
                 practice_time_today = 0
 
+            preferences_record = await self.pool.fetchrow(preferences_query, user_id)
+            daily_word_goal = (
+                preferences_record["daily_word_goal"] if preferences_record else 10
+            )
+            daily_practice_time_goal = (
+                preferences_record["daily_practice_time_goal"]
+                if preferences_record
+                else 5
+            )
+
             return FullUserStats(
                 diamonds=stats_record["diamonds"],
                 streak=stats_record["current_streak"],
                 lastActive=last_active,
                 dailyProgress=DailyProgress(
                     wordsPracticed=words_practiced_today,
-                    totalWordsGoal=10,
+                    dailyWordGoal=daily_word_goal,
                     practiceTime=practice_time_today,
-                    practiceTimeGoal=30,
+                    dailyPracticeTimeGoal=daily_practice_time_goal,
                 ),
                 learningInsights=LearningInsights(
                     wordsMastered=words_mastered,
@@ -757,44 +907,66 @@ class UserService:
 
             current_date = datetime.now(tz).date()
 
-            last_activity = await self.pool.fetchrow(last_activity_query, user_id)
+            # Get the last day the streak was updated
+            last_streak_updated_at = stats_record["last_streak_updated_at"]
+            if last_streak_updated_at:
+                last_streak_date = (
+                    last_streak_updated_at.replace(tzinfo=pytz.UTC)
+                    .astimezone(tz)
+                    .date()
+                )
+            else:
+                last_streak_date = None
 
             current_streak = stats_record["current_streak"]
             longest_streak = stats_record["longest_streak"]
 
-            # Default to current date if no previous activity (new user)
-            if not last_activity or not last_activity["last_active"]:
-                # This is the user's first activity, set streak to 1
-                current_streak = 1
-            else:
+            # Check if the user practiced today (based on activity)
+            last_activity = await self.pool.fetchrow(last_activity_query, user_id)
+            has_practiced_today = False
+
+            if last_activity and last_activity["last_active"]:
                 last_active_utc = last_activity["last_active"].replace(tzinfo=pytz.UTC)
                 last_active_date = last_active_utc.astimezone(tz).date()
+                has_practiced_today = last_active_date == current_date
 
-                # If last active was today, maintain current streak but ensure it's at least 1
-                if last_active_date == current_date:
-                    current_streak = max(current_streak, 1)
-                # If last active was yesterday, increment streak
-                elif last_active_date == current_date - timedelta(days=1):
+            # Only update streak if user has practiced today
+            if has_practiced_today:
+                # If this is the first activity ever
+                if not last_streak_date:
+                    current_streak = 1
+                # If we already updated the streak today, don't increment again
+                elif last_streak_date == current_date:
+                    pass  # Keep current streak value
+                # If last streak update was yesterday, increment streak
+                elif last_streak_date == current_date - timedelta(days=1):
                     current_streak += 1
-                # If last active was before yesterday, reset streak to 1
-                elif last_active_date < current_date - timedelta(days=1):
+                # If streak was last updated more than a day ago, reset streak to 1
+                else:
                     current_streak = 1
 
-            # Update longest streak if needed
-            if current_streak > longest_streak:
-                longest_streak = current_streak
+                # Update longest streak if needed
+                if current_streak > longest_streak:
+                    longest_streak = current_streak
 
-            update_query = """
-                UPDATE user_stats
-                SET current_streak = $2, longest_streak = $3, updated_at = CURRENT_TIMESTAMP
-                WHERE user_id = $1
-                RETURNING *
-            """
+                # Update the database with the new streak values
+                update_query = """
+                    UPDATE user_stats
+                    SET current_streak = $2, 
+                        longest_streak = $3, 
+                        last_streak_updated_at = CURRENT_TIMESTAMP,
+                        updated_at = CURRENT_TIMESTAMP
+                    WHERE user_id = $1
+                    RETURNING *
+                """
 
-            updated_record = await self.pool.fetchrow(
-                update_query, user_id, current_streak, longest_streak
-            )
-            return UserStats(**updated_record)
+                updated_record = await self.pool.fetchrow(
+                    update_query, user_id, current_streak, longest_streak
+                )
+                return UserStats(**updated_record)
+
+            # If user hasn't practiced today, just return current stats
+            return UserStats(**stats_record)
 
         except Exception as e:
             raise Exception(f"Error updating user streak: {str(e)}")
@@ -833,6 +1005,53 @@ class UserService:
             await self.pool.execute(query, user_id, preferences)
         except Exception as e:
             raise Exception(f"Error updating user preferences: {str(e)}")
+
+    async def get_top_five_users(self) -> List[TopFiveUsers]:
+        query = """
+            SELECT 
+                u.id,
+                u.username,
+                u.profile_picture_url,
+                us.total_words_learned,
+                us.total_practice_time,
+                us.diamonds as total_diamonds,
+                us.current_streak as total_streak,
+                (
+                    SELECT MAX(updated_at) 
+                    FROM word_progress 
+                    WHERE user_id = u.id
+                ) as last_active
+            FROM 
+                users u
+            JOIN 
+                user_stats us ON u.id = us.user_id
+            ORDER BY 
+                (us.total_words_learned * 0.4 + 
+                 us.total_practice_time * 0.3 + 
+                 us.current_streak * 0.3) DESC
+            LIMIT 5
+        """
+
+        try:
+            records = await self.pool.fetch(query)
+            result = []
+
+            for record in records:
+                user = TopFiveUsers(
+                    id=record["id"],
+                    username=record["username"],
+                    profile_picture_url=record["profile_picture_url"],
+                    total_words_learned=record["total_words_learned"],
+                    total_practice_time=record["total_practice_time"],
+                    total_diamonds=record["total_diamonds"],
+                    total_streak=record["total_streak"],
+                    last_active=record["last_active"],
+                )
+                result.append(user)
+
+            return result
+        except Exception as e:
+            raise Exception(f"Error getting top five users: {str(e)}")
 
 
 async def get_user_service(

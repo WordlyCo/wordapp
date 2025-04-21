@@ -9,6 +9,7 @@ import MaterialCommunityIcons from "@expo/vector-icons/MaterialCommunityIcons";
 import DropDownPicker from "react-native-dropdown-picker";
 import { UserPreferences } from "@/src/types/user";
 import { useUser } from "@clerk/clerk-expo";
+import Toast from "react-native-toast-message";
 
 const PreferencesScreen = () => {
   const { user } = useUser();
@@ -17,11 +18,15 @@ const PreferencesScreen = () => {
   const { colors } = useTheme();
 
   const [notifications, setNotifications] = useState(
-    preferences?.notificationEnabled ?? false
+    preferences?.notificationsEnabled ?? false
   );
   const [dailyWordGoal, setDailyWordGoal] = useState(
     preferences?.dailyWordGoal ?? 10
   );
+  const [dailyPracticeTimeGoal, setDailyPracticeTimeGoal] = useState(
+    preferences?.dailyPracticeTimeGoal ?? 5
+  );
+  const [theme, setTheme] = useState(preferences?.theme ?? "light");
   const [timeZone, setTimeZone] = useState(preferences?.timeZone ?? "UTC");
   const [open, setOpen] = useState(false);
   const [timezoneItems, setTimezoneItems] = useState(
@@ -52,17 +57,24 @@ const PreferencesScreen = () => {
       ...preferences,
       ...newPreferences,
     });
+
+    Toast.show({
+      text1: "Preferences updated",
+      type: "success",
+    });
   };
 
   const debouncedSave = useDebouncedFunc(handleUpdatePreferences, 500);
 
   useEffect(() => {
     debouncedSave({
-      notificationEnabled: notifications,
+      notificationsEnabled: notifications,
       dailyWordGoal,
+      dailyPracticeTimeGoal,
       timeZone,
+      theme,
     });
-  }, [notifications, dailyWordGoal, timeZone]);
+  }, [notifications, dailyWordGoal, dailyPracticeTimeGoal, timeZone, theme]);
 
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>
@@ -76,12 +88,37 @@ const PreferencesScreen = () => {
           <List.Item
             title="Push Notifications"
             description="Receive updates and reminders"
-            left={(props) => <List.Icon icon="bell" />}
+            left={(props) => <List.Icon icon="bell-outline" />}
             right={() => (
               <Switch
                 value={notifications}
                 onValueChange={() => {
                   setNotifications(!notifications);
+                }}
+              />
+            )}
+          />
+          <Divider />
+          <List.Item
+            title="Theme"
+            description={theme === "dark" ? "Dark" : "Light"}
+            left={(props) => (
+              <MaterialCommunityIcons
+                name={
+                  theme === "dark"
+                    ? "moon-waning-crescent"
+                    : "white-balance-sunny"
+                }
+                size={24}
+                style={{ alignSelf: "center" }}
+                color={colors.onSurface}
+              />
+            )}
+            right={() => (
+              <Switch
+                value={theme === "dark"}
+                onValueChange={() => {
+                  setTheme(theme === "light" ? "dark" : "light");
                 }}
               />
             )}
@@ -95,6 +132,20 @@ const PreferencesScreen = () => {
               <TextInput
                 value={dailyWordGoal.toString()}
                 onChangeText={(text) => setDailyWordGoal(Number(text))}
+                keyboardType="number-pad"
+              />
+            )}
+          />
+          <Divider />
+
+          <List.Item
+            title="Daily Practice Time Goal"
+            description="Set your daily practice time goal"
+            left={(props) => <List.Icon icon="clock-outline" />}
+            right={() => (
+              <TextInput
+                value={dailyPracticeTimeGoal.toString()}
+                onChangeText={(text) => setDailyPracticeTimeGoal(Number(text))}
                 keyboardType="number-pad"
               />
             )}

@@ -32,7 +32,9 @@ export default function RegisterScreen() {
 
   const [email, setEmail] = useState<string>("");
   const [password, setPassword] = useState<string>("");
+  const [hiddenPassword, setHiddenPassword] = useState(true);
   const [confirmPassword, setConfirmPassword] = useState<string>("");
+  const [hiddenConfirmPassword, setHiddenConfirmPassword] = useState(true);
   const [username, setUsername] = useState<string>("");
   const [pendingVerification, setPendingVerification] = useState(false);
   const [verificationCode, setVerificationCode] = useState("");
@@ -294,23 +296,35 @@ export default function RegisterScreen() {
             <TextInput
               mode="outlined"
               label="Password"
-              secureTextEntry
+              secureTextEntry={hiddenPassword}
               value={password}
               onChangeText={setPassword}
               autoCapitalize="none"
               style={styles.input}
-              right={<TextInput.Icon icon="eye" />}
+              right={
+                <TextInput.Icon
+                  icon="eye"
+                  onPress={() => setHiddenPassword(!hiddenPassword)}
+                />
+              }
             />
 
             <TextInput
               mode="outlined"
               label="Confirm Password"
-              secureTextEntry
+              secureTextEntry={hiddenConfirmPassword}
               value={confirmPassword}
               onChangeText={setConfirmPassword}
               autoCapitalize="none"
               style={styles.input}
-              right={<TextInput.Icon icon="eye" />}
+              right={
+                <TextInput.Icon
+                  icon="eye"
+                  onPress={() =>
+                    setHiddenConfirmPassword(!hiddenConfirmPassword)
+                  }
+                />
+              }
             />
 
             <Button

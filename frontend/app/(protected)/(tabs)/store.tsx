@@ -1,10 +1,11 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useCallback } from "react";
 import { View, StyleSheet, TouchableOpacity } from "react-native";
 import {
   Text,
   Searchbar,
   Surface,
   ActivityIndicator,
+  Button,
 } from "react-native-paper";
 import { useRouter } from "expo-router";
 import useTheme from "@/src/hooks/useTheme";
@@ -20,6 +21,7 @@ import Animated, {
   interpolate,
   Extrapolate,
 } from "react-native-reanimated";
+import debounce from "lodash/debounce";
 
 type ViewMode = "browse" | "search";
 
@@ -27,8 +29,15 @@ export default function StoreScreen() {
   const router = useRouter();
   const scrollY = useSharedValue(0);
   const { colors } = useTheme();
-  const { wordLists, wordListPageInfo, fetchWordLists, isFetchingWordLists } =
-    useStore();
+  const {
+    wordLists,
+    wordListPageInfo,
+    fetchWordLists,
+    isFetchingWordLists,
+    addListToUserLists,
+    removeListFromUserLists,
+  } = useStore();
+
   const [searchQuery, setSearchQuery] = useState("");
   const [viewMode, setViewMode] = useState<ViewMode>("browse");
   const headerHeight = 85;
@@ -65,21 +74,39 @@ export default function StoreScreen() {
     };
   });
 
+  // Debounced search function
+  const debouncedSearch = useCallback(
+    debounce((query: string) => {
+      if (query.length > 0) {
+        fetchWordLists(1, wordListPageInfo.perPage, query);
+      } else {
+        fetchWordLists(1, wordListPageInfo.perPage);
+      }
+    }, 500),
+    [wordListPageInfo.perPage]
+  );
+
   useEffect(() => {
     fetchWordLists(wordListPageInfo.page, wordListPageInfo.perPage);
   }, []);
 
   const handleSearch = (text: string) => {
     setSearchQuery(text);
-    if (text.length > 0 && viewMode !== "search") {
+    if (text.length > 0) {
       setViewMode("search");
-    } else if (text.length === 0 && viewMode === "search") {
+      debouncedSearch(text);
+    } else {
       setViewMode("browse");
+      fetchWordLists(1, wordListPageInfo.perPage);
     }
   };
 
   const handlePageChange = (page: number) => {
-    fetchWordLists(page, wordListPageInfo.perPage);
+    if (viewMode === "search") {
+      fetchWordLists(page, wordListPageInfo.perPage, searchQuery);
+    } else {
+      fetchWordLists(page, wordListPageInfo.perPage);
+    }
   };
 
   const renderPaginationControls = () => {
@@ -173,6 +200,14 @@ export default function StoreScreen() {
         <WordListCard
           list={list}
           onPress={() => router.push(`/(protected)/list/${list.id}`)}
+          shouldShowAddToListButton={true}
+          onAddToListPress={() => {
+            if (list.inUsersBank) {
+              removeListFromUserLists(list.id);
+            } else {
+              addListToUserLists(list.id);
+            }
+          }}
         />
       </Animated.View>
     </View>
@@ -278,10 +313,24 @@ export default function StoreScreen() {
                           { color: colors.onSurfaceVariant },
                         ]}
                       >
-                        {wordLists.length === 0
+                        {wordLists.length === 0 && !isFetchingWordLists
                           ? "No results found"
-                          : `${wordLists.length} results found`}
+                          : wordLists.length > 0
+                          ? `${wordLists.length} results found`
+                          : "Searching..."}
                       </Text>
+                      {wordLists.length === 0 && !isFetchingWordLists && (
+                        <View style={styles.noResultsContainer}>
+                          <Button
+                            mode="outlined"
+                            icon="magnify"
+                            onPress={() => handleSearch("")}
+                            style={{ marginVertical: 10 }}
+                          >
+                            Clear Search
+                          </Button>
+                        </View>
+                      )}
                       <View style={styles.searchResults}>
                         {wordLists.map((list, index) =>
                           renderListItem(list, index)
@@ -392,5 +441,10 @@ const styles = StyleSheet.create({
   searchOverflowWrapper: {
     borderRadius: 12,
     overflow: "hidden",
+  },
+  noResultsContainer: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
   },
 });

@@ -62,9 +62,9 @@ export default function HomeScreen() {
           <DailyProgress
             colors={colors}
             wordsLearned={userStats.dailyProgress.wordsPracticed}
-            totalWordsGoal={userStats.dailyProgress.totalWordsGoal}
+            totalWordsGoal={userStats.dailyProgress.dailyWordGoal}
             practiceTime={userStats.dailyProgress.practiceTime}
-            practiceTimeGoal={userStats.dailyProgress.practiceTimeGoal}
+            practiceTimeGoal={userStats.dailyProgress.dailyPracticeTimeGoal}
           />
           <QuickActions colors={colors} isDarkMode={isDarkMode} />
         </Animated.ScrollView>

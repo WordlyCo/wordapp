@@ -43,12 +43,15 @@ class ListService:
                 in_users_bank = False
                 if user_id is not None:
                     user_list_record = await conn.fetchrow(
-                        "SELECT COUNT(*) FROM user_lists WHERE user_id = $1 AND list_id = $2",
+                        "SELECT COUNT(*), is_favorite FROM user_lists WHERE user_id = $1 AND list_id = $2 GROUP BY is_favorite",
                         user_id,
                         list_id,
                     )
                     in_users_bank = (
                         user_list_record["count"] > 0 if user_list_record else False
+                    )
+                    is_favorite = (
+                        user_list_record["is_favorite"] if user_list_record else False
                     )
 
                 return WordList(
@@ -60,6 +63,7 @@ class ListService:
                     created_at=list_data["created_at"],
                     updated_at=list_data["updated_at"],
                     in_users_bank=in_users_bank,
+                    is_favorite=is_favorite,
                 )
         except Exception as e:
             raise Exception(f"Error getting list by ID: {str(e)}")
@@ -406,31 +410,86 @@ class ListService:
             raise Exception(f"Error getting all categories: {str(e)}")
 
     async def get_all_lists(
-        self, page: int = 1, per_page: int = 10, user_id: int = None
+        self,
+        page: int = 1,
+        per_page: int = 10,
+        user_id: int = None,
+        search_query: str = None,
     ) -> PaginatedPayload[WordList]:
         offset = (page - 1) * per_page
 
-        items_query = """
+        # Base query for fetching lists
+        base_query = """
             SELECT 
                 lists.*,
                 COUNT(list_words.word_id) as word_count
             FROM lists
             LEFT JOIN list_words ON lists.id = list_words.list_id
-            GROUP BY lists.id
-            ORDER BY name ASC
-            LIMIT $1 OFFSET $2
         """
 
-        count_query = "SELECT COUNT(*) FROM lists"
+        # Build the query based on whether we're searching or not
+        params = []
+        if search_query and search_query.strip():
+            # Clean and prepare the search query
+            search_query = search_query.strip()
+
+            # Use LIKE for partial word matching
+            search_condition = """
+                WHERE (lists.name ILIKE $1 OR lists.description ILIKE $1)
+            """
+            params.append(f"%{search_query}%")
+
+            items_query = (
+                base_query
+                + search_condition
+                + """
+                GROUP BY lists.id
+                ORDER BY 
+                    CASE 
+                        WHEN lists.name ILIKE $1 THEN 0 
+                        WHEN lists.description ILIKE $1 THEN 1
+                        ELSE 2
+                    END,
+                    lists.name ASC
+                LIMIT $2 OFFSET $3
+            """
+            )
+            params.extend([per_page, offset])
+
+            count_query = (
+                """
+                SELECT COUNT(DISTINCT lists.id) FROM lists
+            """
+                + search_condition
+            )
+        else:
+            items_query = (
+                base_query
+                + """
+                GROUP BY lists.id
+                ORDER BY lists.name ASC
+                LIMIT $1 OFFSET $2
+            """
+            )
+            params.extend([per_page, offset])
+
+            count_query = """
+                SELECT COUNT(DISTINCT lists.id) FROM lists
+            """
 
         try:
             async with self.pool.acquire() as conn:
-                total_items_record = await conn.fetchrow(count_query)
+                # Get total count
+                total_items_record = await conn.fetchrow(
+                    count_query,
+                    *params[:1] if search_query and search_query.strip() else [],
+                )
                 total_items = total_items_record["count"] if total_items_record else 0
 
+                # Get paginated results
+                items = []
                 if total_items > 0:
-                    lists_data = await conn.fetch(items_query, per_page, offset)
-                    items = []
+                    lists_data = await conn.fetch(items_query, *params)
 
                     for list_data in lists_data:
                         categories_data = await conn.fetch(
@@ -472,8 +531,6 @@ class ListService:
                                 in_users_bank=in_users_bank,
                             )
                         )
-                else:
-                    items = []
 
                 total_pages = math.ceil(total_items / per_page) if per_page > 0 else 0
 

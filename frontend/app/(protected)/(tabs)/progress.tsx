@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { View, StyleSheet, TouchableOpacity } from "react-native";
+import { View, StyleSheet, TouchableOpacity, ScrollView } from "react-native";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
 import {
   Text,
@@ -7,9 +7,11 @@ import {
   Searchbar,
   Surface,
   IconButton,
+  Avatar,
 } from "react-native-paper";
 import Animated, {
   FadeInDown,
+  FadeInRight,
   useAnimatedScrollHandler,
   useAnimatedStyle,
   useSharedValue,
@@ -19,6 +21,7 @@ import Animated, {
 import useTheme from "@/src/hooks/useTheme";
 import { authFetch } from "@/lib/api";
 import { WordProgressCard } from "@/src/features/progress/WordProgressCard";
+import { useStore } from "@/src/stores/store";
 
 type SortOption =
   | "mastery_asc"
@@ -36,12 +39,15 @@ export default function ProgressScreen() {
   const [searchQuery, setSearchQuery] = useState("");
   const [sortBy, setSortBy] = useState<SortOption>("mastery_desc");
   const [showFilterOptions, setShowFilterOptions] = useState(false);
+  const { topFiveUsers, isFetchingTopFiveUsers, fetchTopFiveUsers } =
+    useStore();
 
   const scrollY = useSharedValue(0);
   const headerHeight = 150; // Height of search + filter section
 
   useEffect(() => {
     fetchWordProgress();
+    fetchTopFiveUsers();
   }, [page, sortBy]);
 
   const scrollHandler = useAnimatedScrollHandler({
@@ -170,6 +176,125 @@ export default function ProgressScreen() {
 
   const renderWordCard = ({ item, index }: { item: any; index: number }) => {
     return <WordProgressCard item={item} index={index} colors={colors} />;
+  };
+
+  const TopUsersSection = () => {
+    if (isFetchingTopFiveUsers) {
+      return (
+        <View style={styles.topUsersLoadingContainer}>
+          <ActivityIndicator size="small" color={colors.primary} />
+        </View>
+      );
+    }
+
+    if (!topFiveUsers || topFiveUsers.length === 0) {
+      return null;
+    }
+
+    return (
+      <View style={styles.topUsersContainer}>
+        <Text style={[styles.topUsersTitle, { color: colors.onBackground }]}>
+          Top Learners
+        </Text>
+        <ScrollView
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          contentContainerStyle={styles.topUsersScrollContent}
+        >
+          {topFiveUsers.map((user, index) => (
+            <Animated.View
+              key={user.id}
+              entering={FadeInRight.delay(index * 100).springify()}
+            >
+              <Surface
+                style={[
+                  styles.topUserCard,
+                  { backgroundColor: colors.surfaceVariant },
+                ]}
+                elevation={2}
+              >
+                <View style={styles.topUserContent}>
+                  {user.profilePictureUrl ? (
+                    <Avatar.Image
+                      size={50}
+                      source={{ uri: user.profilePictureUrl }}
+                      style={styles.topUserAvatar}
+                    />
+                  ) : (
+                    <Avatar.Icon
+                      size={50}
+                      icon="account"
+                      color={colors.onSurfaceVariant}
+                      style={[
+                        styles.topUserAvatar,
+                        { backgroundColor: colors.primaryContainer },
+                      ]}
+                    />
+                  )}
+                  <Text
+                    style={[
+                      styles.topUserName,
+                      { color: colors.onSurfaceVariant },
+                    ]}
+                    numberOfLines={1}
+                    ellipsizeMode="tail"
+                  >
+                    {user.username}
+                  </Text>
+                  <View style={styles.topUserStatsContainer}>
+                    <View style={styles.topUserStat}>
+                      <MaterialCommunityIcons
+                        name="book-open-page-variant"
+                        size={14}
+                        color={colors.primary}
+                      />
+                      <Text
+                        style={[
+                          styles.topUserStatText,
+                          { color: colors.onSurfaceVariant },
+                        ]}
+                      >
+                        {user.totalWordsLearned}
+                      </Text>
+                    </View>
+                    <View style={styles.topUserStat}>
+                      <MaterialCommunityIcons
+                        name="timer-outline"
+                        size={14}
+                        color={colors.secondary}
+                      />
+                      <Text
+                        style={[
+                          styles.topUserStatText,
+                          { color: colors.onSurfaceVariant },
+                        ]}
+                      >
+                        {user.totalPracticeTime}m
+                      </Text>
+                    </View>
+                    <View style={styles.topUserStat}>
+                      <MaterialCommunityIcons
+                        name="fire"
+                        size={14}
+                        color={colors.error}
+                      />
+                      <Text
+                        style={[
+                          styles.topUserStatText,
+                          { color: colors.onSurfaceVariant },
+                        ]}
+                      >
+                        {user.totalStreak}
+                      </Text>
+                    </View>
+                  </View>
+                </View>
+              </Surface>
+            </Animated.View>
+          ))}
+        </ScrollView>
+      </View>
+    );
   };
 
   return (
@@ -345,6 +470,7 @@ export default function ProgressScreen() {
           windowSize={5}
           onScroll={scrollHandler}
           scrollEventThrottle={16}
+          ListHeaderComponent={<TopUsersSection />}
           ListFooterComponent={
             <View style={styles.paginationContainer}>
               <IconButton
@@ -472,6 +598,62 @@ const styles = StyleSheet.create({
     marginTop: 10,
     paddingBottom: 20,
     gap: 12,
+  },
+  topUsersContainer: {
+    marginBottom: 16,
+  },
+  topUsersLoadingContainer: {
+    height: 120,
+    justifyContent: "center",
+    alignItems: "center",
+    marginBottom: 16,
+  },
+  topUsersTitle: {
+    fontSize: 18,
+    fontWeight: "700",
+    marginBottom: 12,
+  },
+  topUsersScrollContent: {
+    paddingBottom: 8,
+    gap: 16,
+  },
+  topUserCard: {
+    borderRadius: 16,
+    width: 120,
+    height: 140,
+    marginRight: 12,
+    overflow: "hidden",
+  },
+  topUserContent: {
+    padding: 12,
+    justifyContent: "center",
+    alignItems: "center",
+    height: "100%",
+  },
+  topUserAvatar: {
+    marginBottom: 8,
+  },
+  topUserName: {
+    fontSize: 14,
+    fontWeight: "600",
+    textAlign: "center",
+    marginBottom: 8,
+    width: "100%",
+  },
+  topUserStatsContainer: {
+    flexDirection: "row",
+    justifyContent: "center",
+    flexWrap: "wrap",
+    gap: 8,
+  },
+  topUserStat: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 4,
+  },
+  topUserStatText: {
+    fontSize: 12,
+    fontWeight: "500",
   },
   wordCard: {
     marginBottom: 12,

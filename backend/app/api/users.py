@@ -12,6 +12,9 @@ from app.models.user import (
     UserStats,
     FullUserStats,
     UserListAlreadyExistsError,
+    UserListUpdate,
+    UserListsQueryParams,
+    TopFiveUsers,
 )
 from app.models.word import Word
 from app.models.base import Response, PaginatedPayload
@@ -119,6 +122,8 @@ async def remove_list_from_user_lists(
 
 @router.get("/lists")
 async def get_user_lists(
+    filter_by: Optional[str] = Query(None, description="Filter by"),
+    search_query: Optional[str] = Query(None, description="Search query"),
     user_service: UserService = Depends(get_user_service),
     current_user: Optional[User] = Depends(get_current_user),
 ) -> Response[List[WordList]]:
@@ -130,7 +135,11 @@ async def get_user_lists(
                 error_code=SERVER_ERROR,
             )
 
-        user_lists = await user_service.get_user_lists(current_user.id)
+        user_lists = await user_service.get_user_lists(
+            current_user.id,
+            filter_by=filter_by,
+            search_query=search_query,
+        )
         return Response(
             success=True,
             message="User lists retrieved successfully",
@@ -144,6 +153,41 @@ async def get_user_lists(
         return Response(
             success=False,
             message="Could not retrieve user lists due to an internal error",
+            error_code=SERVER_ERROR,
+        )
+
+
+@router.put("/lists/{list_id}")
+async def update_list_favorite_status(
+    list_id: int,
+    user_list_update: UserListUpdate,
+    user_service: UserService = Depends(get_user_service),
+    current_user: Optional[User] = Depends(get_current_user),
+) -> Response[UserList]:
+    try:
+        if current_user is None:
+            return Response(
+                success=False,
+                message="Authentication required",
+                error_code=SERVER_ERROR,
+            )
+
+        updated_list = await user_service.update_list_favorite_status(
+            current_user.id, list_id, user_list_update.is_favorite
+        )
+        return Response(
+            success=True,
+            message="List favorite status updated successfully",
+            payload=updated_list,
+        )
+    except Exception as e:
+        print(f"Error updating list favorite status: {e}")
+        import traceback
+
+        print(traceback.format_exc())
+        return Response(
+            success=False,
+            message="Could not update list favorite status due to an internal error",
             error_code=SERVER_ERROR,
         )
 
@@ -397,5 +441,28 @@ async def record_practice_session(
         return Response(
             success=False,
             message="Could not record practice session due to an internal error",
+            error_code=SERVER_ERROR,
+        )
+
+
+@router.get("/top-five-users")
+async def get_top_five_users(
+    user_service: UserService = Depends(get_user_service),
+) -> Response[List[TopFiveUsers]]:
+    try:
+        top_users = await user_service.get_top_five_users()
+        return Response(
+            success=True,
+            message="Top five users retrieved successfully",
+            payload=top_users,
+        )
+    except Exception as e:
+        print(f"Error retrieving top five users: {e}")
+        import traceback
+
+        print(traceback.format_exc())
+        return Response(
+            success=False,
+            message="Could not retrieve top five users due to an internal error",
             error_code=SERVER_ERROR,
         )

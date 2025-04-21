@@ -18,7 +18,7 @@ export default function RootLayout() {
   const [isReady, setIsReady] = useState(false);
 
   const toastConfig = {
-    success: ({ text1, text2 }: ToastConfigParams<any>) => (
+    success: ({ text1, text2, onPress }: ToastConfigParams<any>) => (
       <Animated.View
         entering={FadeIn.duration(300)}
         exiting={FadeOut.duration(300)}
@@ -29,9 +29,16 @@ export default function RootLayout() {
           <Text style={styles.title}>{text1}</Text>
           {text2 ? <Text style={styles.message}>{text2}</Text> : null}
         </View>
+        <MaterialCommunityIcons
+          name="close"
+          size={24}
+          color="white"
+          onPress={onPress}
+          style={styles.closeButton}
+        />
       </Animated.View>
     ),
-    error: ({ text1, text2 }: ToastConfigParams<any>) => (
+    error: ({ text1, text2, onPress }: ToastConfigParams<any>) => (
       <Animated.View
         entering={FadeIn.duration(300)}
         exiting={FadeOut.duration(300)}
@@ -42,9 +49,16 @@ export default function RootLayout() {
           <Text style={styles.title}>{text1}</Text>
           {text2 ? <Text style={styles.message}>{text2}</Text> : null}
         </View>
+        <MaterialCommunityIcons
+          name="close"
+          size={24}
+          color="white"
+          onPress={onPress}
+          style={styles.closeButton}
+        />
       </Animated.View>
     ),
-    info: ({ text1, text2 }: ToastConfigParams<any>) => (
+    info: ({ text1, text2, onPress }: ToastConfigParams<any>) => (
       <Animated.View
         entering={FadeIn.duration(300)}
         exiting={FadeOut.duration(300)}
@@ -55,9 +69,16 @@ export default function RootLayout() {
           <Text style={styles.title}>{text1}</Text>
           {text2 ? <Text style={styles.message}>{text2}</Text> : null}
         </View>
+        <MaterialCommunityIcons
+          name="close"
+          size={24}
+          color="white"
+          onPress={onPress}
+          style={styles.closeButton}
+        />
       </Animated.View>
     ),
-    warning: ({ text1, text2 }: ToastConfigParams<any>) => (
+    warning: ({ text1, text2, onPress }: ToastConfigParams<any>) => (
       <Animated.View
         entering={FadeIn.duration(300)}
         exiting={FadeOut.duration(300)}
@@ -71,6 +92,13 @@ export default function RootLayout() {
           <Text style={styles.title}>{text1}</Text>
           {text2 ? <Text style={styles.message}>{text2}</Text> : null}
         </View>
+        <MaterialCommunityIcons
+          name="close"
+          size={24}
+          color="white"
+          onPress={onPress}
+          style={styles.closeButton}
+        />
       </Animated.View>
     ),
   };
@@ -154,5 +182,8 @@ const styles = StyleSheet.create({
     color: "white",
     fontSize: 14,
     marginTop: 2,
+  },
+  closeButton: {
+    padding: 4,
   },
 });

@@ -206,7 +206,7 @@ const QuestionScreen: React.FC = () => {
       wordProgressUpdate.numberOfTimesToPractice -= 1;
     }
 
-    await updateWordProgress(wordProgressUpdate);
+    updateWordProgress(wordProgressUpdate);
     updateStreak();
 
     router.replace("/(protected)/quiz/feedback");

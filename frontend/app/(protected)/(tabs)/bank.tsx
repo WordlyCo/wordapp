@@ -1,8 +1,15 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { View, StyleSheet, ScrollView, TouchableOpacity } from "react-native";
 import { useRouter } from "expo-router";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
-import { Searchbar, Chip, Surface, Text, Button } from "react-native-paper";
+import {
+  Searchbar,
+  Chip,
+  Surface,
+  Text,
+  Button,
+  ActivityIndicator,
+} from "react-native-paper";
 import useTheme from "@/src/hooks/useTheme";
 import { useStore } from "@/src/stores/store";
 import { WordListCard } from "@/src/components/WordListCard";
@@ -15,6 +22,7 @@ import Animated, {
   interpolate,
   Extrapolate,
 } from "react-native-reanimated";
+import debounce from "lodash/debounce";
 
 const FILTERS = [
   { id: "all", label: "All Lists" },
@@ -25,22 +33,58 @@ const FILTERS = [
 export default function BankScreen() {
   const router = useRouter();
   const { colors } = useTheme();
-  const { userLists, fetchUserLists } = useStore();
+  const { userLists, fetchUserLists, isFetchingUserLists } = useStore();
+  const updateFavoriteStatus = useStore(
+    (state) => state.updateListFavoriteStatus
+  );
   const [activeFilter, setActiveFilter] = useState("all");
   const [searchQuery, setSearchQuery] = useState("");
+  const [filteredLists, setFilteredLists] = useState(userLists);
 
   const scrollY = useSharedValue(0);
   const headerHeight = 140; // Increased height to account for filters
 
+  const debouncedSearch = useCallback(
+    debounce((query: string) => {
+      fetchUserLists({ searchQuery: query });
+    }, 500),
+    []
+  );
+
   useEffect(() => {
-    fetchUserLists();
-  }, [fetchUserLists]);
+    fetchUserLists({
+      filterBy: activeFilter === "all" ? null : activeFilter,
+    });
+  }, [activeFilter]);
+
+  useEffect(() => {
+    setFilteredLists(userLists);
+  }, [userLists]);
+
+  const handleSearch = (text: string) => {
+    setSearchQuery(text);
+    if (text.length > 0) {
+      debouncedSearch(text);
+    } else {
+      fetchUserLists({
+        filterBy: activeFilter === "all" ? null : activeFilter,
+      });
+    }
+  };
 
   const scrollHandler = useAnimatedScrollHandler({
     onScroll: (event) => {
       scrollY.value = event.contentOffset.y;
     },
   });
+
+  const updateFavorite = async (listId: string, isFavorite: boolean) => {
+    try {
+      await updateFavoriteStatus(listId, !isFavorite);
+    } catch (error) {
+      console.error("Error updating favorite status:", error);
+    }
+  };
 
   const headerAnimatedStyle = useAnimatedStyle(() => {
     const opacity = interpolate(
@@ -82,7 +126,7 @@ export default function BankScreen() {
               <View style={styles.searchWrapper}>
                 <Searchbar
                   placeholder="Search your word lists..."
-                  onChangeText={setSearchQuery}
+                  onChangeText={handleSearch}
                   value={searchQuery}
                   style={[
                     styles.searchBar,
@@ -102,7 +146,7 @@ export default function BankScreen() {
                     />
                   )}
                   clearIcon={() => (
-                    <TouchableOpacity onPress={() => setSearchQuery("")}>
+                    <TouchableOpacity onPress={() => handleSearch("")}>
                       <MaterialCommunityIcons
                         name="close"
                         size={24}
@@ -157,10 +201,14 @@ export default function BankScreen() {
         </View>
       </Animated.View>
 
-      {userLists.length > 0 ? (
+      {isFetchingUserLists ? (
+        <View style={styles.loadingContainer}>
+          <ActivityIndicator size="large" color={colors.primary} />
+        </View>
+      ) : userLists.length > 0 ? (
         <Animated.FlatList
-          data={userLists}
-          keyExtractor={(item) => item.id}
+          data={filteredLists}
+          keyExtractor={(item) => item.id.toString()}
           contentContainerStyle={[
             styles.listsContainer,
             { paddingTop: headerHeight },
@@ -180,21 +228,40 @@ export default function BankScreen() {
                   onPress={() => {
                     router.push(`/(protected)/list/${item.id}`);
                   }}
+                  shouldShowFavoriteButton={true}
+                  onFavoritePress={() => {
+                    updateFavorite(item.id, item.isFavorite);
+                  }}
                 />
               </Animated.View>
             </View>
           )}
         />
       ) : (
-        <View style={styles.noListsContainer}>
-          <Text style={styles.noListsText}>No word lists found.</Text>
-          <Button
-            mode="contained"
-            icon="magnify"
-            onPress={() => router.push("/(protected)/(tabs)/store")}
-          >
-            Explore Word Lists
-          </Button>
+        <View style={[styles.noListsContainer, { paddingTop: headerHeight }]}>
+          {searchQuery ? (
+            <>
+              <Text style={styles.noListsText}>No matching lists found.</Text>
+              <Button
+                mode="outlined"
+                icon="magnify"
+                onPress={() => handleSearch("")}
+              >
+                Clear Search
+              </Button>
+            </>
+          ) : (
+            <>
+              <Text style={styles.noListsText}>No word lists found.</Text>
+              <Button
+                mode="contained"
+                icon="magnify"
+                onPress={() => router.push("/(protected)/(tabs)/store")}
+              >
+                Explore Word Lists
+              </Button>
+            </>
+          )}
         </View>
       )}
     </View>
@@ -258,5 +325,10 @@ const styles = StyleSheet.create({
   scrollView: {
     flex: 1,
     borderRadius: 15,
+  },
+  loadingContainer: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
   },
 });

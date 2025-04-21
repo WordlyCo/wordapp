@@ -14,6 +14,7 @@ import {
   TextInput,
   Button,
   ActivityIndicator,
+  Snackbar,
 } from "react-native-paper";
 import FontAwesome from "@expo/vector-icons/FontAwesome";
 import { useStore } from "@/src/stores/store";
@@ -36,10 +37,22 @@ const AccountSettingsScreen = () => {
   const [, setError] = useState<string | null>(null);
   const [bio, setBio] = useState("");
   const [revealEmail, setRevealEmail] = useState(false);
+  const [isUploading, setIsUploading] = useState(false);
+  const [toastVisible, setToastVisible] = useState(false);
+  const [toastMessage, setToastMessage] = useState("");
 
   const [selectedColorIndex, setSelectedColorIndex] = useState(
     preferences?.profileBackgroundColorIndex ?? 0
   );
+
+  const showToast = (message: string) => {
+    setToastMessage(message);
+    setToastVisible(true);
+  };
+
+  const hideToast = () => {
+    setToastVisible(false);
+  };
 
   const maskEmail = (email: string) => {
     if (!email || !email.includes("@")) return email;
@@ -48,17 +61,16 @@ const AccountSettingsScreen = () => {
   };
 
   const handleSave = async () => {
-    if (profileImage) {
-      await uploadProfileImage();
+    try {
+      await user?.update({
+        firstName,
+        lastName,
+      });
+      showToast("Profile information saved successfully");
+    } catch (error) {
+      console.error("Error saving profile:", error);
+      showToast("Failed to save profile information");
     }
-
-    updatePreferences({
-      profileBackgroundColorIndex: selectedColorIndex,
-    });
-    user?.update({
-      firstName,
-      lastName,
-    });
   };
 
   const pickImage = async () => {
@@ -66,6 +78,7 @@ const AccountSettingsScreen = () => {
 
     if (status !== "granted") {
       setError("Permission to access media library is required");
+      showToast("Permission to access media library is required");
       return;
     }
 
@@ -78,29 +91,46 @@ const AccountSettingsScreen = () => {
 
     if (!result.canceled && result.assets && result.assets.length > 0) {
       setProfileImage(result.assets[0].uri);
+      uploadProfileImage(result.assets[0].uri);
     }
   };
 
-  const uploadProfileImage = async (): Promise<string | null> => {
-    if (!profileImage) return null;
+  const uploadProfileImage = async (
+    imageUri: string
+  ): Promise<string | null> => {
+    if (!imageUri) return null;
 
+    setIsUploading(true);
     try {
-      const base64Image = await FileSystem.readAsStringAsync(profileImage, {
+      const base64Image = await FileSystem.readAsStringAsync(imageUri, {
         encoding: FileSystem.EncodingType.Base64,
       });
 
-      const imageType = profileImage.endsWith(".png") ? "png" : "jpeg";
+      const imageType = imageUri.endsWith(".png") ? "png" : "jpeg";
       const formattedBase64 = `data:image/${imageType};base64,${base64Image}`;
 
       await user?.setProfileImage({
         file: formattedBase64,
       });
 
-      return profileImage;
+      showToast("Profile photo updated successfully");
+      return imageUri;
     } catch (error) {
       console.error("Error uploading profile image:", error);
+      showToast("Failed to upload profile photo");
       throw error;
+    } finally {
+      setIsUploading(false);
     }
+  };
+
+  const handleColorSelect = (index: number) => {
+    setSelectedColorIndex(index);
+    // Auto-save the color preference immediately
+    updatePreferences({
+      profileBackgroundColorIndex: index,
+    });
+    showToast("Profile background color updated");
   };
 
   const renderColorItem = ({
@@ -116,7 +146,7 @@ const AccountSettingsScreen = () => {
         { backgroundColor: PROFILE_BACKGROUND_COLORS[index] },
         selectedColorIndex === index && styles.selectedColorItem,
       ]}
-      onPress={() => setSelectedColorIndex(index)}
+      onPress={() => handleColorSelect(index)}
     >
       {selectedColorIndex === index && (
         <FontAwesome name="check" size={16} color="white" />
@@ -144,109 +174,135 @@ const AccountSettingsScreen = () => {
   }
 
   return (
-    <ScrollView
-      style={[styles.container, { backgroundColor: colors.background }]}
-    >
-      {/* Profile Header Section */}
-      <View style={styles.profileHeader}>
-        <View
-          style={[
-            styles.avatarContainer,
-            { backgroundColor: colors.onBackground },
-          ]}
-        >
-          {profileImage ? (
-            <Image
-              source={{ uri: profileImage }}
-              style={[styles.avatar, { backgroundColor: colors.onBackground }]}
-            />
-          ) : (
-            <MaterialCommunityIcons
-              name="account"
-              size={80}
-              color={colors.primary}
-            />
-          )}
+    <View style={[styles.container, { backgroundColor: colors.background }]}>
+      <ScrollView>
+        {/* Profile Header Section */}
+        <View style={styles.profileHeader}>
+          <View
+            style={[
+              styles.avatarContainer,
+              { backgroundColor: colors.onBackground },
+            ]}
+          >
+            {isUploading ? (
+              <ActivityIndicator
+                size="large"
+                color={colors.primary}
+                style={styles.uploadingIndicator}
+              />
+            ) : profileImage ? (
+              <Image
+                source={{ uri: profileImage }}
+                style={[
+                  styles.avatar,
+                  { backgroundColor: colors.onBackground },
+                ]}
+              />
+            ) : (
+              <MaterialCommunityIcons
+                name="account"
+                size={80}
+                color={colors.primary}
+              />
+            )}
+          </View>
+          <Button
+            mode="outlined"
+            style={styles.changePhotoButton}
+            onPress={pickImage}
+            disabled={isUploading}
+          >
+            {isUploading ? "Uploading..." : "Change Photo"}
+          </Button>
         </View>
-        <Button
-          mode="outlined"
-          style={styles.changePhotoButton}
-          onPress={pickImage}
-        >
-          Change Photo
-        </Button>
-      </View>
 
-      <Divider style={styles.divider} />
+        <Divider style={styles.divider} />
 
-      {/* Edit Profile Section */}
-      <View style={styles.inputSection}>
-        <TextInput
-          label="USERNAME"
-          value={username}
-          onChangeText={setUsername}
-          mode="outlined"
-          style={styles.input}
-        />
-        <TextInput
-          label="First Name"
-          value={firstName}
-          onChangeText={setFirstName}
-          mode="outlined"
-          style={styles.input}
-        />
-        <TextInput
-          label="Last Name"
-          value={lastName}
-          onChangeText={setLastName}
-          mode="outlined"
-          style={styles.input}
-        />
-        <TextInput
-          label="Bio"
-          value={bio}
-          onChangeText={setBio}
-          multiline={true}
-          numberOfLines={5}
-          mode="outlined"
-          style={styles.input}
-        />
-
-        <View style={styles.sensitiveFieldWrapper}>
+        {/* Edit Profile Section */}
+        <View style={styles.inputSection}>
           <TextInput
-            label="EMAIL"
-            value={revealEmail ? email : maskEmail(email)}
-            onChangeText={setEmail}
+            label="USERNAME"
+            value={username}
+            onChangeText={setUsername}
             mode="outlined"
             style={styles.input}
-            keyboardType="email-address"
           />
-          <TouchableOpacity onPress={() => setRevealEmail(!revealEmail)}>
-            <Text style={[styles.revealText, { color: colors.primary }]}>
-              {revealEmail ? "Hide" : "Reveal"}
-            </Text>
-          </TouchableOpacity>
+          <TextInput
+            label="First Name"
+            value={firstName}
+            onChangeText={setFirstName}
+            mode="outlined"
+            style={styles.input}
+          />
+          <TextInput
+            label="Last Name"
+            value={lastName}
+            onChangeText={setLastName}
+            mode="outlined"
+            style={styles.input}
+          />
+          <TextInput
+            label="Bio"
+            value={bio}
+            onChangeText={setBio}
+            multiline={true}
+            numberOfLines={5}
+            mode="outlined"
+            style={styles.input}
+          />
+
+          <View style={styles.sensitiveFieldWrapper}>
+            <TextInput
+              label="EMAIL"
+              value={revealEmail ? email : maskEmail(email)}
+              onChangeText={setEmail}
+              mode="outlined"
+              style={styles.input}
+              keyboardType="email-address"
+            />
+            <TouchableOpacity onPress={() => setRevealEmail(!revealEmail)}>
+              <Text style={[styles.revealText, { color: colors.primary }]}>
+                {revealEmail ? "Hide" : "Reveal"}
+              </Text>
+            </TouchableOpacity>
+          </View>
+
+          {/* Profile Background Color Section */}
+          <Text style={[styles.sectionTitle, { color: colors.onSurface }]}>
+            Profile Background
+          </Text>
+
+          <FlatList
+            data={PROFILE_BACKGROUND_COLORS}
+            renderItem={renderColorItem}
+            keyExtractor={(item, index) => index.toString()}
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            contentContainerStyle={styles.colorList}
+          />
+
+          <Button
+            mode="contained"
+            onPress={handleSave}
+            style={styles.saveButton}
+          >
+            Save Profile Info
+          </Button>
         </View>
+      </ScrollView>
 
-        {/* Profile Background Color Section */}
-        <Text style={[styles.sectionTitle, { color: colors.onSurface }]}>
-          Profile Background
-        </Text>
-
-        <FlatList
-          data={PROFILE_BACKGROUND_COLORS}
-          renderItem={renderColorItem}
-          keyExtractor={(item, index) => index.toString()}
-          horizontal
-          showsHorizontalScrollIndicator={false}
-          contentContainerStyle={styles.colorList}
-        />
-
-        <Button mode="contained" onPress={handleSave} style={styles.saveButton}>
-          Save Changes
-        </Button>
-      </View>
-    </ScrollView>
+      <Snackbar
+        visible={toastVisible}
+        onDismiss={hideToast}
+        duration={3000}
+        action={{
+          label: "Close",
+          onPress: hideToast,
+        }}
+      >
+        {toastMessage}
+      </Snackbar>
+    </View>
   );
 };
 
@@ -261,11 +317,18 @@ const styles = StyleSheet.create({
   avatarContainer: {
     borderRadius: 100,
     padding: 4,
+    width: 128,
+    height: 128,
+    justifyContent: "center",
+    alignItems: "center",
   },
   avatar: {
     width: 120,
     height: 120,
     borderRadius: 60,
+  },
+  uploadingIndicator: {
+    position: "absolute",
   },
   changePhotoButton: {
     marginTop: 10,

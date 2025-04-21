@@ -6,10 +6,17 @@ import React, { useEffect, useRef, useState } from "react";
 import { router } from "expo-router";
 import { DIFFICULTY_LEVELS } from "@/src/stores/enums";
 
+type TimeType = {
+  seconds: number;
+  minutes: number;
+};
+
 const SummaryScreen = () => {
   const { colors } = useTheme();
   const score = useStore((state) => state.quizStats.score);
   const quizWords = useStore((state) => state.quizWords);
+  const isFetchingDailyQuiz = useStore((state) => state.isFetchingDailyQuiz);
+  const fetchDailyQuiz = useStore((state) => state.fetchDailyQuiz);
   const setQuizStats = useStore((state) => state.setQuizStats);
   const totalTime = useStore((state) => state.quizStats.totalTime);
   const answerResults = useStore((state) => state.quizStats.answerResults);
@@ -75,9 +82,23 @@ const SummaryScreen = () => {
         useNativeDriver: false,
       }),
     ]).start();
+
+    // Cleanup function that runs when component unmounts
+    return () => {
+      setQuizStats({
+        score: 0,
+        totalTime: 0,
+        correctAnswers: 0,
+        currentIndex: 0,
+        selectedAnswer: "",
+        startTime: Date.now(),
+        answerResults: {},
+      });
+    };
   }, []);
 
-  const playAgain = () => {
+  const playAgain = async () => {
+    await fetchDailyQuiz();
     setQuizStats({
       score: 0,
       totalTime: 0,
@@ -96,6 +117,20 @@ const SummaryScreen = () => {
     router.replace({
       pathname: "/(protected)/(tabs)/home",
     });
+  };
+
+  const convertSecondsToMinutes = (seconds: number): TimeType => {
+    if (seconds < 60) {
+      return { seconds: 0, minutes: 1 };
+    }
+
+    const minutes = seconds / 60;
+    const final_seconds = seconds % 60;
+
+    return {
+      seconds: final_seconds,
+      minutes,
+    };
   };
 
   return (
@@ -166,7 +201,8 @@ const SummaryScreen = () => {
                     variant="headlineSmall"
                     style={{ color: colors.primary }}
                   >
-                    {Math.round(totalTime)}s
+                    {Math.round(convertSecondsToMinutes(totalTime).minutes)}m{" "}
+                    {Math.round(convertSecondsToMinutes(totalTime).seconds)}s
                   </Text>
                 </View>
 
@@ -217,6 +253,7 @@ const SummaryScreen = () => {
                   style={[styles.button, styles.primaryButton]}
                   contentStyle={styles.buttonContent}
                   icon="replay"
+                  loading={isFetchingDailyQuiz}
                 >
                   Play Again
                 </Button>
@@ -247,7 +284,6 @@ const styles = StyleSheet.create({
     padding: 16,
   },
   contentContainer: {
-    alignItems: "center",
     justifyContent: "center",
   },
   summaryCard: {
@@ -265,7 +301,7 @@ const styles = StyleSheet.create({
   confettiContainer: {
     position: "absolute",
     top: 4,
-    right: 4,
+    right: 0,
     zIndex: 1,
   },
   summaryTitle: {

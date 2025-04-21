@@ -17,8 +17,9 @@ export type User = BaseEntity & {
 export type UserPreferences = BaseEntity & {
   userId: string;
   dailyWordGoal: number;
+  dailyPracticeTimeGoal: number;
   difficultyLevel: DifficultyLevel;
-  notificationEnabled: boolean;
+  notificationsEnabled: boolean;
   notificationType: NotificationType;
   theme: StatusBarStyle;
   profileBackgroundColorIndex: number;
@@ -27,9 +28,9 @@ export type UserPreferences = BaseEntity & {
 
 export type DailyProgress = BaseEntity & {
   wordsPracticed: number;
-  totalWordsGoal: number;
+  dailyWordGoal: number;
   practiceTime: number;
-  practiceTimeGoal: number;
+  dailyPracticeTimeGoal: number;
 };
 
 export type LearningInsights = BaseEntity & {
@@ -97,4 +98,15 @@ export type WordList = BaseEntity & {
   categoryId: string;
   difficultyLevel: DifficultyLevel;
   words: Word[];
+};
+
+export type TopFiveUsers = BaseEntity & {
+  id: string;
+  username: string;
+  profilePictureUrl: string;
+  totalWordsLearned: number;
+  totalPracticeTime: number;
+  totalDiamonds: number;
+  totalStreak: number;
+  lastActive: Date;
 };

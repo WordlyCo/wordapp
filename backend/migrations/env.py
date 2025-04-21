@@ -5,12 +5,10 @@ from alembic import context
 import os
 from dotenv import load_dotenv
 
-# Load environment variables
 load_dotenv()
 
 config = context.config
 
-# Override sqlalchemy.url with environment variable
 db_url = os.getenv("DATABASE_URL")
 if db_url:
     config.set_main_option("sqlalchemy.url", db_url)
