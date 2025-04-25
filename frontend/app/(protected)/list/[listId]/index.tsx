@@ -17,7 +17,7 @@ import {
 } from "react-native-paper";
 import { useLocalSearchParams } from "expo-router";
 import StickyHeader from "@/src/components/StickyHeader";
-import useTheme from "@/src/hooks/useTheme";
+import { useAppTheme } from "@/src/contexts/ThemeContext";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
 import { DIFFICULTY_LEVELS } from "@/src/types/enums";
 import * as Speech from "expo-speech";
@@ -45,7 +45,7 @@ const getSpacing = (hasImage: boolean) => {
 
 export default function ListDetailsScreen() {
   const { listId } = useLocalSearchParams<{ listId: string }>();
-  const { colors } = useTheme();
+  const { colors } = useAppTheme();
   const [searchQuery, setSearchQuery] = useState("");
   const {
     selectedList,

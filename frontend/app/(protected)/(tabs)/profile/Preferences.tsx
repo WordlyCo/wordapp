@@ -1,21 +1,22 @@
-import React, { useState, useEffect } from "react";
-import { View, StyleSheet, ScrollView } from "react-native";
-import { List, Switch, Divider, TextInput, Text } from "react-native-paper";
-import useTheme from "@/src/hooks/useTheme";
+import { formatTimezone, timezones } from "@/lib/utils";
+import { CustomSnackbar } from "@/src/components/CustomSnackbar";
+import { useAppTheme } from "@/src/contexts/ThemeContext";
 import { useStore } from "@/src/stores/store";
-import useDebouncedFunc from "@/src/hooks/useDebounce";
-import { timezones, formatTimezone } from "@/lib/utils";
-import MaterialCommunityIcons from "@expo/vector-icons/MaterialCommunityIcons";
-import DropDownPicker from "react-native-dropdown-picker";
 import { UserPreferences } from "@/src/types/user";
 import { useUser } from "@clerk/clerk-expo";
-import Toast from "react-native-toast-message";
+import MaterialCommunityIcons from "@expo/vector-icons/MaterialCommunityIcons";
+import { debounce } from "lodash";
+import React, { useEffect, useMemo, useState } from "react";
+import { ScrollView, StyleSheet, View } from "react-native";
+import DropDownPicker from "react-native-dropdown-picker";
+import { Divider, List, Switch, Text, TextInput } from "react-native-paper";
 
 const PreferencesScreen = () => {
   const { user } = useUser();
   const preferences = useStore((state) => state.user?.preferences);
   const updatePreferences = useStore((state) => state.updatePreferences);
-  const { colors } = useTheme();
+  const { colors } = useAppTheme();
+  const [snackbarVisible, setSnackbarVisible] = useState(false);
 
   const [notifications, setNotifications] = useState(
     preferences?.notificationsEnabled ?? false
@@ -27,10 +28,25 @@ const PreferencesScreen = () => {
     preferences?.dailyPracticeTimeGoal ?? 5
   );
   const [theme, setTheme] = useState(preferences?.theme ?? "light");
-  const [timeZone, setTimeZone] = useState(preferences?.timeZone ?? "UTC");
+  const [timeZone, setTimeZone] = useState(
+    preferences?.timeZone ?? "America/Los_Angeles"
+  );
   const [open, setOpen] = useState(false);
+
+  const localTimezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+
+  const sortedTimezones = useMemo(() => {
+    const tzList = [...timezones];
+    const localIndex = tzList.indexOf(localTimezone);
+    if (localIndex !== -1) {
+      tzList.splice(localIndex, 1);
+      tzList.unshift(localTimezone);
+    }
+    return tzList;
+  }, [localTimezone]);
+
   const [timezoneItems, setTimezoneItems] = useState(
-    timezones.map((tz: string) => ({
+    sortedTimezones.map((tz: string) => ({
       label: formatTimezone(tz),
       value: tz,
     }))
@@ -58,15 +74,25 @@ const PreferencesScreen = () => {
       ...newPreferences,
     });
 
-    Toast.show({
-      text1: "Preferences updated",
-      type: "success",
-    });
+    setSnackbarVisible(true);
   };
 
-  const debouncedSave = useDebouncedFunc(handleUpdatePreferences, 500);
+  const debouncedSave = useMemo(
+    () => debounce(handleUpdatePreferences, 500),
+    [handleUpdatePreferences]
+  );
 
   useEffect(() => {
+    if (
+      notifications === preferences?.notificationsEnabled &&
+      dailyWordGoal === preferences?.dailyWordGoal &&
+      dailyPracticeTimeGoal === preferences?.dailyPracticeTimeGoal &&
+      timeZone === preferences?.timeZone &&
+      theme === preferences?.theme
+    ) {
+      return;
+    }
+
     debouncedSave({
       notificationsEnabled: notifications,
       dailyWordGoal,
@@ -78,6 +104,63 @@ const PreferencesScreen = () => {
 
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>
+      <View style={styles.pickerContainer}>
+        <DropDownPicker
+          open={open}
+          value={timeZone}
+          items={timezoneItems}
+          setOpen={setOpen}
+          setValue={setTimeZone}
+          setItems={setTimezoneItems}
+          placeholder="Select timezone..."
+          searchable={true}
+          searchPlaceholder="Search..."
+          listMode="SCROLLVIEW"
+          style={{
+            backgroundColor: colors.background,
+            borderColor: open ? colors.primary : colors.outline,
+            height: 56,
+          }}
+          textStyle={{ color: colors.onSurface, fontSize: 16 }}
+          placeholderStyle={{ color: colors.onSurface }}
+          dropDownContainerStyle={{
+            backgroundColor: colors.surface,
+            borderColor: colors.primary,
+            maxHeight: 250,
+          }}
+          labelStyle={{ fontSize: 16 }}
+          listItemContainerStyle={{ paddingVertical: 8 }}
+          searchContainerStyle={{
+            borderBottomColor: colors.primary,
+          }}
+          searchTextInputStyle={{
+            color: colors.onSurface,
+            borderWidth: 0,
+          }}
+          ArrowDownIconComponent={() => (
+            <MaterialCommunityIcons
+              name="chevron-down"
+              size={24}
+              color={colors.primary}
+            />
+          )}
+          ArrowUpIconComponent={() => (
+            <MaterialCommunityIcons
+              name="chevron-up"
+              size={24}
+              color={colors.primary}
+            />
+          )}
+          onSelectItem={(item) => {
+            if (item?.value) {
+              setTimeZone(item.value);
+              setOpen(false);
+            }
+          }}
+          zIndex={3000}
+          zIndexInverse={1000}
+        />
+      </View>
       <ScrollView
         style={[
           styles.scrollViewContainer,
@@ -152,63 +235,18 @@ const PreferencesScreen = () => {
           />
 
           <Divider />
-
-          <View style={styles.pickerContainer}>
-            <DropDownPicker
-              open={open}
-              value={timeZone}
-              items={timezoneItems}
-              setOpen={setOpen}
-              setValue={setTimeZone}
-              setItems={setTimezoneItems}
-              placeholder="Select timezone..."
-              searchable={true}
-              searchPlaceholder="Search..."
-              listMode="SCROLLVIEW"
-              style={{
-                backgroundColor: colors.background,
-                borderColor: open ? colors.primary : colors.outline,
-                height: 56,
-              }}
-              textStyle={{ color: colors.onSurface, fontSize: 16 }}
-              placeholderStyle={{ color: colors.onSurface }}
-              dropDownContainerStyle={{
-                backgroundColor: colors.surface,
-                borderColor: colors.primary,
-                maxHeight: 250,
-              }}
-              labelStyle={{ fontSize: 16 }}
-              listItemContainerStyle={{ paddingVertical: 8 }}
-              searchContainerStyle={{
-                borderBottomColor: colors.primary,
-              }}
-              searchTextInputStyle={{
-                color: colors.onSurface,
-                borderWidth: 0,
-              }}
-              ArrowDownIconComponent={() => (
-                <MaterialCommunityIcons
-                  name="chevron-down"
-                  size={24}
-                  color={colors.primary}
-                />
-              )}
-              ArrowUpIconComponent={() => (
-                <MaterialCommunityIcons
-                  name="chevron-up"
-                  size={24}
-                  color={colors.primary}
-                />
-              )}
-              zIndex={9999}
-              zIndexInverse={9999}
-            />
-          </View>
-
-          <Divider />
+          <Text>
+            Last updated at {preferences?.updatedAt?.toLocaleString()}
+          </Text>
         </List.Section>
-        <Text> Last updated at {preferences?.updatedAt?.toLocaleString()}</Text>
       </ScrollView>
+
+      <CustomSnackbar
+        visible={snackbarVisible}
+        message="Preferences updated"
+        type="success"
+        onDismiss={() => setSnackbarVisible(false)}
+      />
     </View>
   );
 };
@@ -216,10 +254,10 @@ const PreferencesScreen = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    paddingHorizontal: 15,
   },
   scrollViewContainer: {
     flex: 1,
+    paddingHorizontal: 15,
   },
   header: {
     padding: 20,
@@ -230,8 +268,10 @@ const styles = StyleSheet.create({
   },
   pickerContainer: {
     width: "100%",
-    marginVertical: 8,
-    zIndex: 9999,
+    paddingHorizontal: 15,
+    paddingVertical: 8,
+    marginTop: 10,
+    zIndex: 3000,
   },
 });
 

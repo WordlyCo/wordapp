@@ -532,6 +532,7 @@ class UserService:
                     progress_data.success_count or 0,
                     progress_data.number_of_times_to_practice or 5,
                 )
+                await self._update_user_streak(user_id)
                 return WordProgress(**new_record)
 
             update_fields = []
@@ -576,10 +577,94 @@ class UserService:
             """
 
             updated_record = await self.pool.fetchrow(update_query, *params)
+            await self._update_user_streak(user_id)
             return WordProgress(**updated_record)
 
         except Exception as e:
             raise Exception(f"Error updating word progress: {str(e)}")
+
+    async def _update_user_streak(self, user_id: int) -> None:
+        """Internal method to update user streak based on activity."""
+        stats_query = """
+            SELECT * FROM user_stats
+            WHERE user_id = $1
+        """
+
+        check_query = """
+            SELECT COUNT(*) FROM user_stats
+            WHERE user_id = $1
+        """
+
+        timezone_query = """
+            SELECT time_zone
+            FROM user_preferences
+            WHERE user_id = $1
+        """
+
+        try:
+            count = await self.pool.fetchval(check_query, user_id)
+            if count == 0:
+                stats_record = await self._create_default_user_stats(user_id)
+            else:
+                stats_record = await self.pool.fetchrow(stats_query, user_id)
+
+            timezone_record = await self.pool.fetchrow(timezone_query, user_id)
+            user_timezone = timezone_record["time_zone"] if timezone_record else "UTC"
+            print(f"User timezone: {user_timezone}")
+
+            tz = pytz.timezone(user_timezone)
+            current_date = datetime.now(tz).date()
+
+            # Get the last day the streak was updated
+            last_streak_updated_at = stats_record["last_streak_updated_at"]
+            if last_streak_updated_at:
+                # Ensure the timestamp is timezone-aware
+                if last_streak_updated_at.tzinfo is None:
+                    last_streak_updated_at = last_streak_updated_at.replace(
+                        tzinfo=pytz.UTC
+                    )
+
+                last_streak_date = last_streak_updated_at.astimezone(tz).date()
+            else:
+                last_streak_date = None
+
+            current_streak = stats_record["current_streak"]
+            longest_streak = stats_record["longest_streak"]
+
+            # If this is the first activity ever or streak is 0
+            if not last_streak_date or current_streak == 0:
+                current_streak = 1
+            # If we already updated the streak today, don't increment again
+            elif last_streak_date == current_date:
+                pass  # Keep current streak value
+            # If last streak update was yesterday, increment streak
+            elif last_streak_date == current_date - timedelta(days=1):
+                current_streak += 1
+            # If streak was last updated more than a day ago, reset streak to 1
+            else:
+                current_streak = 1
+
+            # Update longest streak if needed
+            if current_streak > longest_streak:
+                longest_streak = current_streak
+
+            # Update the database with the new streak values
+            update_query = """
+                UPDATE user_stats
+                SET current_streak = $2, 
+                    longest_streak = $3, 
+                    last_streak_updated_at = CURRENT_TIMESTAMP AT TIME ZONE 'UTC',
+                    updated_at = CURRENT_TIMESTAMP AT TIME ZONE 'UTC'
+                WHERE user_id = $1
+            """
+
+            await self.pool.execute(
+                update_query, user_id, current_streak, longest_streak
+            )
+
+        except Exception as e:
+            print(f"Error in _update_user_streak: {str(e)}")
+            raise Exception(f"Error updating user streak: {str(e)}")
 
     async def get_word_progress(
         self, user_id: int, page: int = 1, per_page: int = 10
@@ -870,107 +955,6 @@ class UserService:
         except Exception as e:
             raise Exception(f"Error incrementing diamonds: {str(e)}")
 
-    async def update_user_streak(self, user_id: int) -> UserStats:
-        stats_query = """
-            SELECT * FROM user_stats
-            WHERE user_id = $1
-        """
-
-        check_query = """
-            SELECT COUNT(*) FROM user_stats
-            WHERE user_id = $1
-        """
-
-        last_activity_query = """
-            SELECT MAX(updated_at) as last_active 
-            FROM word_progress 
-            WHERE user_id = $1
-        """
-
-        timezone_query = """
-            SELECT time_zone
-            FROM user_preferences
-            WHERE user_id = $1
-        """
-
-        try:
-            count = await self.pool.fetchval(check_query, user_id)
-            if count == 0:
-                stats_record = await self._create_default_user_stats(user_id)
-            else:
-                stats_record = await self.pool.fetchrow(stats_query, user_id)
-
-            timezone_record = await self.pool.fetchrow(timezone_query, user_id)
-            user_timezone = timezone_record["time_zone"] if timezone_record else "UTC"
-
-            tz = pytz.timezone(user_timezone)
-
-            current_date = datetime.now(tz).date()
-
-            # Get the last day the streak was updated
-            last_streak_updated_at = stats_record["last_streak_updated_at"]
-            if last_streak_updated_at:
-                last_streak_date = (
-                    last_streak_updated_at.replace(tzinfo=pytz.UTC)
-                    .astimezone(tz)
-                    .date()
-                )
-            else:
-                last_streak_date = None
-
-            current_streak = stats_record["current_streak"]
-            longest_streak = stats_record["longest_streak"]
-
-            # Check if the user practiced today (based on activity)
-            last_activity = await self.pool.fetchrow(last_activity_query, user_id)
-            has_practiced_today = False
-
-            if last_activity and last_activity["last_active"]:
-                last_active_utc = last_activity["last_active"].replace(tzinfo=pytz.UTC)
-                last_active_date = last_active_utc.astimezone(tz).date()
-                has_practiced_today = last_active_date == current_date
-
-            # Only update streak if user has practiced today
-            if has_practiced_today:
-                # If this is the first activity ever
-                if not last_streak_date:
-                    current_streak = 1
-                # If we already updated the streak today, don't increment again
-                elif last_streak_date == current_date:
-                    pass  # Keep current streak value
-                # If last streak update was yesterday, increment streak
-                elif last_streak_date == current_date - timedelta(days=1):
-                    current_streak += 1
-                # If streak was last updated more than a day ago, reset streak to 1
-                else:
-                    current_streak = 1
-
-                # Update longest streak if needed
-                if current_streak > longest_streak:
-                    longest_streak = current_streak
-
-                # Update the database with the new streak values
-                update_query = """
-                    UPDATE user_stats
-                    SET current_streak = $2, 
-                        longest_streak = $3, 
-                        last_streak_updated_at = CURRENT_TIMESTAMP,
-                        updated_at = CURRENT_TIMESTAMP
-                    WHERE user_id = $1
-                    RETURNING *
-                """
-
-                updated_record = await self.pool.fetchrow(
-                    update_query, user_id, current_streak, longest_streak
-                )
-                return UserStats(**updated_record)
-
-            # If user hasn't practiced today, just return current stats
-            return UserStats(**stats_record)
-
-        except Exception as e:
-            raise Exception(f"Error updating user streak: {str(e)}")
-
     async def record_practice_session(
         self, user_id: int, practice_time: int, session_type: str
     ) -> None:
@@ -989,7 +973,6 @@ class UserService:
         try:
             await self.pool.execute(insert_query, user_id, practice_time, session_type)
             await self.pool.execute(update_stats_query, user_id, practice_time)
-            await self.update_user_streak(user_id)
         except Exception as e:
             raise Exception(f"Error recording practice session: {str(e)}")
 

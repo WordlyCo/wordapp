@@ -7,7 +7,7 @@ import {
   RefreshControl,
 } from "react-native";
 import { Text, Button, IconButton, Card } from "react-native-paper";
-import useTheme from "@/src/hooks/useTheme";
+import { useAppTheme } from "@/src/contexts/ThemeContext";
 import { useStore } from "@/src/stores/store";
 import { PROFILE_BACKGROUND_COLORS } from "@/constants/profileColors";
 import { useRouter } from "expo-router";
@@ -20,7 +20,7 @@ const ProfileScreen = () => {
   const getMe = useStore((state) => state.getMe);
   const isFetchingUser = useStore((state) => state.isFetchingUser);
   const router = useRouter();
-  const { colors } = useTheme();
+  const { colors } = useAppTheme();
   const [refreshing, setRefreshing] = useState(false);
   const userStats = useStore((state) => state.user?.userStats);
 
@@ -79,7 +79,7 @@ const ProfileScreen = () => {
                     size={24}
                     iconColor="white"
                     onPress={() =>
-                      router.push("/(protected)/(tabs)/profile/Settings")
+                      router.push("/(protected)/(tabs)/profile/settings")
                     }
                     style={styles.settingsButton}
                   />
@@ -164,18 +164,20 @@ const ProfileScreen = () => {
                     ]}
                     labelStyle={styles.actionButtonLabel}
                     onPress={() =>
-                      router.push("/(protected)/(tabs)/profile/AccountSettings")
+                      router.push(
+                        "/(protected)/(tabs)/profile/account-settings"
+                      )
                     }
                   >
                     Edit Profile
                   </Button>
                 </View>
                 <LearningInsights
-                  colors={colors}
                   streak={userStats?.streak ?? 0}
                   wordsMastered={
                     userStats?.learningInsights?.wordsMastered ?? 0
                   }
+                  diamonds={userStats?.diamonds ?? 0}
                   accuracy={userStats?.learningInsights?.accuracy ?? 0}
                 />
               </View>

@@ -1,29 +1,29 @@
-import React, { useState, useEffect } from "react";
+import { formatTimezone, timezones } from "@/lib/utils";
+import { useAppTheme } from "@/src/contexts/ThemeContext";
+import { useStore } from "@/src/stores/store";
+import { useUser } from "@clerk/clerk-expo";
+import { MaterialCommunityIcons } from "@expo/vector-icons";
+import * as FileSystem from "expo-file-system";
+import * as ImagePicker from "expo-image-picker";
+import { useRouter } from "expo-router";
+import React, { useEffect, useState } from "react";
 import {
-  View,
-  StyleSheet,
-  ScrollView,
   Image,
   KeyboardAvoidingView,
   Platform,
+  ScrollView,
+  StyleSheet,
+  View,
 } from "react-native";
-import { Text, Button, TextInput, Switch } from "react-native-paper";
-import { SafeAreaView } from "react-native-safe-area-context";
-import * as ImagePicker from "expo-image-picker";
-import { useUser } from "@clerk/clerk-expo";
-import { useRouter } from "expo-router";
-import useTheme from "@/src/hooks/useTheme";
-import * as FileSystem from "expo-file-system";
-import { formatTimezone, timezones } from "@/lib/utils";
-import { useStore } from "@/src/stores/store";
 import DropDownPicker from "react-native-dropdown-picker";
-import Toast from "react-native-toast-message";
-import { MaterialCommunityIcons } from "@expo/vector-icons";
+import { Button, Switch, Text, TextInput } from "react-native-paper";
+import { SafeAreaView } from "react-native-safe-area-context";
+import { CustomSnackbar } from "@/src/components/CustomSnackbar";
 
 export default function OnboardingScreen() {
   const router = useRouter();
   const { user, isLoaded } = useUser();
-  const { colors } = useTheme();
+  const { colors } = useAppTheme();
 
   const setHasOnboarded = useStore((state) => state.setHasOnboarded);
   const preferences = useStore((state) => state.user?.preferences);
@@ -47,6 +47,12 @@ export default function OnboardingScreen() {
 
   const fetchMe = useStore((state) => state.getMe);
   const isFetchingUser = useStore((state) => state.isFetchingUser);
+
+  const [snackbarVisible, setSnackbarVisible] = useState(false);
+  const [snackbarMessage, setSnackbarMessage] = useState("");
+  const [snackbarType, setSnackbarType] = useState<"success" | "error">(
+    "success"
+  );
 
   useEffect(() => {
     if (!isFetchingUser) fetchMe();
@@ -75,11 +81,9 @@ export default function OnboardingScreen() {
   const pickImage = async () => {
     const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
     if (status !== "granted") {
-      Toast.show({
-        type: "error",
-        text1: "Permission Denied",
-        text2: "Media library access is required",
-      });
+      setSnackbarMessage("Media library access is required");
+      setSnackbarType("error");
+      setSnackbarVisible(true);
       return;
     }
     const result = await ImagePicker.launchImageLibraryAsync({
@@ -123,19 +127,15 @@ export default function OnboardingScreen() {
           },
         },
       });
-      Toast.show({
-        type: "success",
-        text1: "Profile Updated",
-        text2: "Setup complete!",
-      });
+      setSnackbarMessage("Setup complete!");
+      setSnackbarType("success");
+      setSnackbarVisible(true);
       setHasOnboarded(true);
       router.replace("/");
     } catch (err) {
-      Toast.show({
-        type: "error",
-        text1: "Update Failed",
-        text2: err instanceof Error ? err.message : String(err),
-      });
+      setSnackbarMessage(err instanceof Error ? err.message : String(err));
+      setSnackbarType("error");
+      setSnackbarVisible(true);
     } finally {
       setIsSubmitting(false);
     }
@@ -339,6 +339,12 @@ export default function OnboardingScreen() {
           </Button>
         </ScrollView>
       </KeyboardAvoidingView>
+      <CustomSnackbar
+        visible={snackbarVisible}
+        message={snackbarMessage}
+        type={snackbarType}
+        onDismiss={() => setSnackbarVisible(false)}
+      />
     </SafeAreaView>
   );
 }

@@ -1,10 +1,9 @@
-import React from "react";
+import React, { useState } from "react";
 import { View, StyleSheet, ScrollView, Alert } from "react-native";
 import { useRouter } from "expo-router";
 import { useUser } from "@clerk/clerk-expo";
-import Toast from "react-native-toast-message";
 
-import useTheme from "@/src/hooks/useTheme";
+import { useAppTheme } from "@/src/contexts/ThemeContext";
 import { useAuth } from "@/src/contexts/AuthContext";
 import { useStore } from "@/src/stores/store";
 import {
@@ -12,15 +11,18 @@ import {
   SettingButton,
   SettingSwitch,
 } from "@/src/features/profile/components";
+import { CustomSnackbar } from "@/src/components/CustomSnackbar";
 
 const SettingsScreen = () => {
   const router = useRouter();
-  const { colors } = useTheme();
+  const { colors } = useAppTheme();
   const { logout } = useAuth();
   const { user } = useUser();
   const preferences = useStore((state) => state.user?.preferences);
   const updatePreferences = useStore((state) => state.updatePreferences);
   const setHasOnboarded = useStore((state) => state.setHasOnboarded);
+  const [snackbarVisible, setSnackbarVisible] = useState(false);
+  const [snackbarMessage, setSnackbarMessage] = useState("");
 
   const handleUpdatePreferences = async () => {
     try {
@@ -73,7 +75,7 @@ const SettingsScreen = () => {
             title="Edit profile"
             titleColor={colors.onSurface}
             onPress={() =>
-              router.push("/(protected)/(tabs)/profile/AccountSettings")
+              router.push("/(protected)/(tabs)/profile/account-settings")
             }
             iconColor={colors.primary}
           />
@@ -83,7 +85,7 @@ const SettingsScreen = () => {
             titleColor={colors.onSurface}
             iconColor={colors.primary}
             onPress={() =>
-              router.push("/(protected)/(tabs)/profile/Preferences")
+              router.push("/(protected)/(tabs)/profile/preferences")
             }
           />
           <SettingButton
@@ -92,7 +94,7 @@ const SettingsScreen = () => {
             titleColor={colors.onSurface}
             iconColor={colors.primary}
             onPress={() =>
-              router.push("/(protected)/(tabs)/profile/PrivacyPolicy")
+              router.push("/(protected)/(tabs)/profile/privacy-policy")
             }
           />
         </SettingSection>
@@ -140,11 +142,8 @@ const SettingsScreen = () => {
             title="Diagnostics"
             titleColor={colors.onSurface}
             onPress={() => {
-              Toast.show({
-                text1: "Long press to view diagnostics",
-                type: "info",
-                position: "bottom",
-              });
+              setSnackbarMessage("Long press to view diagnostics");
+              setSnackbarVisible(true);
             }}
             onLongPress={() => {
               router.push("/diagnostics" as any);
@@ -170,6 +169,12 @@ const SettingsScreen = () => {
         </SettingSection>
         <View style={styles.bottomSpace} />
       </ScrollView>
+      <CustomSnackbar
+        visible={snackbarVisible}
+        message={snackbarMessage}
+        type="info"
+        onDismiss={() => setSnackbarVisible(false)}
+      />
     </View>
   );
 };

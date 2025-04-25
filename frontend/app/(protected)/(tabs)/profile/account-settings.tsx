@@ -1,4 +1,4 @@
-import useTheme from "@/src/hooks/useTheme";
+import { useAppTheme } from "@/src/contexts/ThemeContext";
 import React, { useState, useEffect } from "react";
 import {
   View,
@@ -25,7 +25,7 @@ import * as FileSystem from "expo-file-system";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
 
 const AccountSettingsScreen = () => {
-  const { colors } = useTheme();
+  const { colors } = useAppTheme();
   const updatePreferences = useStore((state) => state.updatePreferences);
   const preferences = useStore((state) => state.user?.preferences);
   const { user, isLoaded } = useUser();

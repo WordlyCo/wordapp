@@ -373,40 +373,6 @@ async def add_diamonds(
         )
 
 
-@router.put("/stats/streak/update")
-async def update_streak(
-    user_service: UserService = Depends(get_user_service),
-    current_user: Optional[User] = Depends(get_current_user),
-) -> Response[UserStats]:
-    """
-    Update a user's streak based on their activity.
-    """
-    try:
-        if current_user is None:
-            return Response(
-                success=False,
-                message="Authentication required",
-                error_code=SERVER_ERROR,
-            )
-
-        updated_stats = await user_service.update_user_streak(current_user.id)
-        return Response(
-            success=True,
-            message="Streak updated successfully",
-            payload=updated_stats,
-        )
-    except Exception as e:
-        print(f"Error updating streak: {e}")
-        import traceback
-
-        print(traceback.format_exc())
-        return Response(
-            success=False,
-            message="Could not update streak due to an internal error",
-            error_code=SERVER_ERROR,
-        )
-
-
 @router.post("/practice-session")
 async def record_practice_session(
     practice_time: int,

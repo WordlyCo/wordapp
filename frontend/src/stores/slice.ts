@@ -1,14 +1,14 @@
+import { HAS_ONBOARDED_KEY } from "@/constants";
 import { authFetch, clearCachedToken } from "@/lib/api";
-import { WordListCategory, WordList } from "@/src/types/lists";
-import { Word, WordProgressUpdate } from "@/src/types/words";
+import { WordList, WordListCategory } from "@/src/types/lists";
 import {
+  TopFiveUser,
+  User,
   UserPreferences,
   UserStats,
-  User,
-  TopFiveUsers,
 } from "@/src/types/user";
+import { Word, WordProgressUpdate } from "@/src/types/words";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import { HAS_ONBOARDED_KEY } from "@/constants";
 import { StateCreator } from "zustand";
 
 type QuizStats = {
@@ -27,7 +27,7 @@ export interface WordAppSlice {
   hasOnboarded: boolean;
   authError: string | null;
   isFetchingUser: boolean;
-  topFiveUsers: TopFiveUsers[];
+  topFiveUsers: TopFiveUser[];
   isFetchingTopFiveUsers: boolean;
   setAuthError: (error: string) => void;
   updatePreferences: (preferences: Partial<UserPreferences>) => void;
@@ -42,6 +42,14 @@ export interface WordAppSlice {
   isFetchingCategories: boolean;
   categories: WordListCategory[];
   wordLists: WordList[];
+  progressWords: Word[];
+  progressWordsPageInfo: {
+    page: number;
+    perPage: number;
+    totalItems: number;
+    totalPages: number;
+  };
+  isFetchingProgressWords: boolean;
   isFetchingWordLists: boolean;
   selectedList: WordList | null;
   selectedCategory: WordListCategory | null;
@@ -62,6 +70,7 @@ export interface WordAppSlice {
   fetchCategories: () => Promise<void>;
   fetchCategory: (id: string) => Promise<void>;
   fetchList: (id: string) => Promise<void>;
+  fetchProgressWords: (page: number, perPage: number) => Promise<void>;
   fetchListsByCategory: (id: string) => Promise<void>;
   fetchWordLists: (
     page: number,
@@ -86,7 +95,6 @@ export interface WordAppSlice {
   setQuizWords: (newState: Word[]) => Promise<void>;
   updateWordProgress: (wordProgress: WordProgressUpdate) => Promise<void>;
   updateDiamonds: (amount: number) => void;
-  updateStreak: () => void;
   updatePracticeTime: (minutes: number) => void;
   updateAccuracy: (correct: boolean) => void;
 
@@ -137,6 +145,14 @@ export const createWordAppSlice: StateCreator<WordAppSlice> = (set, get) => {
     isFetchingListsByCategory: false,
     userLists: [],
     quizWords: [],
+    progressWords: [],
+    progressWordsPageInfo: {
+      page: 1,
+      perPage: 10,
+      totalItems: 0,
+      totalPages: 0,
+    },
+    isFetchingProgressWords: false,
     isFetchingDailyQuiz: false,
     quizWordsError: null,
     quizStats: {
@@ -204,6 +220,29 @@ export const createWordAppSlice: StateCreator<WordAppSlice> = (set, get) => {
         console.error("Error fetching top five users:", error);
       } finally {
         set({ isFetchingTopFiveUsers: false });
+      }
+    },
+
+    fetchProgressWords: async (page: number = 1, perPage: number = 10) => {
+      set({ isFetchingProgressWords: true });
+      try {
+        const response = await authFetch(
+          `/users/progress/words?page=${page}&per_page=${perPage}`
+        );
+        const data = await response.json();
+
+        if (data.success) {
+          set({
+            progressWords: data.payload.items,
+            progressWordsPageInfo: data.payload.pageInfo,
+          });
+        } else {
+          console.error("Failed to fetch word progress:", data.message);
+        }
+      } catch (error) {
+        console.error("Error fetching word progress:", error);
+      } finally {
+        set({ isFetchingProgressWords: false });
       }
     },
 
@@ -677,21 +716,6 @@ export const createWordAppSlice: StateCreator<WordAppSlice> = (set, get) => {
         });
       } catch (error) {
         console.error("Error updating diamonds:", error);
-      }
-    },
-
-    updateStreak: async () => {
-      try {
-        const response = await authFetch("/users/stats/streak/update", {
-          method: "PUT",
-        });
-
-        const data = await response.json();
-        if (data.success) {
-          await get().getMe();
-        }
-      } catch (error) {
-        console.error("Error updating streak:", error);
       }
     },
 

@@ -1,7 +1,7 @@
 import { Button, Text, IconButton, Card } from "react-native-paper";
 import { Animated, StyleSheet, View } from "react-native";
 import { useStore } from "@/src/stores/store";
-import useTheme from "@/src/hooks/useTheme";
+import { useAppTheme } from "@/src/contexts/ThemeContext";
 import React, { useEffect, useRef, useState } from "react";
 import { router } from "expo-router";
 import { DIFFICULTY_LEVELS } from "@/src/stores/enums";
@@ -12,7 +12,7 @@ type TimeType = {
 };
 
 const SummaryScreen = () => {
-  const { colors } = useTheme();
+  const { colors } = useAppTheme();
   const score = useStore((state) => state.quizStats.score);
   const quizWords = useStore((state) => state.quizWords);
   const isFetchingDailyQuiz = useStore((state) => state.isFetchingDailyQuiz);

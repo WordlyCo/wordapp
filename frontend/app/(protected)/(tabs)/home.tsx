@@ -1,7 +1,6 @@
 import React, { useEffect } from "react";
 import { View, StyleSheet, useColorScheme } from "react-native";
-import { ActivityIndicator } from "react-native-paper";
-import useTheme from "@/src/hooks/useTheme";
+import { useAppTheme } from "@/src/contexts/ThemeContext";
 import Animated, {
   useAnimatedScrollHandler,
   useSharedValue,
@@ -12,9 +11,10 @@ import {
   LearningInsights,
 } from "@/src/features/home/components";
 import { useStore } from "@/src/stores/store";
+import { usePulsate } from "@/src/hooks/usePulsate";
 
 export default function HomeScreen() {
-  const { colors } = useTheme();
+  const { colors } = useAppTheme();
   const scrollY = useSharedValue(0);
   const colorScheme = useColorScheme();
   const isDarkMode = colorScheme === "dark";
@@ -23,11 +23,11 @@ export default function HomeScreen() {
   const fetchUser = useStore((state) => state.getMe);
   const isFetchingUser = useStore((state) => state.isFetchingUser);
 
+  const pulsate = usePulsate();
+
   useEffect(() => {
-    if (!isFetchingUser) {
-      fetchUser();
-    }
-  }, [fetchUser]);
+    fetchUser();
+  }, []);
 
   const scrollHandler = useAnimatedScrollHandler({
     onScroll: (event) => {
@@ -35,40 +35,36 @@ export default function HomeScreen() {
     },
   });
 
-  if (!userStats) {
-    return (
-      <View style={[styles.container, { backgroundColor: colors.background }]}>
-        <ActivityIndicator size="large" color={colors.primary} />
-      </View>
-    );
-  }
-
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>
-      {userStats && (
-        <Animated.ScrollView
-          contentContainerStyle={styles.scrollViewContainer}
-          onScroll={scrollHandler}
-          scrollEventThrottle={16}
-          showsVerticalScrollIndicator={false}
-        >
-          <LearningInsights
-            colors={colors}
-            streak={userStats.streak}
-            wordsMastered={userStats.learningInsights.wordsMastered}
-            accuracy={userStats.learningInsights.accuracy}
-            diamonds={userStats.diamonds}
-          />
-          <DailyProgress
-            colors={colors}
-            wordsLearned={userStats.dailyProgress.wordsPracticed}
-            totalWordsGoal={userStats.dailyProgress.dailyWordGoal}
-            practiceTime={userStats.dailyProgress.practiceTime}
-            practiceTimeGoal={userStats.dailyProgress.dailyPracticeTimeGoal}
-          />
-          <QuickActions colors={colors} isDarkMode={isDarkMode} />
-        </Animated.ScrollView>
-      )}
+      <Animated.ScrollView
+        contentContainerStyle={styles.scrollViewContainer}
+        onScroll={scrollHandler}
+        scrollEventThrottle={16}
+        showsVerticalScrollIndicator={false}
+      >
+        <LearningInsights
+          streak={userStats?.streak ?? 0}
+          wordsMastered={userStats?.learningInsights.wordsMastered ?? 0}
+          accuracy={userStats?.learningInsights.accuracy ?? 0}
+          diamonds={userStats?.diamonds ?? 0}
+          isLoading={isFetchingUser}
+          pulsate={pulsate}
+        />
+        <DailyProgress
+          wordsLearned={userStats?.dailyProgress.wordsPracticed ?? 0}
+          totalWordsGoal={userStats?.dailyProgress.dailyWordGoal ?? 0}
+          practiceTime={userStats?.dailyProgress.practiceTime ?? 0}
+          practiceTimeGoal={userStats?.dailyProgress.dailyPracticeTimeGoal ?? 0}
+          isLoading={isFetchingUser}
+          pulsate={pulsate}
+        />
+        <QuickActions
+          isDarkMode={isDarkMode}
+          isLoading={isFetchingUser}
+          pulsate={pulsate}
+        />
+      </Animated.ScrollView>
     </View>
   );
 }

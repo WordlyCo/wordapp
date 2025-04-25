@@ -1,13 +1,13 @@
 import React from "react";
 import { View, Text, StyleSheet } from "react-native";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
-import useTheme from "@/src/hooks/useTheme";
+import { useAppTheme } from "@/src/contexts/ThemeContext";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useStore } from "@/src/stores/store";
 import { useRouter } from "expo-router";
 
 const StickyHeader = ({ title }: { title?: string }) => {
-  const { colors } = useTheme();
+  const { colors } = useAppTheme();
   const userStats = useStore((state) => state.user?.userStats);
   const router = useRouter();
   return (

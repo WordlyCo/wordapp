@@ -1,33 +1,37 @@
-import React from 'react';
-import { View, StyleSheet } from 'react-native';
-import { Text, ProgressBar } from 'react-native-paper';
-import { MaterialCommunityIcons } from '@expo/vector-icons';
-import Animated, { FadeInDown } from 'react-native-reanimated';
+import React from "react";
+import { View, StyleSheet } from "react-native";
+import { Text, ProgressBar } from "react-native-paper";
+import { MaterialCommunityIcons } from "@expo/vector-icons";
+import Animated from "react-native-reanimated";
+import { useAppTheme } from "@/src/contexts/ThemeContext";
 
 interface DailyProgressProps {
-  colors: any;
   wordsLearned: number;
   totalWordsGoal: number;
   practiceTime: number;
   practiceTimeGoal: number;
+  isLoading: boolean;
+  pulsate?: any;
 }
 
 const DailyProgress: React.FC<DailyProgressProps> = ({
-  colors,
   wordsLearned = 5,
   totalWordsGoal = 10,
   practiceTime = 15,
-  practiceTimeGoal = 30
+  practiceTimeGoal = 30,
+  isLoading = false,
+  pulsate = null,
 }) => {
+  const { colors } = useAppTheme();
   const wordsPracticed = wordsLearned;
-  
+
+  if (isLoading) {
+    return <DailyProgressSkeleton pulsate={pulsate} />;
+  }
+
   return (
     <Animated.View
-      entering={FadeInDown.duration(600).springify()}
-      style={[
-        styles.progressCard,
-        { backgroundColor: colors.surfaceVariant },
-      ]}
+      style={[styles.progressCard, { backgroundColor: colors.surfaceVariant }]}
     >
       <View style={styles.progressHeader}>
         <MaterialCommunityIcons
@@ -43,10 +47,7 @@ const DailyProgress: React.FC<DailyProgressProps> = ({
       <View style={styles.progressContent}>
         <View style={styles.progressItem}>
           <Text
-            style={[
-              styles.progressLabel,
-              { color: colors.onSurfaceVariant },
-            ]}
+            style={[styles.progressLabel, { color: colors.onSurfaceVariant }]}
           >
             Words Practiced
           </Text>
@@ -54,7 +55,11 @@ const DailyProgress: React.FC<DailyProgressProps> = ({
             {wordsPracticed}/{totalWordsGoal}
           </Text>
           <ProgressBar
-            progress={wordsPracticed / totalWordsGoal}
+            progress={
+              totalWordsGoal > 0
+                ? Math.min(wordsPracticed / totalWordsGoal, 1)
+                : 0
+            }
             color={colors.primary}
             style={styles.progressBar}
           />
@@ -62,10 +67,7 @@ const DailyProgress: React.FC<DailyProgressProps> = ({
 
         <View style={styles.progressItem}>
           <Text
-            style={[
-              styles.progressLabel,
-              { color: colors.onSurfaceVariant },
-            ]}
+            style={[styles.progressLabel, { color: colors.onSurfaceVariant }]}
           >
             Practice Time
           </Text>
@@ -73,11 +75,37 @@ const DailyProgress: React.FC<DailyProgressProps> = ({
             {practiceTime}/{practiceTimeGoal} min
           </Text>
           <ProgressBar
-            progress={practiceTime / practiceTimeGoal}
+            progress={
+              practiceTimeGoal > 0
+                ? Math.min(practiceTime / practiceTimeGoal, 1)
+                : 0
+            }
             color={colors.secondary}
             style={styles.progressBar}
           />
         </View>
+      </View>
+    </Animated.View>
+  );
+};
+
+const DailyProgressSkeleton: React.FC<{ pulsate?: any }> = ({ pulsate }) => {
+  const { colors } = useAppTheme();
+
+  return (
+    <Animated.View
+      style={[
+        styles.progressCard,
+        { backgroundColor: colors.surfaceVariant },
+        pulsate,
+      ]}
+    >
+      <View style={styles.progressContent}>
+        {[...Array(8)].map((_, i) => (
+          <View key={i} style={styles.progressItem}>
+            <View style={styles.progressBar} />
+          </View>
+        ))}
       </View>
     </Animated.View>
   );
@@ -89,14 +117,14 @@ const styles = StyleSheet.create({
     padding: 16,
   },
   progressHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
     gap: 8,
     marginBottom: 16,
   },
   progressTitle: {
     fontSize: 18,
-    fontWeight: '600',
+    fontWeight: "600",
   },
   progressContent: {
     gap: 16,
@@ -109,7 +137,7 @@ const styles = StyleSheet.create({
   },
   progressValue: {
     fontSize: 16,
-    fontWeight: '600',
+    fontWeight: "600",
   },
   progressBar: {
     height: 8,
@@ -117,4 +145,4 @@ const styles = StyleSheet.create({
   },
 });
 
-export default DailyProgress; 
+export default DailyProgress;

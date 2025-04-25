@@ -1,7 +1,12 @@
-import { useEffect, useState } from "react";
-import { MD3DarkTheme, MD3LightTheme } from "react-native-paper";
+import React, { createContext, useContext, useMemo } from "react";
+import {
+  MD3LightTheme,
+  MD3DarkTheme,
+  Provider as PaperProvider,
+} from "react-native-paper";
 import { useColorScheme } from "react-native";
 import { useStore } from "@/src/stores/store";
+
 const palette = {
   purple: {
     main: "rgb(100, 96, 205)",
@@ -33,6 +38,7 @@ const palette = {
     light: "rgb(184, 240, 196)",
     dark: "rgb(38, 134, 55)",
   },
+
   difficulty: {
     beginner: "rgb(76, 175, 80)",
     intermediate: "rgb(255, 152, 0)",
@@ -46,8 +52,8 @@ const palette = {
   },
 
   neutral: {
-    50: "rgb(249, 250, 251)", // almost white
-    100: "rgb(243, 244, 246)", // light gray (good for card bg)
+    50: "rgb(249, 250, 251)",
+    100: "rgb(243, 244, 246)",
     200: "rgb(229, 231, 235)",
     300: "rgb(209, 213, 219)",
     400: "rgb(156, 163, 175)",
@@ -61,7 +67,9 @@ const palette = {
 
 export const lightTheme = {
   ...MD3LightTheme,
+  dark: false,
   colors: {
+    ...MD3LightTheme.colors,
     primary: palette.purple.main,
     onPrimary: "#FFFFFF",
     primaryContainer: palette.purple.light,
@@ -124,7 +132,9 @@ export const lightTheme = {
 
 export const darkTheme = {
   ...MD3DarkTheme,
+  dark: true,
   colors: {
+    ...MD3DarkTheme.colors,
     primary: palette.purple.main,
     onPrimary: "#FFFFFF",
     primaryContainer: palette.purple.dark,
@@ -185,10 +195,6 @@ export const darkTheme = {
   },
 };
 
-export type ColorType = typeof lightTheme.colors &
-  typeof darkTheme.colors &
-  WordBirdColors;
-
 type WordBirdColors = {
   streak: string;
   streakContainer: string;
@@ -196,20 +202,8 @@ type WordBirdColors = {
   goalContainer: string;
   timer: string;
   timerContainer: string;
-  categories: {
-    books: string;
-    movies: string;
-    philosophy: string;
-    science: string;
-    technology: string;
-    music: string;
-  };
-  difficulty: {
-    beginner: string;
-    intermediate: string;
-    advanced: string;
-    default: string;
-  };
+  categories: Record<string, string>;
+  difficulty: Record<string, string>;
 };
 
 const lightExtendedColors: WordBirdColors = {
@@ -242,31 +236,18 @@ const darkExtendedColors: WordBirdColors = {
   goalContainer: palette.green.dark,
   timer: palette.stats.time,
   timerContainer: palette.softBlue.dark,
-  categories: {
-    books: palette.purple.main,
-    movies: palette.softBlue.main,
-    philosophy: palette.teal.main,
-    science: palette.amber.main,
-    technology: palette.coral.main,
-    music: palette.green.main,
-  },
-  difficulty: {
-    beginner: palette.difficulty.beginner,
-    intermediate: palette.difficulty.intermediate,
-    advanced: palette.difficulty.advanced,
-    default: palette.difficulty.default,
-  },
+  categories: lightExtendedColors.categories,
+  difficulty: lightExtendedColors.difficulty,
 };
 
-const extendedLightTheme = {
+export const extendedLightTheme = {
   ...lightTheme,
   colors: {
     ...lightTheme.colors,
     ...lightExtendedColors,
   },
 };
-
-const extendedDarkTheme = {
+export const extendedDarkTheme = {
   ...darkTheme,
   colors: {
     ...darkTheme.colors,
@@ -274,31 +255,42 @@ const extendedDarkTheme = {
   },
 };
 
-const useTheme = () => {
-  const user = useStore((state) => state.user);
-  const colorScheme = useColorScheme();
-  const [theme, setTheme] = useState(
-    colorScheme === "light" ? extendedLightTheme : extendedDarkTheme
-  );
+export type AppThemeContextType = {
+  dark: boolean;
+  colors: typeof extendedLightTheme.colors;
+  setUserPreference: (t: "light" | "dark") => void;
+};
+const AppThemeContext = createContext<AppThemeContextType>({
+  dark: false,
+  colors: extendedLightTheme.colors,
+  setUserPreference: () => {},
+});
+export const useAppTheme = () => useContext(AppThemeContext);
 
-  useEffect(() => {
-    if (user && user?.preferences?.theme) {
-      setTheme(
-        user.preferences.theme === "light"
-          ? extendedLightTheme
-          : extendedDarkTheme
-      );
-    } else {
-      setTheme(
-        colorScheme === "light" ? extendedLightTheme : extendedDarkTheme
-      );
-    }
-  }, [colorScheme, user]);
+export const AppThemeProvider: React.FC<{ children: React.ReactNode }> = ({
+  children,
+}) => {
+  const user = useStore((s) => s.user);
+  const updatePreferences = useStore((s) => s.updatePreferences);
+  const system = useColorScheme();
+  const userPref = (user?.preferences?.theme as "light" | "dark") ?? null;
 
-  return {
-    theme,
-    ...theme,
+  const theme = useMemo(() => {
+    const scheme = userPref ?? system;
+    return scheme === "dark" ? extendedDarkTheme : extendedLightTheme;
+  }, [system, userPref]);
+
+  const setUserPreference = (t: "light" | "dark") => {
+    updatePreferences({ theme: t });
   };
+
+  return (
+    <AppThemeContext.Provider
+      value={{ dark: theme.dark, colors: theme.colors, setUserPreference }}
+    >
+      <PaperProvider theme={theme}>{children}</PaperProvider>
+    </AppThemeContext.Provider>
+  );
 };
 
-export default useTheme;
+export default AppThemeProvider;

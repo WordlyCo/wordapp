@@ -1,7 +1,7 @@
 import { StyleSheet, View } from "react-native";
 
 import { Button, Avatar, Text } from "react-native-paper";
-import useTheme from "@/src/hooks/useTheme";
+import { useAppTheme } from "@/src/contexts/ThemeContext";
 import { WordListCategory } from "@/src/types/lists";
 import { IconSource } from "react-native-paper/lib/typescript/components/Icon";
 
@@ -12,7 +12,7 @@ const CategoryItem = ({
   item: WordListCategory;
   onPress: () => void;
 }) => {
-  const { colors } = useTheme();
+  const { colors } = useAppTheme();
 
   const getCategoryColor = () => {
     if (item.name.toLowerCase() in colors.categories) {

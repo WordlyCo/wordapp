@@ -1,11 +1,11 @@
 import React, { useEffect } from "react";
 import { Stack } from "expo-router";
 import { useStore } from "@/src/stores/store";
-import useTheme from "@/src/hooks/useTheme";
+import { useAppTheme } from "@/src/contexts/ThemeContext";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 export default function PracticeLayout() {
-  const { colors } = useTheme();
+  const { colors } = useAppTheme();
   const quizStats = useStore((state) => state.quizStats);
   const setQuizStats = useStore((state) => state.setQuizStats);
   const fetchDailyQuiz = useStore((state) => state.fetchDailyQuiz);

@@ -4,19 +4,21 @@ import {
   IconButton,
   Button,
   ActivityIndicator,
+  FAB,
+  Portal,
 } from "react-native-paper";
 import React, { useEffect, useState, useRef } from "react";
 import { OptionButton, ProgressDots } from "@/src/features/quiz/components";
 import { shuffleArray } from "@/lib/utils";
 import { useStore } from "@/src/stores/store";
-import useTheme from "@/src/hooks/useTheme";
+import { useAppTheme } from "@/src/contexts/ThemeContext";
 import { router } from "expo-router";
 import { Word } from "@/src/types/words";
 import { DIFFICULTY_LEVELS } from "@/src/stores/enums";
 import Ionicons from "@expo/vector-icons/Ionicons";
 
 const QuestionScreen: React.FC = () => {
-  const { colors } = useTheme();
+  const { colors } = useAppTheme();
   const [randomizedOptions, setRandomizedOptions] = useState<string[]>([]);
   const fadeAnim = useRef(new Animated.Value(0)).current;
   const slideAnim = useRef(new Animated.Value(20)).current;
@@ -33,7 +35,6 @@ const QuestionScreen: React.FC = () => {
   const answerResults = useStore((state) => state.quizStats.answerResults);
   const updateWordProgress = useStore((state) => state.updateWordProgress);
   const updateDiamonds = useStore((state) => state.updateDiamonds);
-  const updateStreak = useStore((state) => state.updateStreak);
   const updateAccuracy = useStore((state) => state.updateAccuracy);
   const fetchMe = useStore((state) => state.getMe);
   const isFetchingUser = useStore((state) => state.isFetchingUser);
@@ -207,7 +208,6 @@ const QuestionScreen: React.FC = () => {
     }
 
     updateWordProgress(wordProgressUpdate);
-    updateStreak();
 
     router.replace("/(protected)/quiz/feedback");
   };
@@ -315,6 +315,16 @@ const QuestionScreen: React.FC = () => {
           </Animated.View>
         </View>
       </ScrollView>
+
+      <Portal>
+        <FAB
+          icon="arrow-left"
+          style={[styles.fab, {}]}
+          onPress={() => router.back()}
+          color={"white"}
+          uppercase={false}
+        />
+      </Portal>
     </View>
   );
 };
@@ -408,6 +418,15 @@ const styles = StyleSheet.create({
   cardWrapper: {
     overflow: "hidden",
     borderRadius: 16,
+  },
+  fab: {
+    position: "absolute",
+    margin: 16,
+    left: 0,
+    bottom: 16,
+    borderRadius: 28,
+    elevation: 1,
+    zIndex: 999,
   },
 });
 

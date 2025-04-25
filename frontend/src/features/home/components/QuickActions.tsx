@@ -1,8 +1,9 @@
-import React from "react";
-import { View, StyleSheet, Dimensions } from "react-native";
-import { Text, Button, Surface } from "react-native-paper";
+import { useAppTheme } from "@/src/contexts/ThemeContext";
 import { useRouter } from "expo-router";
-import Animated, { FadeInDown, FadeInUp } from "react-native-reanimated";
+import React from "react";
+import { Dimensions, StyleSheet, View } from "react-native";
+import { Button, Surface, Text } from "react-native-paper";
+import Animated from "react-native-reanimated";
 
 const { width } = Dimensions.get("window");
 
@@ -22,8 +23,9 @@ interface QuickAction {
 }
 
 interface QuickActionsProps {
-  colors: any;
   isDarkMode: boolean;
+  isLoading: boolean;
+  pulsate?: any;
 }
 
 const QUICK_ACTIONS: QuickAction[] = [
@@ -59,7 +61,7 @@ const QUICK_ACTIONS: QuickAction[] = [
     id: "review",
     title: "Review",
     icon: "refresh",
-    route: "/(protected)/review",
+    route: "/(protected)/quiz",
     lightColor: {
       background: "#f59e0b",
       text: "#ffffff",
@@ -85,7 +87,12 @@ const QUICK_ACTIONS: QuickAction[] = [
   },
 ];
 
-const QuickActions: React.FC<QuickActionsProps> = ({ colors, isDarkMode }) => {
+const QuickActions: React.FC<QuickActionsProps> = ({
+  isDarkMode,
+  isLoading,
+  pulsate,
+}) => {
+  const { colors } = useAppTheme();
   const router = useRouter();
 
   const navigateTo = (path: string) => {
@@ -96,20 +103,20 @@ const QuickActions: React.FC<QuickActionsProps> = ({ colors, isDarkMode }) => {
     }
   };
 
+  if (isLoading) {
+    return <QuickActionsSkeleton pulsate={pulsate} />;
+  }
+
   return (
     <View style={styles.quickActionsContainer}>
-      <Animated.View entering={FadeInDown.delay(200).duration(600).springify()}>
+      <Animated.View>
         <Text style={[styles.sectionTitle, { color: colors.onSurface }]}>
           Quick Actions
         </Text>
         <View style={styles.quickActionsGrid}>
           {QUICK_ACTIONS.map((action, index) => (
             <View key={action.id}>
-              <Animated.View
-                entering={FadeInUp.delay(300 + index * 100)
-                  .duration(600)
-                  .springify()}
-              >
+              <Animated.View>
                 <View style={styles.quickActionWrapperOuter}>
                   <Surface
                     style={[
@@ -158,6 +165,34 @@ const QuickActions: React.FC<QuickActionsProps> = ({ colors, isDarkMode }) => {
         </View>
       </Animated.View>
     </View>
+  );
+};
+
+const QuickActionsSkeleton: React.FC<{ pulsate?: any }> = ({ pulsate }) => {
+  const { colors } = useAppTheme();
+
+  return (
+    <Animated.View style={styles.quickActionsContainer}>
+      <Text style={[styles.sectionTitle, { color: colors.onSurface }]}>
+        Quick Actions
+      </Text>
+      <View style={styles.quickActionsGrid}>
+        {[...Array(4)].map((_, i) => (
+          <Animated.View
+            key={i}
+            style={[
+              styles.quickActionCard,
+              {
+                backgroundColor: colors.surfaceVariant,
+                width: "48%",
+                height: 100,
+              },
+              pulsate,
+            ]}
+          />
+        ))}
+      </View>
+    </Animated.View>
   );
 };
 

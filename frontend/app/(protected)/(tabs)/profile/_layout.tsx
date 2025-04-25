@@ -1,14 +1,12 @@
 import React from "react";
 import { Stack } from "expo-router";
-import useTheme from "@/src/hooks/useTheme";
+import { useAppTheme } from "@/src/contexts/ThemeContext";
 import { View, StyleSheet, Text } from "react-native";
-import { useTheme as usePaperTheme } from "react-native-paper";
 import Animated, { FadeInDown } from "react-native-reanimated";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
 
 export default function ProfileLayout() {
-  const { colors } = useTheme();
-  const { dark } = usePaperTheme();
+  const { colors, dark } = useAppTheme();
   return (
     <Stack
       screenOptions={{
@@ -55,16 +53,19 @@ export default function ProfileLayout() {
           },
         }}
       />
-      <Stack.Screen name="Settings" />
+      <Stack.Screen name="settings" options={{ headerTitle: "Settings" }} />
       <Stack.Screen
-        name="AccountSettings"
+        name="account-settings"
         options={{ headerTitle: "Account Settings" }}
       />
       <Stack.Screen
-        name="PrivacyPolicy"
+        name="privacy-policy"
         options={{ headerTitle: "Privacy Policy" }}
       />
-      <Stack.Screen name="Preferences" />
+      <Stack.Screen
+        name="preferences"
+        options={{ headerTitle: "Preferences" }}
+      />
     </Stack>
   );
 }

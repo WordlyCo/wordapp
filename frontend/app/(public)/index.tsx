@@ -3,14 +3,14 @@ import React from "react";
 import { View, StyleSheet, Image, ScrollView } from "react-native";
 import { Text, Button } from "react-native-paper";
 import { SafeAreaView } from "react-native-safe-area-context";
-import useTheme from "@/src/hooks/useTheme";
+import { useAppTheme } from "@/src/contexts/ThemeContext";
 import { useAuthNavigation } from "@/src/features/auth/navigation";
 
 WebBrowser.maybeCompleteAuthSession();
 
 export default function WelcomeScreen() {
   const { goToLogin } = useAuthNavigation();
-  const { colors } = useTheme();
+  const { colors } = useAppTheme();
 
   return (
     <SafeAreaView
@@ -79,7 +79,7 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     alignItems: "center",
     gap: 20,
-    minHeight: 600, // Ensures content is centered even on larger screens
+    minHeight: 600,
   },
   title: {
     textAlign: "center",
