@@ -38,8 +38,7 @@ const OptionButton = ({
           {
             backgroundColor: getBackgroundColor(),
             borderWidth: isSelected ? 2 : 0,
-            borderColor: isSelected ? colors.primary : 'transparent',
-            shadowColor: colors.primary,
+            borderColor: isSelected ? colors.primary : "transparent",
           },
         ]}
         elevation={2}
@@ -56,7 +55,7 @@ const OptionButton = ({
 
 const styles = StyleSheet.create({
   container: {
-    width: '100%',
+    width: "100%",
   },
   optionButton: {
     borderRadius: 8,

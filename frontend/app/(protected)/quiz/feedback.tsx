@@ -15,6 +15,7 @@ import { useAppTheme } from "@/src/contexts/ThemeContext";
 import { router } from "expo-router";
 import { useEffect, useState } from "react";
 import { Word } from "@/src/types/words";
+import * as Haptics from "expo-haptics";
 
 const getDifficultyColor = (difficulty: DifficultyLevel, colors: any) => {
   switch (difficulty) {
@@ -104,6 +105,9 @@ const FeedbackScreen = () => {
   const handleNext = async () => {
     const isLastQuestion = currentIndex === quizWords.length - 1;
 
+    // Add haptic feedback for navigation
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+
     if (isLastQuestion) {
       setQuizStats({
         ...quizStats,
@@ -132,6 +136,7 @@ const FeedbackScreen = () => {
                 borderTopWidth: 0,
               },
             ]}
+            elevation={2}
           >
             <Card.Content>
               <View style={styles.feedbackContentContainer}>
@@ -424,6 +429,7 @@ const FeedbackScreen = () => {
                   <Button
                     mode="contained"
                     onPress={() => {
+                      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
                       console.log("WILL IMPLEMENT");
                     }}
                     style={styles.sentencePromptButton}
@@ -469,16 +475,15 @@ export default FeedbackScreen;
 
 const styles = StyleSheet.create({
   container: {
-    marginTop: 20,
     marginBottom: 20,
     padding: 16,
+    paddingTop: 5,
     flex: 1,
   },
   feedbackCard: {
     width: "100%",
     borderRadius: 12,
     marginBottom: 12,
-    elevation: 4,
   },
   wordInfoCard: {
     width: "100%",
@@ -751,7 +756,6 @@ const styles = StyleSheet.create({
     marginLeft: 8,
   },
   cardWrapper: {
-    overflow: "hidden",
     borderRadius: 12,
   },
 });

@@ -60,26 +60,27 @@ class QuizService:
 
     async def get_daily_words_with_quizzes(self, user_id: int) -> List[Dict[str, Any]]:
         query_word_ids = """
-        SELECT w.id
-        FROM words w
-        JOIN word_progress wp ON w.id = wp.word_id
-        JOIN user_lists ul ON ul.list_id = (
-            SELECT lw.list_id 
-            FROM list_words lw 
-            WHERE lw.word_id = w.id
+        WITH RankedWords AS (
+            SELECT 
+                w.id,
+                wp.recognition_mastery_score,
+                wp.updated_at,
+                CASE 
+                    WHEN wp.recognition_mastery_score BETWEEN 1 AND 3 THEN 1
+                    WHEN wp.recognition_mastery_score < 3 THEN 2
+                    ELSE 3
+                END as priority
+            FROM words w
+            JOIN word_progress wp ON w.id = wp.word_id
+            JOIN list_words lw ON w.id = lw.word_id
+            JOIN user_lists ul ON ul.list_id = lw.list_id
+            WHERE wp.user_id = $1
+            AND ul.user_id = $1
+            AND wp.recognition_mastery_score <= 4  -- THRESHOLD FOR WORDS TO BE PRACTICED
         )
-        WHERE wp.user_id = $1
-        AND ul.user_id = $1
-        AND wp.recognition_mastery_score <= 4  -- THRESHOLD FOR WORDS TO BE PRACTICED
-        ORDER BY 
-            -- Prioritize words that need review (low mastery but some practice)
-            CASE 
-                WHEN wp.recognition_mastery_score BETWEEN 1 AND 3 THEN 1
-                WHEN wp.recognition_mastery_score < 3 THEN 2
-                ELSE 3
-            END,
-            -- Then by recency (less recently practiced first)
-            wp.updated_at ASC
+        SELECT DISTINCT id, priority, updated_at
+        FROM RankedWords
+        ORDER BY priority, updated_at ASC
         LIMIT $2;  
         """
 

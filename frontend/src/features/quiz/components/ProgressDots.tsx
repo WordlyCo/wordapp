@@ -1,6 +1,6 @@
-import React, { useEffect, Ref } from 'react';
-import { Animated, View, Text, StyleSheet, ScrollView } from 'react-native';
-import { IconButton } from 'react-native-paper';
+import React, { useEffect, Ref } from "react";
+import { Animated, View, Text, StyleSheet, ScrollView } from "react-native";
+import { IconButton } from "react-native-paper";
 
 type DotStyle = {
   backgroundColor: string;
@@ -30,10 +30,17 @@ const ProgressDots: React.FC<ProgressDotsProps> = ({
   useEffect(() => {
     const DOT_WIDTH = 42; // dot width + margin
     const SCROLL_VIEW_WIDTH = 300; // approximate visible width
-    const scrollToX = Math.max(0, currentIndex * DOT_WIDTH - SCROLL_VIEW_WIDTH / 2 + DOT_WIDTH / 2);
-    
+    const scrollToX = Math.max(
+      0,
+      currentIndex * DOT_WIDTH - SCROLL_VIEW_WIDTH / 2 + DOT_WIDTH / 2
+    );
+
     setTimeout(() => {
-      if (dotsScrollViewRef && 'current' in dotsScrollViewRef && dotsScrollViewRef.current) {
+      if (
+        dotsScrollViewRef &&
+        "current" in dotsScrollViewRef &&
+        dotsScrollViewRef.current
+      ) {
         dotsScrollViewRef.current.scrollTo({
           x: scrollToX,
           animated: true,
@@ -43,27 +50,27 @@ const ProgressDots: React.FC<ProgressDotsProps> = ({
   }, [currentIndex, dotsScrollViewRef]);
 
   return (
-    <ScrollView 
+    <ScrollView
       ref={dotsScrollViewRef}
-      horizontal 
+      horizontal
       showsHorizontalScrollIndicator={false}
       contentContainerStyle={styles.dotsContainer}
     >
       {Array.from({ length: totalDots }).map((_, index) => {
         const isCompleted = index < currentIndex;
         const isCurrent = index === currentIndex;
-        
+
         // Get answer status
         let dotColor = colors.surfaceVariant; // default for unanswered
         let dotIcon = "";
-        
+
         if (isCompleted) {
           // Check if we have a record for this index
           if (answerResults[index] === true) {
-            dotColor = '#4CAF50'; // green for correct
+            dotColor = "#4CAF50"; // green for correct
             dotIcon = "check";
           } else if (answerResults[index] === false) {
-            dotColor = '#F44336'; // red for incorrect
+            dotColor = "#F44336"; // red for incorrect
             dotIcon = "close";
           } else {
             dotColor = colors.secondary; // fallback for completed but unknown result
@@ -71,22 +78,21 @@ const ProgressDots: React.FC<ProgressDotsProps> = ({
         } else if (isCurrent) {
           dotColor = colors.primary;
         }
-        
+
         // Build the style based on status
         const dotStyle: DotStyle = {
           backgroundColor: dotColor,
           ...(isCompleted ? { transform: [{ scale: 0.8 }] } : {}),
-          ...(isCurrent ? { 
-            borderWidth: 2, 
-            borderColor: colors.primaryContainer,
-          } : {})
+          ...(isCurrent
+            ? {
+                borderWidth: 2,
+                borderColor: colors.primaryContainer,
+              }
+            : {}),
         };
-        
+
         return (
-          <View 
-            key={index} 
-            style={[styles.dot, dotStyle]}
-          >
+          <View key={index} style={[styles.dot, dotStyle]}>
             {isCompleted && dotIcon && (
               <Animated.View>
                 <IconButton
@@ -101,11 +107,11 @@ const ProgressDots: React.FC<ProgressDotsProps> = ({
               <Animated.View
                 style={{
                   transform: [{ scale: pulseAnim }],
-                  position: 'absolute',
-                  width: '100%',
-                  height: '100%',
-                  justifyContent: 'center',
-                  alignItems: 'center',
+                  position: "absolute",
+                  width: "100%",
+                  height: "100%",
+                  justifyContent: "center",
+                  alignItems: "center",
                 }}
               >
                 <Text style={styles.currentDotText}>{index + 1}</Text>
@@ -150,4 +156,4 @@ const styles = StyleSheet.create({
   },
 });
 
-export default ProgressDots; 
+export default ProgressDots;
