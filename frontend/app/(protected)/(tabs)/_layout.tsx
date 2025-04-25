@@ -5,6 +5,7 @@ import { MaterialCommunityIcons } from "@expo/vector-icons";
 import { useAppTheme } from "@/src/contexts/ThemeContext";
 import Animated, { FadeInDown } from "react-native-reanimated";
 import { SafeAreaView } from "react-native-safe-area-context";
+import * as Haptics from "expo-haptics";
 
 export default function AppLayout() {
   const { colors, dark } = useAppTheme();
@@ -36,7 +37,18 @@ export default function AppLayout() {
             fontSize: 12,
             paddingBottom: 4,
           },
-
+          tabBarButton: (props) => {
+            const { onPress, ...rest } = props;
+            return (
+              <View
+                {...rest}
+                onTouchEnd={(event) => {
+                  Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                  onPress?.(event);
+                }}
+              />
+            );
+          },
           tabBarIcon: ({ color, focused }) => {
             let iconName: any;
 

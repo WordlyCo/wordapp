@@ -5,6 +5,7 @@ import { useAppTheme } from "@/src/contexts/ThemeContext";
 import React, { useEffect, useRef, useState } from "react";
 import { router } from "expo-router";
 import { DIFFICULTY_LEVELS } from "@/src/stores/enums";
+import * as Haptics from "expo-haptics";
 
 type TimeType = {
   seconds: number;
@@ -98,6 +99,7 @@ const SummaryScreen = () => {
   }, []);
 
   const playAgain = async () => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
     await fetchDailyQuiz();
     setQuizStats({
       score: 0,
@@ -114,6 +116,7 @@ const SummaryScreen = () => {
   };
 
   const goHome = () => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     router.replace({
       pathname: "/(protected)/(tabs)/home",
     });
@@ -138,7 +141,7 @@ const SummaryScreen = () => {
       <Animated.View style={[styles.contentContainer, { opacity: fadeAnim }]}>
         <View style={styles.cardWrapper}>
           <Card
-            style={[styles.summaryCard, { backgroundColor: colors.surface }]}
+            style={[styles.summaryCard, { backgroundColor: colors.background }]}
             elevation={4}
           >
             <View style={styles.confettiContainer}>

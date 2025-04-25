@@ -55,6 +55,11 @@ export const WordListCard = ({
         <IconButton
           icon={list.inUsersBank ? "check" : "plus"}
           iconColor={colors.onSurfaceVariant}
+          style={{
+            backgroundColor: list.inUsersBank
+              ? colors.secondary
+              : "transparent",
+          }}
           onPress={onAddToListPress}
           size={20}
         />
@@ -65,7 +70,10 @@ export const WordListCard = ({
       return (
         <IconButton
           icon={list.isFavorite ? "heart" : "heart-outline"}
-          iconColor={colors.onSurfaceVariant}
+          style={{
+            backgroundColor: list.isFavorite ? colors.primary : "transparent",
+          }}
+          iconColor={list.isFavorite ? colors.error : colors.onSurfaceVariant}
           onPress={onFavoritePress}
           size={20}
         />

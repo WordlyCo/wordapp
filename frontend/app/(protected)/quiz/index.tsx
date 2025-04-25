@@ -1,4 +1,10 @@
-import { Animated, View, Text, StyleSheet, ScrollView } from "react-native";
+import {
+  Animated as RNAnimated,
+  View,
+  Text,
+  StyleSheet,
+  ScrollView,
+} from "react-native";
 import {
   Card,
   IconButton,
@@ -7,6 +13,9 @@ import {
   FAB,
   Portal,
 } from "react-native-paper";
+import Animated, { FadeIn, FadeOut } from "react-native-reanimated";
+import * as Haptics from "expo-haptics";
+
 import React, { useEffect, useState, useRef } from "react";
 import { OptionButton, ProgressDots } from "@/src/features/quiz/components";
 import { shuffleArray } from "@/lib/utils";
@@ -20,9 +29,9 @@ import Ionicons from "@expo/vector-icons/Ionicons";
 const QuestionScreen: React.FC = () => {
   const { colors } = useAppTheme();
   const [randomizedOptions, setRandomizedOptions] = useState<string[]>([]);
-  const fadeAnim = useRef(new Animated.Value(0)).current;
-  const slideAnim = useRef(new Animated.Value(20)).current;
-  const pulseAnim = useRef(new Animated.Value(1)).current;
+  const fadeAnim = useRef(new RNAnimated.Value(0)).current;
+  const slideAnim = useRef(new RNAnimated.Value(20)).current;
+  const pulseAnim = useRef(new RNAnimated.Value(1)).current;
   const dotsScrollViewRef = useRef<ScrollView>(null);
 
   const quizWords = useStore((state) => state.quizWords);
@@ -62,13 +71,13 @@ const QuestionScreen: React.FC = () => {
       fadeAnim.setValue(0);
       slideAnim.setValue(20);
 
-      Animated.parallel([
-        Animated.timing(fadeAnim, {
+      RNAnimated.parallel([
+        RNAnimated.timing(fadeAnim, {
           toValue: 1,
           duration: 400,
           useNativeDriver: true,
         }),
-        Animated.timing(slideAnim, {
+        RNAnimated.timing(slideAnim, {
           toValue: 0,
           duration: 400,
           useNativeDriver: true,
@@ -78,14 +87,14 @@ const QuestionScreen: React.FC = () => {
   }, [currentWord, currentIndex, setRandomizedOptions]);
 
   useEffect(() => {
-    Animated.loop(
-      Animated.sequence([
-        Animated.timing(pulseAnim, {
+    RNAnimated.loop(
+      RNAnimated.sequence([
+        RNAnimated.timing(pulseAnim, {
           toValue: 1.2,
           duration: 800,
           useNativeDriver: true,
         }),
-        Animated.timing(pulseAnim, {
+        RNAnimated.timing(pulseAnim, {
           toValue: 1,
           duration: 800,
           useNativeDriver: true,
@@ -151,6 +160,12 @@ const QuestionScreen: React.FC = () => {
 
   const handleAnswer = async (answer: string) => {
     const isCorrect = !!currentWord?.quiz?.correctOptions.includes(answer);
+
+    if (isCorrect) {
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+    } else {
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
+    }
 
     const updatedAnswerResults = { ...answerResults };
     updatedAnswerResults[currentIndex] = isCorrect;
@@ -240,7 +255,7 @@ const QuestionScreen: React.FC = () => {
         showsVerticalScrollIndicator={false}
       >
         <View style={styles.questionContainer}>
-          <Animated.View
+          <RNAnimated.View
             style={{
               opacity: fadeAnim,
               transform: [{ translateY: slideAnim }],
@@ -251,10 +266,9 @@ const QuestionScreen: React.FC = () => {
                 styles.card,
                 {
                   backgroundColor: colors.surface,
-                  shadowColor: colors.primary,
                 },
               ]}
-              elevation={4}
+              elevation={2}
             >
               <View style={styles.cardWrapper}>
                 <View style={styles.questionIconContainer}>
@@ -268,7 +282,7 @@ const QuestionScreen: React.FC = () => {
                   <Text
                     style={[styles.questionLabel, { color: colors.primary }]}
                   >
-                    Question:
+                    Question
                   </Text>
                   <Text
                     style={[styles.questionText, { color: colors.onSurface }]}
@@ -282,14 +296,14 @@ const QuestionScreen: React.FC = () => {
             <View style={styles.optionsContainer}>
               {randomizedOptions.map((option: string, index: number) => (
                 <View key={index}>
-                  <Animated.View
+                  <RNAnimated.View
                     style={{
                       opacity: fadeAnim,
                       transform: [
                         {
-                          translateY: Animated.multiply(
+                          translateY: RNAnimated.multiply(
                             slideAnim,
-                            new Animated.Value(1 + index * 0.3)
+                            new RNAnimated.Value(1 + index * 0.3)
                           ),
                         },
                       ],
@@ -308,22 +322,31 @@ const QuestionScreen: React.FC = () => {
                     >
                       {option}
                     </OptionButton>
-                  </Animated.View>
+                  </RNAnimated.View>
                 </View>
               ))}
             </View>
-          </Animated.View>
+          </RNAnimated.View>
         </View>
       </ScrollView>
 
       <Portal>
-        <FAB
-          icon="arrow-left"
-          style={[styles.fab, {}]}
-          onPress={() => router.back()}
-          color={"white"}
-          uppercase={false}
-        />
+        <Animated.View
+          style={styles.fab}
+          entering={FadeIn.duration(400).springify()}
+          exiting={FadeOut.duration(20).springify()}
+        >
+          <FAB
+            icon="arrow-left"
+            style={[styles.fab, { backgroundColor: colors.primary }]}
+            onPress={() => {
+              Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+              router.back();
+            }}
+            color={"white"}
+            uppercase={false}
+          />
+        </Animated.View>
       </Portal>
     </View>
   );

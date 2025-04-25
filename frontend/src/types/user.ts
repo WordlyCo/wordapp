@@ -10,6 +10,7 @@ export type User = BaseEntity & {
   lastName?: string;
   clerkId?: string;
   profilePictureUrl?: string;
+  bio?: string;
   preferences?: UserPreferences;
   userStats?: FullUserStats;
 };

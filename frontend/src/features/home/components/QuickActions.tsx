@@ -12,6 +12,7 @@ interface QuickAction {
   title: string;
   icon: string;
   route: string;
+  isNew?: boolean;
   lightColor: {
     background: string;
     text: string;
@@ -58,10 +59,11 @@ const QUICK_ACTIONS: QuickAction[] = [
     },
   },
   {
-    id: "review",
-    title: "Review",
-    icon: "refresh",
-    route: "/(protected)/quiz",
+    id: "legit",
+    title: "Cap or No Cap?",
+    icon: "scale-balance",
+    route: "/(protected)/legit",
+    isNew: true,
     lightColor: {
       background: "#f59e0b",
       text: "#ffffff",
@@ -133,6 +135,11 @@ const QuickActions: React.FC<QuickActionsProps> = ({
                     ]}
                     elevation={2}
                   >
+                    {action.isNew && (
+                      <View style={styles.newBadgeContainer}>
+                        <Text style={styles.newBadgeText}>NEW</Text>
+                      </View>
+                    )}
                     <View style={styles.quickActionWrapper}>
                       <Button
                         mode="contained"
@@ -143,7 +150,11 @@ const QuickActions: React.FC<QuickActionsProps> = ({
                             backgroundColor: "transparent",
                           },
                         ]}
-                        icon={action.icon}
+                        icon={
+                          action.id === "legit"
+                            ? () => <Text style={{ fontSize: 20 }}>🧢</Text>
+                            : action.icon
+                        }
                         contentStyle={styles.quickActionContent}
                         labelStyle={[
                           styles.quickActionLabel,
@@ -237,6 +248,22 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: "600",
     marginTop: 12,
+  },
+  newBadgeContainer: {
+    position: "absolute",
+    top: 0,
+    right: 0,
+    backgroundColor: "#ef4444",
+    paddingHorizontal: 8,
+    paddingVertical: 2,
+    borderTopRightRadius: 16,
+    borderBottomLeftRadius: 8,
+    zIndex: 10,
+  },
+  newBadgeText: {
+    color: "white",
+    fontSize: 10,
+    fontWeight: "bold",
   },
 });
 

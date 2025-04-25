@@ -119,8 +119,24 @@ const ProfileScreen = () => {
                   {user?.email}
                 </Text>
 
+                {/* Bio Section */}
+                <View style={styles.bioContainer}>
+                  <Text
+                    style={[
+                      styles.bioLabel,
+                      { color: colors.onSurfaceVariant },
+                    ]}
+                  >
+                    About Me
+                  </Text>
+                  <Text style={[styles.bioText, { color: colors.onSurface }]}>
+                    {user?.bio ||
+                      "No bio yet. Add one to let others know more about you!"}
+                  </Text>
+                </View>
+
                 {/* User Stats */}
-                <View style={styles.statsContainer}>
+                {/* <View style={styles.statsContainer}>
                   <View style={styles.statItem}>
                     <Text
                       style={[styles.statNumber, { color: colors.primary }]}
@@ -151,7 +167,7 @@ const ProfileScreen = () => {
                       Following
                     </Text>
                   </View>
-                </View>
+                </View> */}
 
                 {/* Action Buttons */}
                 <View style={styles.actionContainer}>
@@ -323,6 +339,24 @@ const styles = StyleSheet.create({
   },
   card: {
     paddingBottom: 10,
+  },
+  bioContainer: {
+    width: "100%",
+    marginVertical: 15,
+    paddingHorizontal: 20,
+  },
+  bioLabel: {
+    fontSize: 14,
+    fontWeight: "500",
+    marginBottom: 8,
+    textTransform: "uppercase",
+    letterSpacing: 0.5,
+  },
+  bioText: {
+    fontSize: 15,
+    lineHeight: 22,
+    textAlign: "left",
+    fontStyle: "italic",
   },
 });
 
