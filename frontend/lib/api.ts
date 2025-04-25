@@ -82,7 +82,12 @@ export const authFetch = async (
     const token = await getToken();
 
     if (!token) {
-      throw new Error("No token found. Please sign in again.");
+      return Promise.resolve({
+        status: 401,
+        ok: false,
+        json: () =>
+          Promise.resolve({ error: "No token found. Please sign in again." }),
+      } as Response);
     }
 
     const headers = {

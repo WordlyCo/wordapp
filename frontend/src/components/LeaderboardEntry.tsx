@@ -1,7 +1,7 @@
 import React from "react";
 import { View, StyleSheet } from "react-native";
 import { Text, Surface, Avatar } from "react-native-paper";
-import useTheme from "@/src/hooks/useTheme";
+import { useAppTheme } from "@/src/contexts/ThemeContext";
 
 type Props = {
   entry: {
@@ -14,7 +14,7 @@ type Props = {
 };
 
 const LeaderboardEntry = ({ entry, rank }: Props) => {
-  const { colors } = useTheme();
+  const { colors } = useAppTheme();
 
   return (
     <Surface

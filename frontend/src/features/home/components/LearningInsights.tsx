@@ -1,27 +1,35 @@
 import React from "react";
-import { View, StyleSheet } from "react-native";
+import { View, StyleSheet, Dimensions } from "react-native";
 import { Text } from "react-native-paper";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
-import Animated, { FadeInDown } from "react-native-reanimated";
+import Animated from "react-native-reanimated";
+import { useAppTheme } from "@/src/contexts/ThemeContext";
 
 interface LearningInsightsProps {
-  colors: any;
   streak: number;
   wordsMastered: number;
   accuracy: number;
   diamonds?: number;
+  isLoading?: boolean;
+  pulsate?: any;
 }
 
 const LearningInsights: React.FC<LearningInsightsProps> = ({
-  colors,
   streak = 3,
   wordsMastered = 42,
   accuracy = 85,
   diamonds = 0,
+  isLoading = false,
+  pulsate = null,
 }) => {
+  const { colors } = useAppTheme();
+
+  if (isLoading) {
+    return <InsightsSkeleton pulsate={pulsate} />;
+  }
+
   return (
     <Animated.View
-      entering={FadeInDown.delay(400).duration(600).springify()}
       style={[styles.insightsCard, { backgroundColor: colors.surfaceVariant }]}
     >
       <View style={styles.insightsContent}>
@@ -138,5 +146,35 @@ const styles = StyleSheet.create({
     textAlign: "center",
   },
 });
+
+const InsightsSkeleton: React.FC<{ pulsate?: any }> = ({ pulsate }) => {
+  const { colors } = useAppTheme();
+
+  return (
+    <Animated.View
+      style={[
+        styles.insightsCard,
+        { backgroundColor: colors.surfaceVariant },
+        pulsate,
+      ]}
+    >
+      <View style={styles.insightsContent}>
+        {[...Array(4)].map((_, i) => (
+          <Animated.View
+            key={i}
+            style={[
+              {
+                width: (Dimensions.get("window").width - 32) / 4 - 8,
+                height: 65,
+                borderRadius: 8,
+                marginBottom: 8,
+              },
+            ]}
+          />
+        ))}
+      </View>
+    </Animated.View>
+  );
+};
 
 export default LearningInsights;

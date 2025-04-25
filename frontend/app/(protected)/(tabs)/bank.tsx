@@ -10,7 +10,7 @@ import {
   Button,
   ActivityIndicator,
 } from "react-native-paper";
-import useTheme from "@/src/hooks/useTheme";
+import { useAppTheme } from "@/src/contexts/ThemeContext";
 import { useStore } from "@/src/stores/store";
 import { WordListCard } from "@/src/components/WordListCard";
 import Animated, {
@@ -32,7 +32,7 @@ const FILTERS = [
 
 export default function BankScreen() {
   const router = useRouter();
-  const { colors } = useTheme();
+  const { colors } = useAppTheme();
   const { userLists, fetchUserLists, isFetchingUserLists } = useStore();
   const updateFavoriteStatus = useStore(
     (state) => state.updateListFavoriteStatus

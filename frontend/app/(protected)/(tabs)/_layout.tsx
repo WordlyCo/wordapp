@@ -2,14 +2,12 @@ import React from "react";
 import { StyleSheet, View, Text, Platform } from "react-native";
 import { Tabs } from "expo-router";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
-import useTheme from "@/src/hooks/useTheme";
-import { useTheme as usePaperTheme } from "react-native-paper";
+import { useAppTheme } from "@/src/contexts/ThemeContext";
 import Animated, { FadeInDown } from "react-native-reanimated";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 export default function AppLayout() {
-  const { colors } = useTheme();
-  const { dark } = usePaperTheme();
+  const { colors, dark } = useAppTheme();
 
   return (
     <View style={{ flex: 1 }}>

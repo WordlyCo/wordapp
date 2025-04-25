@@ -10,10 +10,10 @@ import {
 } from "react-native";
 import { Text, Button, TextInput, Divider } from "react-native-paper";
 import { SafeAreaView } from "react-native-safe-area-context";
-import useTheme from "@/src/hooks/useTheme";
+import { useAppTheme } from "@/src/contexts/ThemeContext";
 import { useSignUp, useSSO } from "@clerk/clerk-expo";
 import { useAuthNavigation } from "@/src/features/auth/navigation";
-import Toast from "react-native-toast-message";
+import { CustomSnackbar } from "@/src/components/CustomSnackbar";
 
 WebBrowser.maybeCompleteAuthSession();
 
@@ -38,7 +38,12 @@ export default function RegisterScreen() {
   const [username, setUsername] = useState<string>("");
   const [pendingVerification, setPendingVerification] = useState(false);
   const [verificationCode, setVerificationCode] = useState("");
-  const { colors } = useTheme();
+  const { colors } = useAppTheme();
+  const [snackbarVisible, setSnackbarVisible] = useState(false);
+  const [snackbarMessage, setSnackbarMessage] = useState("");
+  const [snackbarType, setSnackbarType] = useState<"success" | "error">(
+    "success"
+  );
 
   const validateEmail = (email: string) => {
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -54,39 +59,32 @@ export default function RegisterScreen() {
     if (!isSignUpLoaded) return;
 
     if (!email || !password || !username) {
-      Toast.show({
-        type: "error",
-        text1: "Missing Information",
-        text2: "Please fill in all required fields.",
-      });
+      setSnackbarMessage("Please fill in all required fields.");
+      setSnackbarType("error");
+      setSnackbarVisible(true);
       return;
     }
 
     if (!validateEmail(email)) {
-      Toast.show({
-        type: "error",
-        text1: "Invalid Email",
-        text2: "Please enter a valid email address.",
-      });
+      setSnackbarMessage("Please enter a valid email address.");
+      setSnackbarType("error");
+      setSnackbarVisible(true);
       return;
     }
 
     if (!validatePassword(password)) {
-      Toast.show({
-        type: "error",
-        text1: "Invalid Password",
-        text2:
-          "Password must be at least 8 characters long and contain at least one uppercase letter.",
-      });
+      setSnackbarMessage(
+        "Password must be at least 8 characters long and contain at least one uppercase letter."
+      );
+      setSnackbarType("error");
+      setSnackbarVisible(true);
       return;
     }
 
     if (password !== confirmPassword) {
-      Toast.show({
-        type: "error",
-        text1: "Password Mismatch",
-        text2: "Passwords do not match.",
-      });
+      setSnackbarMessage("Passwords do not match.");
+      setSnackbarType("error");
+      setSnackbarVisible(true);
       return;
     }
 
@@ -100,17 +98,15 @@ export default function RegisterScreen() {
       await signUp.prepareEmailAddressVerification({ strategy: "email_code" });
 
       setPendingVerification(true);
-      Toast.show({
-        type: "success",
-        text1: "Registration Successful",
-        text2: "Please verify your email address",
-      });
+      setSnackbarMessage("Please verify your email address");
+      setSnackbarType("success");
+      setSnackbarVisible(true);
     } catch (error) {
-      Toast.show({
-        type: "error",
-        text1: "Registration Failed",
-        text2: error instanceof Error ? error.message : String(error),
-      });
+      setSnackbarMessage(
+        error instanceof Error ? error.message : String(error)
+      );
+      setSnackbarType("error");
+      setSnackbarVisible(true);
     }
   };
 
@@ -124,60 +120,50 @@ export default function RegisterScreen() {
 
       if (signUpAttempt.status === "complete") {
         await setSignUpActive({ session: signUpAttempt.createdSessionId });
-        Toast.show({
-          type: "success",
-          text1: "Email Verified",
-          text2: "Your account is now verified",
-        });
+        setSnackbarMessage("Your account is now verified");
+        setSnackbarType("success");
+        setSnackbarVisible(true);
         goToOnboarding();
       } else {
-        Toast.show({
-          type: "error",
-          text1: "Verification Failed",
-          text2: "Please try again.",
-        });
+        setSnackbarMessage("Please try again.");
+        setSnackbarType("error");
+        setSnackbarVisible(true);
       }
     } catch (error) {
-      Toast.show({
-        type: "error",
-        text1: "Verification Failed",
-        text2: error instanceof Error ? error.message : String(error),
-      });
+      setSnackbarMessage(
+        error instanceof Error ? error.message : String(error)
+      );
+      setSnackbarType("error");
+      setSnackbarVisible(true);
     }
   };
 
   const handleOAuthSignIn = async (provider: "google" | "apple") => {
     try {
-      // start SSO flow for chosen strategy
       const result = await startSSOFlow({
         strategy: `oauth_${provider}`,
       });
 
       if (result && result.createdSessionId) {
         await result.setActive?.({ session: result.createdSessionId });
-        Toast.show({
-          type: "success",
-          text1: `${
-            provider.charAt(0).toUpperCase() + provider.slice(1)
-          } Sign-in Successful`,
-          text2: "Welcome!",
-        });
+        setSnackbarMessage("Welcome!");
+        setSnackbarType("success");
+        setSnackbarVisible(true);
       } else {
-        Toast.show({
-          type: "error",
-          text1: `${
+        setSnackbarMessage(
+          `${
             provider.charAt(0).toUpperCase() + provider.slice(1)
-          } Sign-in Incomplete`,
-        });
+          } Sign-in Incomplete`
+        );
+        setSnackbarType("error");
+        setSnackbarVisible(true);
       }
     } catch (error) {
-      Toast.show({
-        type: "error",
-        text1: `${
-          provider.charAt(0).toUpperCase() + provider.slice(1)
-        } Sign-in Failed`,
-        text2: error instanceof Error ? error.message : String(error),
-      });
+      setSnackbarMessage(
+        error instanceof Error ? error.message : String(error)
+      );
+      setSnackbarType("error");
+      setSnackbarVisible(true);
     }
   };
 
@@ -377,6 +363,12 @@ export default function RegisterScreen() {
           </View>
         </ScrollView>
       </KeyboardAvoidingView>
+      <CustomSnackbar
+        visible={snackbarVisible}
+        message={snackbarMessage}
+        type={snackbarType}
+        onDismiss={() => setSnackbarVisible(false)}
+      />
     </SafeAreaView>
   );
 }

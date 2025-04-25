@@ -1,10 +1,10 @@
-import React, { useState } from "react";
-import { View, StyleSheet, TouchableOpacity } from "react-native";
+import { getColorWithOpacity, getPartOfSpeechColor } from "@/lib/utils";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
-import { Text, Card, ProgressBar } from "react-native-paper";
 import * as Speech from "expo-speech";
+import React, { useState } from "react";
+import { StyleSheet, TouchableOpacity, View } from "react-native";
+import { Card, ProgressBar, Text } from "react-native-paper";
 import Animated, { FadeInRight } from "react-native-reanimated";
-import { getPartOfSpeechColor, getColorWithOpacity } from "@/lib/utils";
 export interface WordProgressCardProps {
   item: any;
   index: number;
@@ -245,6 +245,7 @@ export const WordProgressCard: React.FC<WordProgressCardProps> = ({
 const styles = StyleSheet.create({
   cardContainer: {
     marginBottom: 10,
+    paddingHorizontal: 16,
   },
   cardWrapper: {
     borderRadius: 12,

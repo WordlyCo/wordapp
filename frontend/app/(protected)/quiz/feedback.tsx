@@ -11,7 +11,7 @@ import {
 import { View, StyleSheet, ScrollView } from "react-native";
 import { DifficultyLevel, DIFFICULTY_LEVELS } from "@/src/types/enums";
 import { useStore } from "@/src/stores/store";
-import useTheme from "@/src/hooks/useTheme";
+import { useAppTheme } from "@/src/contexts/ThemeContext";
 import { router } from "expo-router";
 import { useEffect, useState } from "react";
 import { Word } from "@/src/types/words";
@@ -72,7 +72,7 @@ const getDifficultyIcon = (difficulty: DifficultyLevel): string => {
 };
 
 const FeedbackScreen = () => {
-  const { colors } = useTheme();
+  const { colors } = useAppTheme();
   const quizWords = useStore((state) => state.quizWords);
   const currentIndex = useStore((state) => state.quizStats.currentIndex);
   const selectedAnswer = useStore((state) => state.quizStats.selectedAnswer);

@@ -1,4 +1,4 @@
-import useTheme from "@/src/hooks/useTheme";
+import { useAppTheme } from "@/src/contexts/ThemeContext";
 import MaterialCommunityIcons from "@expo/vector-icons/build/MaterialCommunityIcons";
 import React from "react";
 import {
@@ -14,7 +14,7 @@ import { router } from "expo-router";
 import { useStore } from "@/src/stores/store";
 
 const PrivacyPolicyScreen = () => {
-  const { colors } = useTheme();
+  const { colors } = useAppTheme();
   const { user } = useUser();
   const setHasOnboarded = useStore((state) => state.setHasOnboarded);
   const handleDeleteAccount = async () => {

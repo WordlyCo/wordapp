@@ -8,7 +8,7 @@ import {
   Button,
 } from "react-native-paper";
 import { useRouter } from "expo-router";
-import useTheme from "@/src/hooks/useTheme";
+import { useAppTheme } from "@/src/contexts/ThemeContext";
 import { useStore } from "@/src/stores/store";
 import { WordListCard } from "@/src/components/WordListCard";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
@@ -28,7 +28,7 @@ type ViewMode = "browse" | "search";
 export default function StoreScreen() {
   const router = useRouter();
   const scrollY = useSharedValue(0);
-  const { colors } = useTheme();
+  const { colors } = useAppTheme();
   const {
     wordLists,
     wordListPageInfo,

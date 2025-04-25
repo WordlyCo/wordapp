@@ -1,6 +1,6 @@
 import { View, StyleSheet, Image } from "react-native";
 import { Text, Card, IconButton } from "react-native-paper";
-import useTheme from "@/src/hooks/useTheme";
+import { useAppTheme } from "@/src/contexts/ThemeContext";
 import { WordList } from "@/src/types/lists";
 import MaterialCommunityIcons from "@expo/vector-icons/MaterialCommunityIcons";
 import { DIFFICULTY_LEVELS } from "@/src/stores/enums";
@@ -44,7 +44,7 @@ export const WordListCard = ({
   shouldShowAddToListButton?: boolean;
   onAddToListPress?: () => void;
 }) => {
-  const { colors } = useTheme();
+  const { colors } = useAppTheme();
   const difficultyColor = getDifficultyColor(list.difficultyLevel, colors);
 
   const categoryIcon = getCategoryIcon(list.imageUrl || "");

@@ -2,7 +2,7 @@ import React from "react";
 import { Animated, StyleSheet, View } from "react-native";
 import { Card, Text, Avatar } from "react-native-paper";
 import { CARD_HEIGHT, SCROLL_DISTANCE_PER_CARD } from "@/src/stores/enums";
-import useTheme from "@/src/hooks/useTheme";
+import { useAppTheme } from "@/src/contexts/ThemeContext";
 
 interface CardData {
   id: string;
@@ -20,7 +20,7 @@ const AnimatedCard = ({
   scrollY: Animated.Value;
   index: number;
 }) => {
-  const { colors } = useTheme();
+  const { colors } = useAppTheme();
   const animatedValue = scrollY.interpolate({
     inputRange: [
       -SCROLL_DISTANCE_PER_CARD,

@@ -100,7 +100,7 @@ export type WordList = BaseEntity & {
   words: Word[];
 };
 
-export type TopFiveUsers = BaseEntity & {
+export type TopFiveUser = BaseEntity & {
   id: string;
   username: string;
   profilePictureUrl: string;
