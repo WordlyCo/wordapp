@@ -1,3 +1,4 @@
+import { router } from "expo-router";
 import React, { useEffect, useRef } from "react";
 import { StyleSheet, View, ScrollView, Animated } from "react-native";
 import { Text, IconButton } from "react-native-paper";
@@ -107,8 +108,13 @@ const ProgressTracker: React.FC<ProgressTrackerProps> = ({
   };
 
   return (
-    <View style={styles.container}>
+    <View>
       <View style={styles.statsContainer}>
+        <IconButton
+          icon="close"
+          onPress={() => router.back()}
+          style={{ marginRight: 10, marginLeft: 0 }}
+        />
         <Text style={{ color: colors.onSurface }}>
           Word {currentIndex + 1} of {totalItems}
         </Text>
@@ -130,14 +136,12 @@ const ProgressTracker: React.FC<ProgressTrackerProps> = ({
 };
 
 const styles = StyleSheet.create({
-  container: {
-    marginVertical: 10,
-  },
   statsContainer: {
     flexDirection: "row",
     justifyContent: "space-between",
-    paddingHorizontal: 16,
     marginBottom: 8,
+    paddingHorizontal: 16,
+    alignItems: "center",
   },
   dotsContainer: {
     flexDirection: "row",

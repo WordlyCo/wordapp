@@ -1,21 +1,12 @@
-import React, {
-  useEffect,
-  useMemo,
-  useImperativeHandle,
-  forwardRef,
-} from "react";
+import React, { useMemo, useImperativeHandle, forwardRef } from "react";
 import { StyleSheet, View, Dimensions } from "react-native";
 import { Card, Text } from "react-native-paper";
-import { PanGestureHandler } from "react-native-gesture-handler";
 import Animated, {
-  useAnimatedGestureHandler,
   useAnimatedStyle,
-  useSharedValue,
   withSpring,
-  runOnJS,
   interpolate,
   Extrapolate,
-  useDerivedValue,
+  SharedValue,
 } from "react-native-reanimated";
 import { CAP_EMOJIS, LEGIT_EMOJIS } from "./EmojiExplosion";
 
@@ -34,7 +25,7 @@ const SPRING_CONFIG = {
 type SwipeCardProps = {
   word: string;
   definition: string;
-  onSwipe: (direction: "left" | "right") => void;
+  translateX: SharedValue<number>;
   colors: any;
 };
 
@@ -44,16 +35,23 @@ export type SwipeCardRef = {
 };
 
 const SwipeCard = forwardRef<SwipeCardRef, SwipeCardProps>(
-  ({ word, definition, onSwipe, colors }, ref) => {
-    const translateX = useSharedValue(0);
-
-    useEffect(() => {
-      translateX.value = 0;
-    }, [word, definition]);
-
-    const rotation = useDerivedValue(() => {
-      return (translateX.value / SCREEN_WIDTH) * 15;
-    });
+  ({ word, definition, colors, translateX }, ref) => {
+    useImperativeHandle(ref, () => ({
+      swipeLeft: () => {
+        translateX.value = withSpring(-SCREEN_WIDTH * 1.5, {
+          ...SPRING_CONFIG,
+          stiffness: 400,
+          damping: 10,
+        });
+      },
+      swipeRight: () => {
+        translateX.value = withSpring(SCREEN_WIDTH * 1.5, {
+          ...SPRING_CONFIG,
+          stiffness: 400,
+          damping: 10,
+        });
+      },
+    }));
 
     const randomEmojis = useMemo(() => {
       const getRandomEmoji = (emojiList: string[]) => {
@@ -65,64 +63,7 @@ const SwipeCard = forwardRef<SwipeCardRef, SwipeCardProps>(
         cap: getRandomEmoji(CAP_EMOJIS),
         legit: getRandomEmoji(LEGIT_EMOJIS),
       };
-    }, [word]); // Re-randomize when word changes
-
-    const animateSwipe = (direction: "left" | "right") => {
-      const toX = direction === "right" ? SCREEN_WIDTH : -SCREEN_WIDTH;
-      translateX.value = withSpring(toX, SPRING_CONFIG, () => {
-        runOnJS(onSwipe)(direction);
-      });
-    };
-
-    // Expose methods via ref
-    useImperativeHandle(ref, () => ({
-      swipeLeft: () => animateSwipe("left"),
-      swipeRight: () => animateSwipe("right"),
-    }));
-
-    const gestureHandler = useAnimatedGestureHandler({
-      onStart: (_, ctx: any) => {
-        ctx.startX = translateX.value;
-      },
-      onActive: (event, ctx: any) => {
-        translateX.value = ctx.startX + event.translationX;
-      },
-      onEnd: (event) => {
-        // Check velocity for more responsive swipes
-        const shouldDismissLeft =
-          translateX.value < -SWIPE_THRESHOLD || event.velocityX < -800;
-
-        const shouldDismissRight =
-          translateX.value > SWIPE_THRESHOLD || event.velocityX > 800;
-
-        if (shouldDismissLeft || shouldDismissRight) {
-          const toX = shouldDismissRight ? SCREEN_WIDTH : -SCREEN_WIDTH;
-          translateX.value = withSpring(toX, SPRING_CONFIG, () => {
-            runOnJS(onSwipe)(shouldDismissRight ? "right" : "left");
-          });
-        } else {
-          translateX.value = withSpring(0, SPRING_CONFIG);
-        }
-      },
-    });
-
-    const cardStyle = useAnimatedStyle(() => {
-      const rotateValue = `${rotation.value}deg`;
-      const scale = interpolate(
-        Math.abs(translateX.value),
-        [0, SWIPE_THRESHOLD],
-        [1, 1.05],
-        Extrapolate.CLAMP
-      );
-
-      return {
-        transform: [
-          { translateX: translateX.value },
-          { rotate: rotateValue },
-          { scale },
-        ],
-      };
-    });
+    }, [word]);
 
     const leftIndicatorStyle = useAnimatedStyle(() => {
       const opacity = interpolate(
@@ -144,34 +85,56 @@ const SwipeCard = forwardRef<SwipeCardRef, SwipeCardProps>(
       return { opacity };
     });
 
-    return (
-      <PanGestureHandler onGestureEvent={gestureHandler}>
-        <Animated.View style={[styles.cardContainer, cardStyle]}>
-          <Card
-            style={[styles.card, { backgroundColor: colors.surface }]}
-            elevation={5}
-          >
-            <Card.Content style={styles.cardContent}>
-              <Text
-                variant="headlineMedium"
-                style={[styles.word, { color: colors.primary }]}
-              >
-                {word}
-              </Text>
-              <View style={styles.definitionContainer}>
-                <Text style={[styles.definition, { color: colors.onSurface }]}>
-                  {definition}
-                </Text>
-              </View>
-            </Card.Content>
-          </Card>
+    const cardAnimatedStyle = useAnimatedStyle(() => {
+      const rotation = (translateX.value / SCREEN_WIDTH) * 15;
 
-          {/* Swipe direction indicators */}
+      const scale = interpolate(
+        Math.abs(translateX.value),
+        [0, SWIPE_THRESHOLD],
+        [1, 1.05],
+        Extrapolate.CLAMP
+      );
+
+      return {
+        transform: [
+          { translateX: translateX.value },
+          { rotate: `${rotation}deg` },
+          { scale },
+        ],
+      };
+    });
+
+    return (
+      <Animated.View style={[styles.cardContainer, cardAnimatedStyle]}>
+        <Card
+          style={[styles.card, { backgroundColor: colors.surface }]}
+          elevation={5}
+        >
+          <Card.Content
+            style={[styles.cardContent, { backgroundColor: colors.surface }]}
+          >
+            <Text
+              variant="headlineMedium"
+              style={[styles.word, { color: colors.primary }]}
+            >
+              {word}
+            </Text>
+            <View
+              style={[
+                styles.definitionContainer,
+                { backgroundColor: colors.surface },
+              ]}
+            >
+              <Text style={[styles.definition, { color: colors.onSurface }]}>
+                {definition}
+              </Text>
+            </View>
+          </Card.Content>
+
           <View style={styles.indicatorsContainer}>
             <Animated.View
               style={[
                 styles.indicator,
-                styles.leftIndicator,
                 leftIndicatorStyle,
                 { backgroundColor: colors.error + "20" },
               ]}
@@ -184,7 +147,6 @@ const SwipeCard = forwardRef<SwipeCardRef, SwipeCardProps>(
             <Animated.View
               style={[
                 styles.indicator,
-                styles.rightIndicator,
                 rightIndicatorStyle,
                 { backgroundColor: colors.primary + "20" },
               ]}
@@ -194,8 +156,8 @@ const SwipeCard = forwardRef<SwipeCardRef, SwipeCardProps>(
               </Text>
             </Animated.View>
           </View>
-        </Animated.View>
-      </PanGestureHandler>
+        </Card>
+      </Animated.View>
     );
   }
 );
@@ -206,6 +168,7 @@ const styles = StyleSheet.create({
   cardContainer: {
     width: "100%",
     height: 400,
+    maxHeight: 400,
     shadowColor: "#000",
     shadowOpacity: 0.25,
     shadowRadius: 8,
@@ -214,10 +177,12 @@ const styles = StyleSheet.create({
   card: {
     borderRadius: 16,
     overflow: "hidden",
+    height: "100%",
   },
   cardContent: {
     justifyContent: "space-between",
     padding: 20,
+    height: "100%",
   },
   word: {
     fontSize: 32,
@@ -229,6 +194,7 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     alignItems: "center",
     padding: 10,
+    flex: 1,
   },
   definition: {
     fontSize: 20,
@@ -236,26 +202,24 @@ const styles = StyleSheet.create({
     lineHeight: 28,
   },
   indicatorsContainer: {
-    position: "relative",
+    position: "absolute",
     flexDirection: "row",
-    justifyContent: "space-between",
-    marginTop: 20,
+    alignItems: "center",
+    justifyContent: "space-around",
+    width: "100%",
+    bottom: 5,
     height: 50,
+    overflow: "visible",
+    zIndex: 10,
   },
   indicator: {
-    position: "absolute",
     paddingHorizontal: 20,
     paddingVertical: 8,
     borderRadius: 20,
     justifyContent: "center",
     alignItems: "center",
   },
-  leftIndicator: {
-    left: 0,
-  },
-  rightIndicator: {
-    right: 0,
-  },
+
   indicatorText: {
     fontWeight: "700",
     fontSize: 16,
