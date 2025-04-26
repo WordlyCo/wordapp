@@ -59,10 +59,10 @@ const QUICK_ACTIONS: QuickAction[] = [
     },
   },
   {
-    id: "legit",
+    id: "swipeable",
     title: "Cap or No Cap?",
     icon: "scale-balance",
-    route: "/(protected)/legit",
+    route: "/(protected)/swipeable",
     isNew: true,
     lightColor: {
       background: "#f59e0b",
@@ -151,7 +151,7 @@ const QuickActions: React.FC<QuickActionsProps> = ({
                           },
                         ]}
                         icon={
-                          action.id === "legit"
+                          action.id === "swipeable"
                             ? () => <Text style={{ fontSize: 20 }}>🧢</Text>
                             : action.icon
                         }

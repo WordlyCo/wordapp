@@ -109,7 +109,7 @@ const QuestionScreen: React.FC = () => {
         style={[styles.errorContainer, { backgroundColor: colors.background }]}
       >
         <Text style={[styles.errorText, { color: colors.onBackground }]}>
-          You don't have any word lists yet!
+          You don't have any unlearned words yet!
         </Text>
         <Ionicons
           name="sad-outline"
@@ -126,7 +126,7 @@ const QuestionScreen: React.FC = () => {
             flexDirection: "row-reverse",
           }}
         >
-          Add Word Lists
+          Add New Word Lists
         </Button>
       </View>
     );
