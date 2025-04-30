@@ -11,7 +11,6 @@ import {
   Button,
   ActivityIndicator,
   FAB,
-  Portal,
 } from "react-native-paper";
 import Animated, { FadeIn, FadeOut } from "react-native-reanimated";
 import * as Haptics from "expo-haptics";
@@ -31,7 +30,6 @@ const QuestionScreen: React.FC = () => {
   const [randomizedOptions, setRandomizedOptions] = useState<string[]>([]);
   const fadeAnim = useRef(new RNAnimated.Value(0)).current;
   const slideAnim = useRef(new RNAnimated.Value(20)).current;
-  const pulseAnim = useRef(new RNAnimated.Value(1)).current;
   const dotsScrollViewRef = useRef<ScrollView>(null);
 
   const quizWords = useStore((state) => state.quizWords);
@@ -85,23 +83,6 @@ const QuestionScreen: React.FC = () => {
       ]).start();
     }
   }, [currentWord, currentIndex, setRandomizedOptions]);
-
-  useEffect(() => {
-    RNAnimated.loop(
-      RNAnimated.sequence([
-        RNAnimated.timing(pulseAnim, {
-          toValue: 1.2,
-          duration: 800,
-          useNativeDriver: true,
-        }),
-        RNAnimated.timing(pulseAnim, {
-          toValue: 1,
-          duration: 800,
-          useNativeDriver: true,
-        }),
-      ])
-    ).start();
-  }, []);
 
   if (quizWordsError) {
     return (
@@ -162,7 +143,8 @@ const QuestionScreen: React.FC = () => {
     const isCorrect = !!currentWord?.quiz?.correctOptions.includes(answer);
 
     if (isCorrect) {
-      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+      // no haptic feedback for correct answers here, instead
+      // we'll provide haptic feedback for rewards in the feedback screen
     } else {
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
     }
@@ -183,22 +165,22 @@ const QuestionScreen: React.FC = () => {
     updateAccuracy(isCorrect);
 
     if (isCorrect) {
-      let diamondReward = 0;
+      let diamonds = 0;
       switch (currentWord.difficultyLevel) {
         case DIFFICULTY_LEVELS.BEGINNER:
-          diamondReward = 1;
+          diamonds = 1;
           break;
         case DIFFICULTY_LEVELS.INTERMEDIATE:
-          diamondReward = 2;
+          diamonds = 2;
           break;
         case DIFFICULTY_LEVELS.ADVANCED:
-          diamondReward = 3;
+          diamonds = 3;
           break;
         default:
-          diamondReward = 1;
+          diamonds = 1;
       }
 
-      updateDiamonds(diamondReward);
+      updateDiamonds(diamonds);
     }
 
     const wordProgressUpdate = {
@@ -234,9 +216,35 @@ const QuestionScreen: React.FC = () => {
           <Text style={[styles.progressText, { color: colors.onBackground }]}>
             Word {currentIndex + 1} of {wordCount}
           </Text>
-          <Text style={[styles.scoreText, { color: colors.primary }]}>
-            Score: {score}/{wordCount}
-          </Text>
+          <View style={styles.statsContainer}>
+            <View style={styles.statItem}>
+              <IconButton
+                icon="diamond"
+                size={20}
+                iconColor={colors.info}
+                style={styles.statIcon}
+              />
+              <View style={styles.valueContainer}>
+                <Text style={[styles.statValue, { color: colors.info }]}>
+                  {useStore.getState().user?.userStats?.diamonds || 0}
+                </Text>
+              </View>
+            </View>
+
+            <View style={styles.statItem}>
+              <IconButton
+                icon="lightning-bolt"
+                size={20}
+                iconColor={colors.streak}
+                style={styles.statIcon}
+              />
+              <View style={styles.valueContainer}>
+                <Text style={[styles.statValue, { color: colors.streak }]}>
+                  {useStore.getState().user?.userStats?.streak || 0}
+                </Text>
+              </View>
+            </View>
+          </View>
         </View>
 
         <ProgressDots
@@ -244,7 +252,7 @@ const QuestionScreen: React.FC = () => {
           currentIndex={currentIndex}
           answerResults={answerResults}
           dotsScrollViewRef={dotsScrollViewRef}
-          pulseAnim={pulseAnim}
+          pulseAnim={new RNAnimated.Value(1)}
           colors={colors}
         />
       </View>
@@ -330,24 +338,22 @@ const QuestionScreen: React.FC = () => {
         </View>
       </ScrollView>
 
-      <Portal>
-        <Animated.View
-          style={styles.fab}
-          entering={FadeIn.duration(400).springify()}
-          exiting={FadeOut.duration(20).springify()}
-        >
-          <FAB
-            icon="arrow-left"
-            style={[styles.fab, { backgroundColor: colors.primary }]}
-            onPress={() => {
-              Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-              router.back();
-            }}
-            color={"white"}
-            uppercase={false}
-          />
-        </Animated.View>
-      </Portal>
+      <Animated.View
+        style={styles.fab}
+        entering={FadeIn.duration(400).springify()}
+        exiting={FadeOut.duration(20).springify()}
+      >
+        <FAB
+          icon="arrow-left"
+          style={[styles.fab, { backgroundColor: colors.primary }]}
+          onPress={() => {
+            Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+            router.back();
+          }}
+          color={"white"}
+          uppercase={false}
+        />
+      </Animated.View>
     </View>
   );
 };
@@ -378,8 +384,26 @@ const styles = StyleSheet.create({
     fontSize: 15,
     fontWeight: "500",
   },
-  scoreText: {
-    fontSize: 15,
+  statsContainer: {
+    flexDirection: "row",
+    justifyContent: "flex-end",
+  },
+  statItem: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginHorizontal: 8,
+  },
+  statIcon: {
+    margin: 0,
+    marginRight: 4,
+  },
+  valueContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+    height: 24, // Fixed height to prevent layout shifts
+  },
+  statValue: {
+    fontSize: 16,
     fontWeight: "bold",
   },
   questionContainer: {

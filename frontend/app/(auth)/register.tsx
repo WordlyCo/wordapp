@@ -149,6 +149,37 @@ export default function RegisterScreen() {
         setSnackbarMessage("Welcome!");
         setSnackbarType("success");
         setSnackbarVisible(true);
+      } else if (result.signUp) {
+        try {
+          const emailUsername =
+            result.signUp.emailAddress?.split("@")[0] || `user_${Date.now()}`;
+
+          const completeSignUp = await result.signUp.update({
+            username: emailUsername,
+          });
+
+          if (completeSignUp.status === "complete") {
+            await result.setActive?.({
+              session: result.signUp.createdSessionId,
+            });
+            setSnackbarMessage("Welcome! Your account has been created.");
+            setSnackbarType("success");
+            setSnackbarVisible(true);
+            goToOnboarding();
+          } else {
+            setSnackbarMessage(
+              "Additional steps are required to complete sign-up."
+            );
+            setSnackbarType("error");
+            setSnackbarVisible(true);
+          }
+        } catch (error) {
+          setSnackbarMessage(
+            error instanceof Error ? error.message : String(error)
+          );
+          setSnackbarType("error");
+          setSnackbarVisible(true);
+        }
       } else {
         setSnackbarMessage(
           `${

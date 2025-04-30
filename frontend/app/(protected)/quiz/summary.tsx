@@ -1,5 +1,5 @@
 import { Button, Text, IconButton, Card } from "react-native-paper";
-import { Animated, StyleSheet, View } from "react-native";
+import { Animated, StyleSheet, View, TextStyle } from "react-native";
 import { useStore } from "@/src/stores/store";
 import { useAppTheme } from "@/src/contexts/ThemeContext";
 import React, { useEffect, useRef, useState } from "react";
@@ -10,6 +10,39 @@ import * as Haptics from "expo-haptics";
 type TimeType = {
   seconds: number;
   minutes: number;
+};
+
+type AnimatedCounterProps = {
+  value: number;
+  style: TextStyle | TextStyle[];
+  duration?: number;
+};
+
+const AnimatedCounter: React.FC<AnimatedCounterProps> = ({
+  value,
+  style,
+  duration = 1500,
+}) => {
+  const animatedValue = useRef(new Animated.Value(0)).current;
+  const [displayValue, setDisplayValue] = useState(0);
+
+  useEffect(() => {
+    Animated.timing(animatedValue, {
+      toValue: value,
+      duration,
+      useNativeDriver: false,
+    }).start();
+
+    const listener = animatedValue.addListener(({ value }) => {
+      setDisplayValue(Math.round(value));
+    });
+
+    return () => {
+      animatedValue.removeListener(listener);
+    };
+  }, [value, animatedValue, duration]);
+
+  return <Text style={style}>{displayValue}</Text>;
 };
 
 const SummaryScreen = () => {
@@ -24,9 +57,13 @@ const SummaryScreen = () => {
   const userStats = useStore((state) => state.user?.userStats);
   const updatePracticeTime = useStore((state) => state.updatePracticeTime);
   const [diamondsEarned, setDiamondsEarned] = useState(0);
+  const [streakUpdated, setStreakUpdated] = useState(false);
+  const [initialStreak, setInitialStreak] = useState(0);
 
   const fadeAnim = useRef(new Animated.Value(0)).current;
   const scoreAnim = useRef(new Animated.Value(0)).current;
+  const diamondScaleAnim = useRef(new Animated.Value(1)).current;
+  const streakScaleAnim = useRef(new Animated.Value(1)).current;
 
   const numberOfWords = quizWords.length || 0;
   const [scorePercentage, setScorePercentage] = useState(
@@ -38,6 +75,8 @@ const SummaryScreen = () => {
       const practiceMinutes = Math.ceil(totalTime / 60);
       updatePracticeTime(practiceMinutes);
     }
+
+    setInitialStreak(userStats?.streak || 0);
 
     let totalDiamonds = 0;
     quizWords.forEach((word, index) => {
@@ -84,7 +123,48 @@ const SummaryScreen = () => {
       }),
     ]).start();
 
-    // Cleanup function that runs when component unmounts
+    Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+
+    if (
+      userStats?.streak &&
+      initialStreak &&
+      userStats.streak > initialStreak
+    ) {
+      setStreakUpdated(true);
+
+      Animated.sequence([
+        Animated.timing(streakScaleAnim, {
+          toValue: 1.3,
+          duration: 300,
+          useNativeDriver: true,
+        }),
+        Animated.timing(streakScaleAnim, {
+          toValue: 1,
+          duration: 300,
+          useNativeDriver: true,
+        }),
+      ]).start();
+
+      setTimeout(() => {
+        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Heavy);
+      }, 1000);
+    }
+
+    if (totalDiamonds > 0) {
+      Animated.sequence([
+        Animated.timing(diamondScaleAnim, {
+          toValue: 1.3,
+          duration: 300,
+          useNativeDriver: true,
+        }),
+        Animated.timing(diamondScaleAnim, {
+          toValue: 1,
+          duration: 300,
+          useNativeDriver: true,
+        }),
+      ]).start();
+    }
+
     return () => {
       setQuizStats({
         score: 0,
@@ -209,7 +289,12 @@ const SummaryScreen = () => {
                   </Text>
                 </View>
 
-                <View style={styles.statItem}>
+                <Animated.View
+                  style={[
+                    styles.statItem,
+                    { transform: [{ scale: diamondScaleAnim }] },
+                  ]}
+                >
                   <IconButton
                     icon="diamond"
                     size={28}
@@ -222,12 +307,26 @@ const SummaryScreen = () => {
                   >
                     Diamonds
                   </Text>
-                  <Text variant="headlineSmall" style={{ color: colors.info }}>
-                    +{diamondsEarned}
-                  </Text>
-                </View>
+                  <View style={styles.rewardWrapper}>
+                    <AnimatedCounter
+                      value={diamondsEarned}
+                      style={[styles.rewardText, { color: colors.info }]}
+                      duration={1500}
+                    />
+                    <Text
+                      style={[styles.statIndicator, { color: colors.info }]}
+                    >
+                      +
+                    </Text>
+                  </View>
+                </Animated.View>
 
-                <View style={styles.statItem}>
+                <Animated.View
+                  style={[
+                    styles.statItem,
+                    { transform: [{ scale: streakScaleAnim }] },
+                  ]}
+                >
                   <IconButton
                     icon="lightning-bolt"
                     size={28}
@@ -240,13 +339,21 @@ const SummaryScreen = () => {
                   >
                     Streak
                   </Text>
-                  <Text
-                    variant="headlineSmall"
-                    style={{ color: colors.streak }}
-                  >
-                    {userStats?.streak}
-                  </Text>
-                </View>
+                  <View style={styles.rewardWrapper}>
+                    <AnimatedCounter
+                      value={userStats?.streak || 0}
+                      style={[styles.rewardText, { color: colors.streak }]}
+                      duration={1500}
+                    />
+                    {streakUpdated && (
+                      <Text
+                        style={[styles.statIndicator, { color: colors.streak }]}
+                      >
+                        +1
+                      </Text>
+                    )}
+                  </View>
+                </Animated.View>
               </View>
 
               <View style={styles.actionButtons}>
@@ -365,6 +472,19 @@ const styles = StyleSheet.create({
   cardWrapper: {
     overflow: "hidden",
     borderRadius: 16,
+  },
+  rewardWrapper: {
+    flexDirection: "row",
+    alignItems: "center",
+  },
+  rewardText: {
+    fontSize: 24,
+    fontWeight: "bold",
+  },
+  statIndicator: {
+    fontSize: 20,
+    fontWeight: "bold",
+    marginLeft: 4,
   },
 });
 
