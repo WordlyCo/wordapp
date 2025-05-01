@@ -72,10 +72,27 @@ export default function OnboardingScreen() {
     }
   }, [isLoaded, user]);
 
-  const handleThemeChange = () => {
-    updatePreferences({
-      theme: preferences?.theme === "dark" ? "light" : "dark",
-    });
+  const handleThemeChange = async () => {
+    try {
+      const newTheme = preferences?.theme === "dark" ? "light" : "dark";
+      updatePreferences({
+        theme: newTheme,
+      });
+      const currentMetadata = user?.unsafeMetadata || {};
+      const currentPreferences = currentMetadata.preferences || {};
+
+      await user?.update({
+        unsafeMetadata: {
+          ...currentMetadata,
+          preferences: {
+            ...currentPreferences,
+            theme: newTheme,
+          },
+        },
+      });
+    } catch (error) {
+      console.error("Update theme failed:", error);
+    }
   };
 
   const pickImage = async () => {

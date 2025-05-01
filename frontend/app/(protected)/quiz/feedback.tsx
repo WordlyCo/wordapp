@@ -8,14 +8,20 @@ import {
   IconButton,
   Portal,
 } from "react-native-paper";
-import { View, StyleSheet, ScrollView } from "react-native";
+import {
+  View,
+  StyleSheet,
+  ScrollView,
+  Animated as RNAnimated,
+} from "react-native";
 import { DifficultyLevel, DIFFICULTY_LEVELS } from "@/src/types/enums";
 import { useStore } from "@/src/stores/store";
 import { useAppTheme } from "@/src/contexts/ThemeContext";
 import { router } from "expo-router";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Word } from "@/src/types/words";
 import * as Haptics from "expo-haptics";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 
 const getDifficultyColor = (difficulty: DifficultyLevel, colors: any) => {
   switch (difficulty) {
@@ -80,19 +86,217 @@ const FeedbackScreen = () => {
   const quizStats = useStore((state) => state.quizStats);
   const startTime = useStore((state) => state.quizStats.startTime);
   const setQuizStats = useStore((state) => state.setQuizStats);
+  const correctAnswers = useStore(
+    (state) => state.quizStats.correctAnswers || 0
+  );
+  const isFirstCorrectAnswer = correctAnswers === 1;
 
   const [currentWord, setCurrentWord] = useState<Word | null>(null);
+  const [currentDiamonds, setCurrentDiamonds] = useState(0);
+  const [currentStreak, setCurrentStreak] = useState(0);
+  const [showAnimation, setShowAnimation] = useState(false);
+  const [diamondReward, setDiamondReward] = useState(0);
+  const [streakIncreased, setStreakIncreased] = useState(false);
+  const [showDiamondReward, setShowDiamondReward] = useState(false);
+  const [showStreakReward, setShowStreakReward] = useState(false);
+
+  const diamondScaleAnim = useRef(new RNAnimated.Value(1)).current;
+  const streakScaleAnim = useRef(new RNAnimated.Value(1)).current;
+  const rewardScaleAnim = useRef(new RNAnimated.Value(0)).current;
+  const streakIncrementAnim = useRef(new RNAnimated.Value(0)).current;
+
+  const hapticTimeoutsRef = useRef<NodeJS.Timeout[]>([]);
 
   const numberOfWords = quizWords.length || 0;
 
+  const scheduleHapticFeedback = (
+    feedbackFunction: () => Promise<void>,
+    delay: number
+  ) => {
+    const timeout = setTimeout(() => {
+      feedbackFunction();
+    }, delay);
+
+    hapticTimeoutsRef.current.push(timeout);
+    return timeout;
+  };
+
   useEffect(() => {
-    const word = quizWords.find((w, index) => index === currentIndex);
-    if (word) {
-      setCurrentWord(word);
-    } else {
-      console.error("Word not found for currentIndex:", currentIndex);
+    return () => {
+      hapticTimeoutsRef.current.forEach((timeout) => clearTimeout(timeout));
+      hapticTimeoutsRef.current = [];
+    };
+  }, []);
+
+  const checkStreakUpdatedToday = async () => {
+    try {
+      const today = new Date().toISOString().split("T")[0];
+      const lastStreakUpdate = await AsyncStorage.getItem("lastStreakUpdate");
+
+      if (lastStreakUpdate === today) {
+        return true;
+      } else {
+        return false;
+      }
+    } catch (error) {
+      console.log("Error checking streak update:", error);
+      return false;
     }
+  };
+
+  const markStreakAsUpdated = async () => {
+    try {
+      const today = new Date().toISOString().split("T")[0];
+      await AsyncStorage.setItem("lastStreakUpdate", today);
+    } catch (error) {
+      console.log("Error setting streak update:", error);
+    }
+  };
+
+  useEffect(() => {
+    const initializeComponent = async () => {
+      const word = quizWords.find((w, index) => index === currentIndex);
+      if (word) {
+        setCurrentWord(word);
+      } else {
+        console.error("Word not found for currentIndex:", currentIndex);
+      }
+
+      const userStats = useStore.getState().user?.userStats;
+      const diamonds = userStats?.diamonds || 0;
+      const streak = userStats?.streak || 0;
+
+      setCurrentDiamonds(diamonds);
+      setCurrentStreak(streak);
+
+      const isCorrect =
+        word?.quiz?.correctOptions.includes(selectedAnswer) || false;
+
+      if (isCorrect && word) {
+        let reward = 0;
+        switch (word.difficultyLevel) {
+          case DIFFICULTY_LEVELS.BEGINNER:
+            reward = 1;
+            break;
+          case DIFFICULTY_LEVELS.INTERMEDIATE:
+            reward = 2;
+            break;
+          case DIFFICULTY_LEVELS.ADVANCED:
+            reward = 3;
+            break;
+          default:
+            reward = 1;
+        }
+        setDiamondReward(reward);
+
+        if (isFirstCorrectAnswer) {
+          const alreadyUpdated = await checkStreakUpdatedToday();
+          if (!alreadyUpdated) {
+            setStreakIncreased(true);
+            markStreakAsUpdated();
+          } else {
+            setStreakIncreased(false);
+          }
+        } else {
+          setStreakIncreased(false);
+        }
+      }
+
+      const animationTimeout = setTimeout(() => {
+        setShowAnimation(true);
+
+        if (isCorrect) {
+          Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+
+          if (diamondReward > 0) {
+            setShowDiamondReward(true);
+
+            scheduleHapticFeedback(
+              () => Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light),
+              200
+            );
+          }
+
+          RNAnimated.sequence([
+            RNAnimated.timing(diamondScaleAnim, {
+              toValue: 1.2,
+              duration: 200,
+              useNativeDriver: true,
+            }),
+            RNAnimated.timing(diamondScaleAnim, {
+              toValue: 1,
+              duration: 200,
+              useNativeDriver: true,
+            }),
+          ]).start();
+
+          RNAnimated.sequence([
+            RNAnimated.timing(rewardScaleAnim, {
+              toValue: 1.3,
+              duration: 300,
+              useNativeDriver: true,
+            }),
+            RNAnimated.timing(rewardScaleAnim, {
+              toValue: 1,
+              duration: 200,
+              useNativeDriver: true,
+            }),
+          ]).start(() => {
+            const hideTimeout = setTimeout(() => {
+              setShowDiamondReward(false);
+            }, 800);
+            hapticTimeoutsRef.current.push(hideTimeout);
+          });
+
+          if (streakIncreased) {
+            setShowStreakReward(true);
+
+            const streakAnimTimeout = setTimeout(() => {
+              Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+
+              RNAnimated.sequence([
+                RNAnimated.timing(streakScaleAnim, {
+                  toValue: 1.2,
+                  duration: 200,
+                  useNativeDriver: true,
+                }),
+                RNAnimated.timing(streakScaleAnim, {
+                  toValue: 1,
+                  duration: 200,
+                  useNativeDriver: true,
+                }),
+              ]).start();
+
+              RNAnimated.sequence([
+                RNAnimated.timing(streakIncrementAnim, {
+                  toValue: 1.3,
+                  duration: 300,
+                  useNativeDriver: true,
+                }),
+                RNAnimated.timing(streakIncrementAnim, {
+                  toValue: 1,
+                  duration: 200,
+                  useNativeDriver: true,
+                }),
+              ]).start(() => {
+                const hideStreakTimeout = setTimeout(() => {
+                  setShowStreakReward(false);
+                }, 800);
+                hapticTimeoutsRef.current.push(hideStreakTimeout);
+              });
+            }, 600);
+
+            hapticTimeoutsRef.current.push(streakAnimTimeout);
+          }
+        }
+      }, 400);
+
+      hapticTimeoutsRef.current.push(animationTimeout);
+    };
+
+    initializeComponent();
   }, [currentIndex, quizWords]);
+
   if (!currentWord) return null;
 
   const isCorrect =
@@ -104,9 +308,6 @@ const FeedbackScreen = () => {
 
   const handleNext = async () => {
     const isLastQuestion = currentIndex === quizWords.length - 1;
-
-    // Add haptic feedback for navigation
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
 
     if (isLastQuestion) {
       setQuizStats({
@@ -126,6 +327,91 @@ const FeedbackScreen = () => {
 
   return (
     <ScrollView style={[styles.container]}>
+      {/* Stats header */}
+      <View style={styles.statsHeader}>
+        <View style={styles.statItem}>
+          <IconButton
+            icon="diamond"
+            size={20}
+            iconColor={colors.info}
+            style={styles.statIcon}
+          />
+          <RNAnimated.View
+            style={[
+              styles.valueContainer,
+              { transform: [{ scale: diamondScaleAnim }] },
+              showAnimation && isCorrect ? styles.glowInfo : {},
+            ]}
+          >
+            <Text style={[styles.statValue, { color: colors.info }]}>
+              {currentDiamonds}
+            </Text>
+
+            {showAnimation &&
+              isCorrect &&
+              diamondReward > 0 &&
+              showDiamondReward && (
+                <RNAnimated.View
+                  style={[
+                    styles.rewardContainer,
+                    {
+                      opacity: rewardScaleAnim,
+                      transform: [{ scale: rewardScaleAnim }],
+                    },
+                  ]}
+                >
+                  <Text style={[styles.statIncrement, { color: colors.info }]}>
+                    +{diamondReward}
+                  </Text>
+                </RNAnimated.View>
+              )}
+          </RNAnimated.View>
+        </View>
+
+        <View style={styles.statItem}>
+          <IconButton
+            icon="lightning-bolt"
+            size={20}
+            iconColor={colors.streak}
+            style={styles.statIcon}
+          />
+          <RNAnimated.View
+            style={[
+              styles.valueContainer,
+              { transform: [{ scale: streakScaleAnim }] },
+              showAnimation && isCorrect && streakIncreased
+                ? styles.glowStreak
+                : {},
+            ]}
+          >
+            <Text style={[styles.statValue, { color: colors.streak }]}>
+              {currentStreak}
+            </Text>
+
+            {showAnimation &&
+              isCorrect &&
+              streakIncreased &&
+              showStreakReward && (
+                <RNAnimated.View
+                  style={[
+                    styles.rewardContainer,
+                    {
+                      opacity: streakIncrementAnim,
+                      transform: [{ scale: streakIncrementAnim }],
+                    },
+                  ]}
+                >
+                  <Text
+                    style={[styles.statIncrement, { color: colors.streak }]}
+                  >
+                    +1
+                  </Text>
+                </RNAnimated.View>
+              )}
+          </RNAnimated.View>
+        </View>
+      </View>
+
       <View style={{ paddingBottom: 80 }}>
         <View style={styles.cardWrapper}>
           <Card
@@ -564,7 +850,9 @@ const styles = StyleSheet.create({
     marginBottom: 24,
   },
   statItem: {
+    flexDirection: "row",
     alignItems: "center",
+    marginHorizontal: 8,
   },
   restartButton: {
     marginTop: 16,
@@ -623,8 +911,8 @@ const styles = StyleSheet.create({
     opacity: 0.7,
   },
   statValue: {
+    fontSize: 16,
     fontWeight: "bold",
-    fontSize: 20,
   },
   cardActions: {
     paddingHorizontal: 16,
@@ -757,5 +1045,57 @@ const styles = StyleSheet.create({
   },
   cardWrapper: {
     borderRadius: 12,
+  },
+  statsHeader: {
+    flexDirection: "row",
+    justifyContent: "flex-end",
+    alignItems: "center",
+    paddingHorizontal: 8,
+    marginBottom: 8,
+  },
+  statIcon: {
+    margin: 0,
+    marginRight: 4,
+  },
+  valueContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+    height: 24,
+    position: "relative",
+  },
+  rewardContainer: {
+    position: "absolute",
+    right: -24,
+    top: -2,
+    padding: 4,
+    backgroundColor: "rgba(0,0,0,0.1)",
+    borderRadius: 12,
+    paddingHorizontal: 6,
+  },
+  statIncrement: {
+    marginLeft: 4,
+    fontSize: 14,
+    fontWeight: "bold",
+    opacity: 0.9,
+  },
+  glowInfo: {
+    shadowColor: "#2196F3",
+    shadowOffset: { width: 0, height: 0 },
+    shadowOpacity: 0.8,
+    shadowRadius: 10,
+    elevation: 8,
+    borderRadius: 8,
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+  },
+  glowStreak: {
+    shadowColor: "#FF9800",
+    shadowOffset: { width: 0, height: 0 },
+    shadowOpacity: 0.8,
+    shadowRadius: 10,
+    elevation: 8,
+    borderRadius: 8,
+    paddingHorizontal: 6,
+    paddingVertical: 2,
   },
 });

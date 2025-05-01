@@ -11,7 +11,10 @@ export default function AppLayout() {
   const { colors, dark } = useAppTheme();
 
   return (
-    <View style={{ flex: 1 }}>
+    <SafeAreaView
+      style={{ flex: 1, backgroundColor: colors.background }}
+      edges={["left", "right", "bottom"]}
+    >
       <Tabs
         screenOptions={({ route }) => ({
           tabBarActiveTintColor: colors.primary,
@@ -241,17 +244,7 @@ export default function AppLayout() {
         />
         <Tabs.Screen name="profile" />
       </Tabs>
-      <SafeAreaView
-        edges={["bottom"]}
-        style={{
-          backgroundColor: colors.background,
-          bottom: 0,
-          left: 0,
-          right: 0,
-          height: 0,
-        }}
-      />
-    </View>
+    </SafeAreaView>
   );
 }
 
