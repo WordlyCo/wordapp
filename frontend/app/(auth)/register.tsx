@@ -373,7 +373,7 @@ export default function RegisterScreen() {
               Continue with Google
             </Button>
 
-            {/* <Button
+            <Button
               icon="apple"
               mode="outlined"
               onPress={() => handleOAuthSignIn("apple")}
@@ -383,7 +383,7 @@ export default function RegisterScreen() {
               theme={{ colors: { outline: "transparent" } }}
             >
               Continue with Apple
-            </Button> */}
+            </Button>
 
             <View style={styles.loginContainer}>
               <Text variant="bodyMedium">Already have an account?</Text>

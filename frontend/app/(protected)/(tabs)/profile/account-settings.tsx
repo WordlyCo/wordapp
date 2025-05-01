@@ -7,6 +7,7 @@ import {
   FlatList,
   TouchableOpacity,
   Image,
+  Alert,
 } from "react-native";
 import {
   Text,
@@ -23,11 +24,13 @@ import { PROFILE_BACKGROUND_COLORS } from "@/constants/profileColors";
 import * as ImagePicker from "expo-image-picker";
 import * as FileSystem from "expo-file-system";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
+import { router } from "expo-router";
 
 const AccountSettingsScreen = () => {
   const { colors } = useAppTheme();
   const updatePreferences = useStore((state) => state.updatePreferences);
   const preferences = useStore((state) => state.user?.preferences);
+  const setHasOnboarded = useStore((state) => state.setHasOnboarded);
   const { user, isLoaded } = useUser();
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
@@ -153,6 +156,30 @@ const AccountSettingsScreen = () => {
       )}
     </TouchableOpacity>
   );
+
+  const handleDeleteAccount = async () => {
+    Alert.alert(
+      "Delete Account",
+      "Are you sure you want to delete your account? This action cannot be undone.",
+      [
+        { text: "Cancel", style: "cancel" },
+        {
+          text: "Delete",
+          style: "destructive",
+          onPress: async () => {
+            try {
+              await user?.delete();
+              setHasOnboarded(false);
+              router.replace("/");
+            } catch (error) {
+              console.error("Error deleting account:", error);
+              showToast("Failed to delete account");
+            }
+          },
+        },
+      ]
+    );
+  };
 
   useEffect(() => {
     if (isLoaded) {
@@ -288,6 +315,21 @@ const AccountSettingsScreen = () => {
           >
             Save Profile Info
           </Button>
+
+          <View style={styles.dangerZone}>
+            <Text style={[styles.dangerZoneTitle, { color: colors.error }]}>
+              Danger Zone
+            </Text>
+            <Button
+              mode="outlined"
+              icon="delete"
+              textColor={colors.error}
+              style={[styles.deleteButton, { borderColor: colors.error }]}
+              onPress={handleDeleteAccount}
+            >
+              Delete Account
+            </Button>
+          </View>
         </View>
       </ScrollView>
 
@@ -385,6 +427,20 @@ const styles = StyleSheet.create({
   },
   saveButton: {
     marginTop: 20,
+  },
+  dangerZone: {
+    marginTop: 40,
+    paddingTop: 20,
+    borderTopWidth: 1,
+    borderTopColor: "rgba(255, 0, 0, 0.2)",
+  },
+  dangerZoneTitle: {
+    fontSize: 18,
+    fontWeight: "bold",
+    marginBottom: 15,
+  },
+  deleteButton: {
+    borderWidth: 1,
   },
 });
 

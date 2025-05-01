@@ -6,7 +6,7 @@ import {
   Image,
   RefreshControl,
 } from "react-native";
-import { Text, Button, IconButton, Card } from "react-native-paper";
+import { Text, IconButton, Card } from "react-native-paper";
 import { useAppTheme } from "@/src/contexts/ThemeContext";
 import { useStore } from "@/src/stores/store";
 import { PROFILE_BACKGROUND_COLORS } from "@/constants/profileColors";
@@ -169,25 +169,6 @@ const ProfileScreen = () => {
                   </View>
                 </View> */}
 
-                {/* Action Buttons */}
-                <View style={styles.actionContainer}>
-                  <Button
-                    mode="contained"
-                    icon="pencil"
-                    style={[
-                      styles.actionButton,
-                      { backgroundColor: colors.primary },
-                    ]}
-                    labelStyle={styles.actionButtonLabel}
-                    onPress={() =>
-                      router.push(
-                        "/(protected)/(tabs)/profile/account-settings"
-                      )
-                    }
-                  >
-                    Edit Profile
-                  </Button>
-                </View>
                 <LearningInsights
                   streak={userStats?.streak ?? 0}
                   wordsMastered={

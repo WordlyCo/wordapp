@@ -225,7 +225,7 @@ export default function LoginScreen() {
               Continue with Google
             </Button>
 
-            {/* <Button
+            <Button
               icon="apple"
               mode="outlined"
               onPress={() => handleOAuthSignIn("apple")}
@@ -235,7 +235,7 @@ export default function LoginScreen() {
               theme={{ colors: { outline: "transparent" } }}
             >
               Continue with Apple
-            </Button> */}
+            </Button>
 
             <View style={styles.signupContainer}>
               <Text variant="bodyMedium">Don't have an account?</Text>
