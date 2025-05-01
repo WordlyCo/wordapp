@@ -1,5 +1,5 @@
 import * as WebBrowser from "expo-web-browser";
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   View,
   StyleSheet,
@@ -16,8 +16,6 @@ import { useAuthNavigation } from "@/src/features/auth/navigation";
 import { CustomSnackbar } from "@/src/components/CustomSnackbar";
 
 const googleLogo = require("@/assets/logos/google.png");
-
-WebBrowser.maybeCompleteAuthSession();
 
 export default function LoginScreen() {
   const { goToRegister } = useAuthNavigation();
@@ -38,6 +36,17 @@ export default function LoginScreen() {
   const [snackbarType, setSnackbarType] = useState<"success" | "error">(
     "success"
   );
+
+  // Properly manage WebBrowser sessions
+  useEffect(() => {
+    // Setup browser on mount
+    WebBrowser.maybeCompleteAuthSession();
+
+    // Cleanup when component unmounts
+    return () => {
+      WebBrowser.coolDownAsync();
+    };
+  }, []);
 
   const validateEmail = (email: string) => {
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;

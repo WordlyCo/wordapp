@@ -114,6 +114,7 @@ async def on_user_updated(
                 daily_practice_time_goal=preferences.get("dailyPracticeTimeGoal"),
                 notifications_enabled=preferences.get("notificationsEnabled"),
                 time_zone=preferences.get("timeZone"),
+                profile_background_color=preferences.get("profileBackgroundColor"),
             )
 
         user_update = UserUpdate(

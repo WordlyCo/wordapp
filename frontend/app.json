@@ -20,7 +20,8 @@
       "bundleIdentifier": "com.nverkhachoyan.wordapp",
       "infoPlist": {
         "ITSAppUsesNonExemptEncryption": false,
-        "NSPhotoLibraryUsageDescription": "WordApp needs access to your photo library so you can select and upload a profile picture to personalize your account."
+        "NSPhotoLibraryUsageDescription": "WordApp needs access to your photo library so you can select and upload a profile picture to personalize your account.",
+        "NSPhotoLibraryAddUsageDescription": "WordApp needs access to your photo library so you can select and upload a profile picture to personalize your account."
       }
     },
     "android": {
@@ -39,7 +40,7 @@
       "typedRoutes": true,
       "tsconfigPaths": true
     },
-    "plugins": ["expo-font", "expo-router"],
+    "plugins": ["expo-font", "expo-router", ["expo-apple-authentication"]],
     "extra": {
       "router": {
         "origin": false

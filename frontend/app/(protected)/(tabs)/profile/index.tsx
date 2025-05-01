@@ -47,8 +47,10 @@ const ProfileScreen = () => {
     }
   };
 
-  const profileBackgroundColorIndex = useStore(
-    (state) => state.user?.preferences?.profileBackgroundColorIndex ?? 0
+  const profileBackgroundColor = useStore(
+    (state) =>
+      state.user?.preferences?.profileBackgroundColor ??
+      PROFILE_BACKGROUND_COLORS[0]
   );
 
   return (
@@ -67,8 +69,7 @@ const ProfileScreen = () => {
                 style={[
                   styles.profileBackground,
                   {
-                    backgroundColor:
-                      PROFILE_BACKGROUND_COLORS[profileBackgroundColorIndex],
+                    backgroundColor: profileBackgroundColor,
                   },
                 ]}
               >

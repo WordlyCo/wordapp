@@ -59,6 +59,7 @@ class UserPreferences(BaseEntity):
     notifications_enabled: bool = True
     time_zone: str = "America/Los_Angeles"
     theme: str = "light"
+    profile_background_color: Optional[str] = None
 
 
 class UserPreferencesUpdate(CamelModel):
@@ -68,6 +69,7 @@ class UserPreferencesUpdate(CamelModel):
     notifications_enabled: Optional[bool] = None
     time_zone: Optional[str] = None
     theme: Optional[str] = None
+    profile_background_color: Optional[str] = None
 
 
 class User(BaseEntity):
