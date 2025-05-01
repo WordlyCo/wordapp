@@ -37,12 +37,8 @@ export default function LoginScreen() {
     "success"
   );
 
-  // Properly manage WebBrowser sessions
   useEffect(() => {
-    // Setup browser on mount
     WebBrowser.maybeCompleteAuthSession();
-
-    // Cleanup when component unmounts
     return () => {
       WebBrowser.coolDownAsync();
     };
@@ -121,12 +117,6 @@ export default function LoginScreen() {
             });
             setSnackbarMessage("Welcome! Your account has been created.");
             setSnackbarType("success");
-            setSnackbarVisible(true);
-          } else {
-            setSnackbarMessage(
-              "Additional steps are required to complete sign-up."
-            );
-            setSnackbarType("error");
             setSnackbarVisible(true);
           }
         } catch (error) {

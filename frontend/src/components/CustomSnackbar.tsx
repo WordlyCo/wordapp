@@ -79,11 +79,12 @@ export const CustomSnackbar: React.FC<CustomSnackbarProps> = ({
 const styles = StyleSheet.create({
   snackbar: {
     position: "absolute",
-    bottom: 0,
+    bottom: 35,
     left: 0,
     right: 0,
     elevation: 6,
     shadowColor: "#000",
+    marginHorizontal: 20,
     shadowOffset: {
       width: 0,
       height: 2,
