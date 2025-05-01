@@ -1,6 +1,6 @@
 {
   "expo": {
-    "name": "wordapp",
+    "name": "WordApp",
     "slug": "wordapp",
     "version": "1.0.0",
     "orientation": "portrait",
@@ -19,7 +19,9 @@
       "supportsTablet": true,
       "bundleIdentifier": "com.nverkhachoyan.wordapp",
       "infoPlist": {
-        "ITSAppUsesNonExemptEncryption": false
+        "ITSAppUsesNonExemptEncryption": false,
+        "NSPhotoLibraryUsageDescription": "WordApp needs access to your photo library so you can select and upload a profile picture to personalize your account.",
+        "NSPhotoLibraryAddUsageDescription": "WordApp needs access to your photo library so you can select and upload a profile picture to personalize your account."
       }
     },
     "android": {
@@ -38,7 +40,7 @@
       "typedRoutes": true,
       "tsconfigPaths": true
     },
-    "plugins": ["expo-font", "expo-router"],
+    "plugins": ["expo-font", "expo-router", ["expo-apple-authentication"]],
     "extra": {
       "router": {
         "origin": false

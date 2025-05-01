@@ -226,25 +226,19 @@ class UserService:
                     "theme": "theme",
                     "time_zone": "time_zone",
                     "difficulty_level": "difficulty_level",
+                    "profile_background_color": "profile_background_color",
                 }
 
                 updated_preferences = dict(current_prefs)
 
                 clerk_preferences = update_fields["preferences"]
-                print("Current preferences:", current_prefs)
-                print("Clerk preferences:", clerk_preferences)
 
                 for clerk_field, db_field in preference_mapping.items():
                     if (
                         clerk_field in clerk_preferences
                         and clerk_preferences[clerk_field] is not None
                     ):
-                        print(
-                            f"Updating {db_field} from {clerk_field}: {clerk_preferences[clerk_field]}"
-                        )
                         updated_preferences[db_field] = clerk_preferences[clerk_field]
-
-                print("Updated preferences:", updated_preferences)
 
                 preferences_params = []
                 preferences_set_clauses = []
@@ -258,13 +252,11 @@ class UserService:
                         "daily_practice_time_goal",
                         "notifications_enabled",
                         "time_zone",
+                        "profile_background_color",
                     ]:
                         preferences_set_clauses.append(f"{field} = ${pref_param_index}")
                         preferences_params.append(value)
                         pref_param_index += 1
-
-                print("Final update query fields:", preferences_set_clauses)
-                print("Final update query values:", preferences_params)
 
                 preferences_params.append(clerk_id)
                 preferences_query = f"""
@@ -280,7 +272,8 @@ class UserService:
                         notifications_enabled, 
                         time_zone, 
                         created_at, 
-                        updated_at
+                        updated_at,
+                        profile_background_color
                 """
                 preferences_record = await self.pool.fetchrow(
                     preferences_query, *preferences_params
@@ -610,7 +603,6 @@ class UserService:
 
             timezone_record = await self.pool.fetchrow(timezone_query, user_id)
             user_timezone = timezone_record["time_zone"] if timezone_record else "UTC"
-            print(f"User timezone: {user_timezone}")
 
             tz = pytz.timezone(user_timezone)
             current_date = datetime.now(tz).date()

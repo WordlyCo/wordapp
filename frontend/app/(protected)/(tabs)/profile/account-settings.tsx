@@ -7,6 +7,7 @@ import {
   FlatList,
   TouchableOpacity,
   Image,
+  Alert,
 } from "react-native";
 import {
   Text,
@@ -23,11 +24,13 @@ import { PROFILE_BACKGROUND_COLORS } from "@/constants/profileColors";
 import * as ImagePicker from "expo-image-picker";
 import * as FileSystem from "expo-file-system";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
+import { router } from "expo-router";
 
 const AccountSettingsScreen = () => {
   const { colors } = useAppTheme();
   const updatePreferences = useStore((state) => state.updatePreferences);
   const preferences = useStore((state) => state.user?.preferences);
+  const setHasOnboarded = useStore((state) => state.setHasOnboarded);
   const { user, isLoaded } = useUser();
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
@@ -41,8 +44,9 @@ const AccountSettingsScreen = () => {
   const [toastVisible, setToastVisible] = useState(false);
   const [toastMessage, setToastMessage] = useState("");
 
-  const [selectedColorIndex, setSelectedColorIndex] = useState(
-    preferences?.profileBackgroundColorIndex ?? 0
+  // Get initial selected color from preferences or default to first color
+  const [selectedColor, setSelectedColor] = useState<string>(
+    preferences?.profileBackgroundColor || PROFILE_BACKGROUND_COLORS[0]
   );
 
   const showToast = (message: string) => {
@@ -124,46 +128,91 @@ const AccountSettingsScreen = () => {
     }
   };
 
-  const handleColorSelect = (index: number) => {
-    setSelectedColorIndex(index);
-    // Auto-save the color preference immediately
+  const handleColorSelect = async (colorValue: string) => {
+    setSelectedColor(colorValue);
+
+    // Update local state in the app
     updatePreferences({
-      profileBackgroundColorIndex: index,
+      profileBackgroundColor: colorValue,
     });
-    showToast("Profile background color updated");
+
+    try {
+      // Update Clerk user metadata with the color value
+      const currentMetadata = user?.unsafeMetadata || {};
+      const currentPreferences = currentMetadata.preferences || {};
+
+      await user?.update({
+        unsafeMetadata: {
+          ...currentMetadata,
+          preferences: {
+            ...currentPreferences,
+            profileBackgroundColor: colorValue,
+          },
+        },
+      });
+
+      showToast("Profile background color updated");
+    } catch (error) {
+      console.error("Error updating profile color:", error);
+      showToast("Failed to update profile background color");
+    }
   };
 
-  const renderColorItem = ({
-    item,
-    index,
-  }: {
-    item: string;
-    index: number;
-  }) => (
+  const renderColorItem = ({ item }: { item: string }) => (
     <TouchableOpacity
       style={[
         styles.colorItem,
-        { backgroundColor: PROFILE_BACKGROUND_COLORS[index] },
-        selectedColorIndex === index && styles.selectedColorItem,
+        { backgroundColor: item },
+        selectedColor === item && styles.selectedColorItem,
       ]}
-      onPress={() => handleColorSelect(index)}
+      onPress={() => handleColorSelect(item)}
     >
-      {selectedColorIndex === index && (
+      {selectedColor === item && (
         <FontAwesome name="check" size={16} color="white" />
       )}
     </TouchableOpacity>
   );
 
+  const handleDeleteAccount = async () => {
+    Alert.alert(
+      "Delete Account",
+      "Are you sure you want to delete your account? This action cannot be undone.",
+      [
+        { text: "Cancel", style: "cancel" },
+        {
+          text: "Delete",
+          style: "destructive",
+          onPress: async () => {
+            try {
+              await user?.delete();
+              setHasOnboarded(false);
+              router.replace("/");
+            } catch (error) {
+              console.error("Error deleting account:", error);
+              showToast("Failed to delete account");
+            }
+          },
+        },
+      ]
+    );
+  };
+
   useEffect(() => {
-    if (isLoaded) {
+    if (isLoaded && user) {
       setFirstName(user?.firstName ?? "");
       setLastName(user?.lastName ?? "");
       setEmail(user?.emailAddresses[0].emailAddress ?? "");
       setUsername(user?.username ?? "");
       setProfileImage(user?.imageUrl ?? null);
-      // setBio(user?.unsafeMetadata?.bio ?? "");
+
+      // Get background color from user metadata if available
+      const userPreferences =
+        (user?.unsafeMetadata?.preferences as Record<string, any>) || {};
+      if (userPreferences.profileBackgroundColor) {
+        setSelectedColor(userPreferences.profileBackgroundColor);
+      }
     }
-  }, [isLoaded]);
+  }, [isLoaded, user]);
 
   if (!isLoaded) {
     return (
@@ -275,7 +324,7 @@ const AccountSettingsScreen = () => {
           <FlatList
             data={PROFILE_BACKGROUND_COLORS}
             renderItem={renderColorItem}
-            keyExtractor={(item, index) => index.toString()}
+            keyExtractor={(item) => item}
             horizontal
             showsHorizontalScrollIndicator={false}
             contentContainerStyle={styles.colorList}
@@ -288,6 +337,21 @@ const AccountSettingsScreen = () => {
           >
             Save Profile Info
           </Button>
+
+          <View style={styles.dangerZone}>
+            <Text style={[styles.dangerZoneTitle, { color: colors.error }]}>
+              Danger Zone
+            </Text>
+            <Button
+              mode="outlined"
+              icon="delete"
+              textColor={colors.error}
+              style={[styles.deleteButton, { borderColor: colors.error }]}
+              onPress={handleDeleteAccount}
+            >
+              Delete Account
+            </Button>
+          </View>
         </View>
       </ScrollView>
 
@@ -385,6 +449,20 @@ const styles = StyleSheet.create({
   },
   saveButton: {
     marginTop: 20,
+  },
+  dangerZone: {
+    marginTop: 40,
+    paddingTop: 20,
+    borderTopWidth: 1,
+    borderTopColor: "rgba(255, 0, 0, 0.2)",
+  },
+  dangerZoneTitle: {
+    fontSize: 18,
+    fontWeight: "bold",
+    marginBottom: 15,
+  },
+  deleteButton: {
+    borderWidth: 1,
   },
 });
 

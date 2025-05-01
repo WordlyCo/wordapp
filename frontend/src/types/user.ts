@@ -23,7 +23,7 @@ export type UserPreferences = BaseEntity & {
   notificationsEnabled: boolean;
   notificationType: NotificationType;
   theme: StatusBarStyle;
-  profileBackgroundColorIndex: number;
+  profileBackgroundColor: string;
   timeZone: string;
 };
 

@@ -1,5 +1,5 @@
 import * as WebBrowser from "expo-web-browser";
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   View,
   StyleSheet,
@@ -16,8 +16,6 @@ import { useAuthNavigation } from "@/src/features/auth/navigation";
 import { CustomSnackbar } from "@/src/components/CustomSnackbar";
 
 const googleLogo = require("@/assets/logos/google.png");
-
-WebBrowser.maybeCompleteAuthSession();
 
 export default function LoginScreen() {
   const { goToRegister } = useAuthNavigation();
@@ -38,6 +36,13 @@ export default function LoginScreen() {
   const [snackbarType, setSnackbarType] = useState<"success" | "error">(
     "success"
   );
+
+  useEffect(() => {
+    WebBrowser.maybeCompleteAuthSession();
+    return () => {
+      WebBrowser.coolDownAsync();
+    };
+  }, []);
 
   const validateEmail = (email: string) => {
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -112,12 +117,6 @@ export default function LoginScreen() {
             });
             setSnackbarMessage("Welcome! Your account has been created.");
             setSnackbarType("success");
-            setSnackbarVisible(true);
-          } else {
-            setSnackbarMessage(
-              "Additional steps are required to complete sign-up."
-            );
-            setSnackbarType("error");
             setSnackbarVisible(true);
           }
         } catch (error) {
@@ -225,7 +224,7 @@ export default function LoginScreen() {
               Continue with Google
             </Button>
 
-            {/* <Button
+            <Button
               icon="apple"
               mode="outlined"
               onPress={() => handleOAuthSignIn("apple")}
@@ -235,7 +234,7 @@ export default function LoginScreen() {
               theme={{ colors: { outline: "transparent" } }}
             >
               Continue with Apple
-            </Button> */}
+            </Button>
 
             <View style={styles.signupContainer}>
               <Text variant="bodyMedium">Don't have an account?</Text>
