@@ -52,15 +52,24 @@
         line-height: 1.6;
         overflow-x: hidden;
         background-color: var(--neutral-50);
+        margin: 0;
+        padding: 0;
       }
 
       header {
         position: relative;
-        background-color: var(--purple-main);
+        background: linear-gradient(
+          135deg,
+          var(--purple-main) 0%,
+          var(--purple-dark) 100%
+        );
         color: white;
-        padding: 5rem 0 8rem;
+        padding: 5rem 0 5rem;
         text-align: center;
-        overflow: hidden;
+        width: 100vw;
+        margin: 0;
+        left: 0;
+        right: 0;
       }
 
       header::before {
@@ -120,6 +129,13 @@
         z-index: 2;
       }
 
+      .title-container {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin-bottom: 1rem;
+      }
+
       h1 {
         font-size: 3.5rem;
         margin-bottom: 1rem;
@@ -148,23 +164,49 @@
       }
 
       .app-showcase {
-        margin-top: -5rem;
+        margin-top: -8rem;
         position: relative;
         z-index: 10;
         text-align: center;
+        padding: 0;
+        width: 100%;
+        overflow: visible;
       }
 
-      .app-showcase img {
-        max-width: 300px;
-        border-radius: 16px;
+      .screenshot-container {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 1.5rem;
+        padding: 1.5rem;
+        position: relative;
+        max-width: 1000px;
+        margin: 0 auto;
+        margin-top: 6rem;
+        overflow: visible;
+      }
+
+      .screenshot {
+        border-radius: 20px;
         box-shadow: 0 15px 30px rgba(0, 0, 0, 0.2);
-        border: 5px solid white;
-        transform: rotate(-3deg);
-        transition: transform 0.3s ease;
+        transition: all 0.3s ease;
+        background: white;
+        transform: translateZ(0);
+        backface-visibility: hidden;
+        cursor: pointer;
       }
 
-      .app-showcase img:hover {
-        transform: rotate(0deg) scale(1.05);
+      .screenshot:hover {
+        transform: translateY(-10px) translateZ(0);
+        box-shadow: 0 20px 40px rgba(0, 0, 0, 0.25);
+      }
+
+      .screenshot img {
+        width: 100%;
+        height: auto;
+        border-radius: 20px;
+        display: block;
+        transform: translateZ(0);
+        backface-visibility: hidden;
       }
 
       .features {
@@ -385,57 +427,162 @@
         width: 60px;
         height: 60px;
         border-radius: 12px;
-        margin-bottom: 1rem;
+        margin-right: 1rem;
         box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+        vertical-align: middle;
+      }
+
+      .app-store-button {
+        display: inline-block;
+        margin: 1rem 0;
+        transition: transform 0.3s ease;
+      }
+
+      .app-store-button:hover {
+        transform: scale(1.05);
+      }
+
+      .app-store-button img {
+        height: 40px;
+        width: auto;
       }
 
       @media (max-width: 768px) {
+        header {
+          padding: 4rem 0 10rem;
+        }
+
+        .app-showcase {
+          margin-top: -6rem;
+        }
+
+        .screenshot-container {
+          grid-template-columns: repeat(2, 1fr);
+          gap: 1rem;
+          padding: 1.5rem 10%;
+          margin-top: 5rem;
+        }
+      }
+
+      @media (max-width: 480px) {
+        .screenshot-container {
+          grid-template-columns: repeat(2, 1fr);
+          gap: 0.5rem;
+          padding: 1.5rem 5%;
+        }
+
+        .screenshot {
+          max-width: 100%;
+        }
+
         h1 {
-          font-size: 2.5rem;
+          font-size: 2.8rem;
         }
 
         .tagline {
           font-size: 1.2rem;
         }
+      }
 
-        .app-showcase img {
-          max-width: 250px;
-        }
+      /* Modal for fullscreen images */
+      .modal {
+        display: none;
+        position: fixed;
+        z-index: 100;
+        left: 0;
+        top: 0;
+        width: 100%;
+        height: 100%;
+        overflow: auto;
+        background-color: rgba(0, 0, 0, 0.9);
+        backdrop-filter: blur(5px);
+      }
 
-        .cta h2 {
-          font-size: 2rem;
-        }
+      .modal-content {
+        margin: auto;
+        display: block;
+        width: 90%;
+        max-width: 700px;
+        max-height: 80vh;
+        object-fit: contain;
+        position: relative;
+        top: 50%;
+        transform: translateY(-50%);
+      }
+
+      .close {
+        position: absolute;
+        top: 15px;
+        right: 35px;
+        color: #f1f1f1;
+        font-size: 40px;
+        font-weight: bold;
+        transition: 0.3s;
+        z-index: 101;
+      }
+
+      .close:hover,
+      .close:focus {
+        color: #bbb;
+        text-decoration: none;
+        cursor: pointer;
       }
     </style>
   </head>
   <body>
     <header>
       <div class="container header-content">
-        <img
-          src="/static/images/icon.png"
-          alt="WordApp Icon"
-          class="app-icon"
-        />
-        <h1>WordApp</h1>
+        <div class="title-container">
+          <img
+            src="/static/images/icon.png"
+            alt="WordApp Icon"
+            class="app-icon"
+          />
+          <h1>WordApp</h1>
+        </div>
         <p class="tagline">
           The smarter way to learn and remember new vocabulary
         </p>
+        <a
+          target="_blank"
+          href="https://apps.apple.com/us/app/wordapp-mastery/id6744808761"
+          class="app-store-button"
+        >
+          <img
+            src="/static/images/download_apple.svg"
+            alt="Download on the App Store"
+          />
+        </a>
+      </div>
+      <div class="app-showcase">
+        <div class="screenshot-container">
+          <div class="screenshot">
+            <img src="/static/screenshots/home.png" alt="WordApp Home Screen" />
+          </div>
+          <div class="screenshot">
+            <img src="/static/screenshots/word_store.png" alt="Word Store" />
+          </div>
+          <div class="screenshot">
+            <img src="/static/screenshots/mcq.png" alt="Interactive Quiz" />
+          </div>
+          <div class="screenshot">
+            <img
+              src="/static/screenshots/progress.png"
+              alt="Progress Tracking"
+            />
+          </div>
+        </div>
       </div>
     </header>
-
-    <div class="app-showcase container">
-      <img src="/static/images/splash.png" alt="WordApp Screenshot" />
-    </div>
 
     <main class="container">
       <section>
         <h2>About WordApp</h2>
         <p>
           WordApp is a powerful vocabulary learning tool designed to help you
-          expand your vocabulary effectively. Whether you're learning a new
-          language, preparing for standardized tests, or simply want to enrich
-          your vocabulary, WordApp has you covered with an intelligent approach
-          to word mastery.
+          expand your vocabulary effectively. Whether you're preparing for
+          standardized tests, or simply want to enrich your vocabulary, WordApp
+          has you covered with an intelligent approach to word mastery.
         </p>
       </section>
 
@@ -483,8 +630,16 @@
           mastery.
         </p>
         <div class="cta-buttons">
-          <a href="#" class="btn btn-primary">Download App</a>
-          <a href="#" class="btn btn-secondary">Learn More</a>
+          <a
+            target="_blank"
+            href="https://apps.apple.com/us/app/wordapp-mastery/id6744808761"
+            class="app-store-button"
+          >
+            <img
+              src="/static/images/download_apple.svg"
+              alt="Download on the App Store"
+            />
+          </a>
         </div>
       </section>
     </main>
@@ -500,5 +655,43 @@
         <p><a href="/privacy-policy">Privacy Policy</a></p>
       </div>
     </footer>
+
+    <!-- Modal for displaying screenshots -->
+    <div id="imageModal" class="modal">
+      <span class="close">&times;</span>
+      <img class="modal-content" id="modalImage" />
+    </div>
+
+    <script>
+      // Image modal functionality
+      document.addEventListener("DOMContentLoaded", function () {
+        const modal = document.getElementById("imageModal");
+        const modalImg = document.getElementById("modalImage");
+        const closeBtn = document.getElementsByClassName("close")[0];
+
+        // Get all screenshots
+        const screenshots = document.querySelectorAll(".screenshot img");
+
+        // Add click event to each screenshot
+        screenshots.forEach((img) => {
+          img.addEventListener("click", function () {
+            modal.style.display = "block";
+            modalImg.src = this.src;
+          });
+        });
+
+        // Close modal when clicking the × button
+        closeBtn.addEventListener("click", function () {
+          modal.style.display = "none";
+        });
+
+        // Close modal when clicking outside the image
+        modal.addEventListener("click", function (event) {
+          if (event.target === modal) {
+            modal.style.display = "none";
+          }
+        });
+      });
+    </script>
   </body>
 </html>
